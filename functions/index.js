@@ -102,7 +102,7 @@ exports.removeFriend=onCall(async req=>{
 });
 exports.transferCoins=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount);
- if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>500)throw new HttpsError('invalid-argument','Transfer 1-500 altın arasında olmalı.');
+ if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>100)throw new HttpsError('invalid-argument','Transfer 1-500 altın arasında olmalı.');
  await userDoc(target);
  const day=istanbulDayKey(),sender=db.doc('users/'+uid),receiver=db.doc('users/'+target),limitRef=db.doc('coinTransferLimits/'+uid);
  await db.runTransaction(async tx=>{
@@ -110,7 +110,7 @@ exports.transferCoins=onCall(async req=>{
   if(!s.exists||!r.exists)throw new HttpsError('not-found','Kullanıcı bulunamadı.');
   if(r.data().banned)throw new HttpsError('permission-denied','Bu kullanıcıya transfer yapılamaz.');
   const old=l.exists&&l.data().day===day?Number(l.data().amount)||0:0;
-  if(old+amount>1000)throw new HttpsError('resource-exhausted','Günlük 1000 altın transfer sınırına ulaştın.');
+  if(old+amount>100)throw new HttpsError('resource-exhausted','Günlük 1000 altın transfer sınırına ulaştın.');
   const coins=Number(s.data().coins)||0;if(coins<amount)throw new HttpsError('failed-precondition','Yeterli altının yok.');
   tx.update(sender,{coins:coins-amount});tx.update(receiver,{coins:(Number(r.data().coins)||0)+amount});
   tx.set(limitRef,{day,amount:old+amount,updatedAt:Field.serverTimestamp()},{merge:true});
@@ -130,7 +130,7 @@ exports.claimDailyTask=onCall(async req=>{
   const [t,u,claim]=await Promise.all([tx.get(taskRef),tx.get(userRef),tx.get(claimRef)]);
   if(!t.exists||!t.data().active)throw new HttpsError('not-found','Görev artık etkin değil.');
   if(claim.exists)throw new HttpsError('already-exists','Bu görevin bugünkü ödülünü zaten aldın.');
-  const d=t.data(),today=new Date();const start=new Date(today.toLocaleString('en-US',{timeZone:'Europe/Istanbul'}));start.setHours(0,0,0,0);
+  const d=t.data(),parts=istanbulDayKey().split('-').map(Number),start=admin.firestore.Timestamp.fromMillis(Date.UTC(parts[0],parts[1]-1,parts[2])-3*60*60*1000);
   let q=db.collection('scores').where('uid','==',uid).where('createdAt','>=',start);
   if(d.mode!=='any')q=q.where('mode','==',d.mode);
   const scores=await tx.get(q);const done=scores.docs.some(x=>Number(x.data().score)>=d.minScore&&Number(x.data().questions)>=d.minQuestions);
@@ -175,7 +175,7 @@ exports.protectAdminProfile=onDocumentCreated('users/{uid}',async e=>{const uid=
 // Skorlar yalnızca callable üzerinden yazılır; oyuncu kendi puanını değiştiremez.
 exports.submitGameScore=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const d=req.data||{},score=Number(d.score),questions=Number(d.questions),mode=String(d.mode||'classic'),topic=String(d.topic||'Karışık');
- if(!Number.isInteger(score)||score<0||!Number.isInteger(questions)||questions<1||questions>500||score>questions*20||!['classic','endless','retry','balance'].includes(mode)||(mode==='retry'&&questions>10))throw new HttpsError('invalid-argument','Skor, soru sayısı veya oyun modu geçersiz.');
+ if(!Number.isInteger(score)||score<0||!Number.isInteger(questions)||questions<1||questions>10000||score>questions*20||!['classic','endless','retry','balance'].includes(mode)||(mode==='retry'&&questions>10))throw new HttpsError('invalid-argument','Skor, soru sayısı veya oyun modu geçersiz.');
  const ur=db.doc(`users/${uid}`),u=await ur.get(),name=String(u.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32),publicScore=d.public===true;
  const ref=await db.collection('scores').add({uid,playerName:name,score,mode,topic:topic.slice(0,40),public:publicScore,questions,createdAt:Field.serverTimestamp()});
  return {ok:true,id:ref.id};
