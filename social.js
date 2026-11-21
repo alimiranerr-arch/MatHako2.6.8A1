@@ -34,18 +34,32 @@
  function listenMessages(id){if(stopMessages)stopMessages();const el=$('msgs');if(el)el.innerHTML='';stopMessages=db().collection('chats').doc(id).collection('messages').orderBy('createdAt').limit(100).onSnapshot(s=>{if(el)el.innerHTML='';s.forEach(x=>renderMessage(x.data(),x.id))},e=>note('Mesajlar yüklenemedi: '+e.message));}
  function openChat(id,title){activeChat=id;stopGroupCompetition?.();$('chatTools')?.querySelector('#groupCompetitionControls')?.remove();$('chatTools')?.querySelector('#startGroupCompetition')?.remove();$('chatRoom')?.classList.remove('hide');$('chatTitle').textContent=title||'Sohbet';listenMessages(id);setupGroupCompetition(id)}
  async function createChat(group){const raw=prompt(group?'Grup üyelerinin e-posta adreslerini virgülle yaz (kendin otomatik eklenirsin):':'Sohbet edeceğin kişinin e-posta adresi:');if(!raw)return;const emails=[...new Set(raw.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean))];if(!group&&emails.length!==1)throw Error('Özel sohbet için yalnızca bir e-posta adresi gir.');if(group&&emails.length>9)throw Error('Bir gruba en fazla 9 kişi davet edebilirsin.');const result=await cloud().fn.httpsCallable('findChatMembers')({emails:emails.slice(0,9)});const ids=[uid(),...(result.data.uids||[])].filter((v,i,a)=>a.indexOf(v)===i);if(ids.length<2)throw Error('Belirtilen kullanıcı bulunamadı veya kayıtlı değil.');const ref=await db().collection('chats').add({memberIds:ids,type:group?'group':'dm',title:group?'Yeni grup':'Özel sohbet',createdBy:uid(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});openChat(ref.id,group?'Yeni grup':'Özel sohbet');}
+ function ensureNotificationPanel(){
+  let panel=$('notifPanel');if(panel)return panel;
+  panel=document.createElement('aside');panel.id='notifPanel';panel.className='card hide';panel.setAttribute('aria-label','Bildirimler');panel.setAttribute('aria-hidden','true');
+  panel.style.cssText='position:fixed;top:68px;right:14px;z-index:1000001;width:min(360px,calc(100vw - 28px));max-height:70vh;overflow:auto;box-shadow:0 12px 40px #0004';
+  const heading=document.createElement('b');heading.textContent='🔔 Bildirimler';panel.appendChild(heading);document.body.appendChild(panel);return panel;
+ }
+ async function markNotificationsRead(){
+  if(!db()||!uid())return;
+  try{const s=await db().collection('users').doc(uid()).collection('notifications').where('read','==',false).limit(50).get(),batch=db().batch();s.docs.forEach(d=>batch.update(d.ref,{read:true}));await batch.commit();}catch(e){console.warn('Bildirim okundu işaretlenemedi:',e);}
+ }
  function watchNotifications(){
   if(!db()||!uid())return;stopNotifications?.();
-  const panel=$('notifPanel');if(!panel)return;
-  stopNotifications=db().collection('users').doc(uid()).collection('notifications').orderBy('createdAt','desc').limit(20).onSnapshot(s=>{
-   panel.innerHTML='';if(s.empty){panel.textContent='Yeni bildirim yok.';return;}
-   s.forEach(d=>{const x=d.data(),row=document.createElement('div');row.className='card';row.textContent=(x.type==='friend-request'?'👥 Yeni arkadaşlık isteği':'🔔 Bildirim')+' · '+(x.createdAt?.toDate?.().toLocaleString('tr-TR')||'');panel.appendChild(row);
-    if(!x.read&&$('notifOn')?.checked&&'Notification'in window&&Notification.permission==='granted'&&!notified.has(d.id)){notified.add(d.id);new Notification('Matematik Macerası',{body:x.type==='friend-request'?'Yeni bir arkadaşlık isteğin var.':'Yeni bildirimin var.'});}
+  const panel=ensureNotificationPanel();
+  stopNotifications=db().collection('users').doc(uid()).collection('notifications').orderBy('createdAt','desc').limit(30).onSnapshot(s=>{
+   panel.replaceChildren();const heading=document.createElement('b');heading.textContent='🔔 Bildirimler';panel.appendChild(heading);
+   const unread=s.docs.filter(d=>!d.data().read).length,badge=$('bellBadge');if(badge){badge.textContent=String(unread);badge.classList.toggle('hide',unread===0);}
+   if(s.empty){const empty=document.createElement('p');empty.textContent='Yeni bildirim yok.';panel.appendChild(empty);return;}
+   s.forEach(d=>{const x=d.data(),row=document.createElement('button');row.type='button';row.className='btn';row.style.cssText='display:block;width:100%;text-align:left;margin-top:7px;white-space:normal';row.textContent=(x.type==='friend-request'?'👥 '+(x.fromName||'Yeni arkadaşlık isteği')+' sana arkadaşlık isteği gönderdi':x.type==='duel-invite'?'⚔️ Düello daveti · '+(x.code||''):'🔔 Bildirim')+' · '+(x.createdAt?.toDate?.().toLocaleString('tr-TR')||'');row.addEventListener('click',()=>{w.MatematikMacerasi?.navigate('s6');if(x.code&&$('joinCode'))$('joinCode').value=x.code;panel.classList.add('hide');panel.setAttribute('aria-hidden','true');});panel.appendChild(row);
+    if(!x.read&&$('notifOn')?.checked&&'Notification'in window&&Notification.permission==='granted'&&!notified.has(d.id)){notified.add(d.id);new Notification('Matematik Macerası',{body:x.type==='friend-request'?(x.fromName||'Yeni arkadaşlık isteği')+' sana arkadaşlık isteği gönderdi.':'Yeni bildirimin var.'});}
    });
   },e=>{panel.textContent='Bildirimler yüklenemedi: '+e.message;});
  }
  function bindNotifications(){
-  const tabs=$('tabs');if(tabs&&!$('mmNotifButton')){const b=document.createElement('button');b.type='button';b.id='mmNotifButton';b.className='btn';b.textContent='🔔';b.setAttribute('aria-label','Bildirimleri aç');b.addEventListener('click',async()=>{const panel=$('notifPanel');panel?.classList.toggle('hide');if(panel&&!panel.classList.contains('hide')&&uid()){try{const s=await db().collection('users').doc(uid()).collection('notifications').where('read','==',false).limit(20).get(),batch=db().batch();s.docs.forEach(d=>batch.update(d.ref,{read:true}));await batch.commit();}catch(e){console.warn('Bildirim okundu işaretlenemedi:',e);}}});tabs.appendChild(b);}
+  ensureNotificationPanel();
+  let b=$('bellBtn');if(!b){const tabs=$('tabs');if(tabs&&!$('mmNotifButton')){b=document.createElement('button');b.type='button';b.id='mmNotifButton';b.className='btn';b.textContent='🔔';b.setAttribute('aria-label','Bildirimleri aç');tabs.appendChild(b);}}
+  b=b||$('mmNotifButton');if(b&&!b.dataset.notifBound){b.dataset.notifBound='1';b.addEventListener('click',async()=>{const panel=ensureNotificationPanel(),open=panel.classList.contains('hide');panel.classList.toggle('hide');panel.setAttribute('aria-hidden',String(!open));if(open)await markNotificationsRead();});}
   const pref=$('notifOn');if(pref&&!pref.dataset.bound){pref.dataset.bound='1';pref.checked=localStorage.getItem('mm_notifications')==='1';pref.addEventListener('change',async()=>{localStorage.setItem('mm_notifications',pref.checked?'1':'0');if(pref.checked&&'Notification'in window&&Notification.permission==='default')await Notification.requestPermission();});}
  }
  function bindFriends(){
