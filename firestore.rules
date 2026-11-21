@@ -10,11 +10,12 @@ service cloud.firestore {
     && request.resource.data.senderId==request.auth.uid
     && request.resource.data.senderName is string
     && request.resource.data.senderName.size()<=80
+    && (request.resource.data.senderName==request.auth.token.name || request.resource.data.senderName==request.auth.token.email)
     && request.resource.data.text is string
     && request.resource.data.text.size()<=4000
     && request.resource.data.type in ['text','media']
     && (!request.resource.data.keys().hasAny(['mediaUrl']) || (request.resource.data.mediaUrl is string && request.resource.data.mediaUrl.matches('https://.*')))
-    && (!request.resource.data.keys().hasAny(['mediaPath']) || (request.resource.data.mediaPath is string && request.resource.data.mediaPath.size()<=500))
+    && (!request.resource.data.keys().hasAny(['mediaPath']) || (request.resource.data.mediaPath is string && request.resource.data.mediaPath.size()<=500 && request.resource.data.mediaPath.matches('chatMedia/[^/]+/'+request.auth.uid+'_.*')))
     && (!request.resource.data.keys().hasAny(['mediaType']) || (request.resource.data.mediaType is string && request.resource.data.mediaType.matches('(image|audio|video)/[a-zA-Z0-9.+-]+')));
   }
   match /settings/{doc}{allow read:if signedIn();allow write:if admin();}
