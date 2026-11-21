@@ -169,6 +169,20 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "messageReports",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "messageId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "reportedBy",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
