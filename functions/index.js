@@ -102,7 +102,7 @@ exports.removeFriend=onCall(async req=>{
 });
 exports.transferCoins=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount);
- if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>100)throw new HttpsError('invalid-argument','Transfer 1-500 altın arasında olmalı.');
+ if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>500)throw new HttpsError('invalid-argument','Tek seferde 1-500 altın gönderebilirsin.');
  await userDoc(target);
  const day=istanbulDayKey(),sender=db.doc('users/'+uid),receiver=db.doc('users/'+target),limitRef=db.doc('coinTransferLimits/'+uid);
  await db.runTransaction(async tx=>{
@@ -110,7 +110,7 @@ exports.transferCoins=onCall(async req=>{
   if(!s.exists||!r.exists)throw new HttpsError('not-found','Kullanıcı bulunamadı.');
   if(r.data().banned)throw new HttpsError('permission-denied','Bu kullanıcıya transfer yapılamaz.');
   const old=l.exists&&l.data().day===day?Number(l.data().amount)||0:0;
-  if(old+amount>100)throw new HttpsError('resource-exhausted','Günlük 1000 altın transfer sınırına ulaştın.');
+  if(old+amount>1000)throw new HttpsError('resource-exhausted','Günlük 1000 altın transfer sınırına ulaştın.');
   const coins=Number(s.data().coins)||0;if(coins<amount)throw new HttpsError('failed-precondition','Yeterli altının yok.');
   tx.update(sender,{coins:coins-amount});tx.update(receiver,{coins:(Number(r.data().coins)||0)+amount});
   tx.set(limitRef,{day,amount:old+amount,updatedAt:Field.serverTimestamp()},{merge:true});
@@ -192,8 +192,15 @@ exports.requestEmailChange=onCall(async req=>{
  if(email===String(req.auth.token.email||'').toLowerCase())throw new HttpsError('invalid-argument','Yeni e-posta mevcut adresinle aynı.');
  try{const existing=await admin.auth().getUserByEmail(email);if(existing.uid!==uid)throw new HttpsError('already-exists','Bu e-posta başka bir hesapta kullanılıyor.');}catch(e){if(e.code!=='auth/user-not-found'&&!(e instanceof HttpsError))throw e;}
  const ref=db.doc('emailChangeLimits/'+uid),now=Date.now(),period=30*86400000;
- await db.runTransaction(async tx=>{const s=await tx.get(ref),last=Number(s.data()?.lastRequestedAt)||0;if(last&&now-last<period){const days=Math.ceil((period-(now-last))/86400000);throw new HttpsError('failed-precondition','E-posta değişikliği için '+days+' gün daha beklemelisin.');}tx.set(ref,{lastRequestedAt:now,requestedEmail:email,status:'verification-pending'},{merge:true});});
+ await db.runTransaction(async tx=>{const s=await tx.get(ref),last=Number(s.data()?.lastChangedAt)||0;if(last&&now-last<period){const days=Math.ceil((period-(now-last))/86400000);throw new HttpsError('failed-precondition','E-posta değişikliği için '+days+' gün daha beklemelisin.');}tx.set(ref,{requestedAt:now,requestedEmail:email,status:'verification-pending'},{merge:true});});
  return{ok:true,email};
+});
+exports.completeEmailChange=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const email=String(req.auth.token.email||'').trim().toLowerCase(),authUser=await admin.auth().getUser(uid);
+ if(!authUser.emailVerified||String(authUser.email||'').toLowerCase()!==email)throw new HttpsError('permission-denied','Yeni e-posta adresi doğrulanmamış.');
+ const ref=db.doc('emailChangeLimits/'+uid),profile=db.doc('users/'+uid),now=Date.now(),period=30*86400000;let changed=false;
+ await db.runTransaction(async tx=>{const s=await tx.get(ref);if(!s.exists||s.data().status!=='verification-pending'||String(s.data().requestedEmail||'').toLowerCase()!==email)return;const last=Number(s.data().lastChangedAt)||0;if(last&&now-last<period)throw new HttpsError('failed-precondition','E-posta değişikliği için 30 gün beklemelisin.');tx.set(ref,{lastChangedAt:now,status:'completed',completedAt:Field.serverTimestamp()},{merge:true});tx.set(profile,{email},{merge:true});changed=true;});
+ return{ok:true,changed};
 });
 
 
@@ -279,7 +286,7 @@ exports.startGameSession=onCall(async req=>{
  else if(competitionType==='group'){const comp=await db.doc('groupCompetitions/'+competitionCode).get();if(!comp.exists||comp.data().status!=='playing'||(!(comp.data().membersA||[]).includes(uid)&&!(comp.data().membersB||[]).includes(uid))||comp.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif grup yarışması bulunamadı.');}
  else if(competitionType)throw new HttpsError('invalid-argument','Yarışma türü geçersiz.');
  const count=mode==='retry'?10:500,questions=Array.from({length:count},()=>makeServerQuestion(topic)),id=crypto.randomBytes(16).toString('hex');
- await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',answers:[],nextIndex:0,score:0,correct:0,streak:0,lives:5,createdAt:Field.serverTimestamp(),expiresAt:Date.now()+2*60*60*1000});
+ const startedAt=Date.now();await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',answers:[],nextIndex:0,score:0,correct:0,streak:0,lives:5,questionStartedAt:startedAt,questionDeadlineAt:mode==='endless'?startedAt+10000:null,createdAt:Field.serverTimestamp(),expiresAt:startedAt+2*60*60*1000});
  return{sessionId:id,questions:questions.map(x=>({q:x.q,opts:x.options}))};
 });
 exports.submitGameSession=onCall(async()=>{throw new HttpsError('failed-precondition','Bu eski puan uç noktası kapalı.');});
@@ -290,10 +297,10 @@ exports.submitGameAnswer=onCall(async req=>{
  await db.runTransaction(async tx=>{
   const s=await tx.get(ref);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
   const d=s.data();if(index!==d.nextIndex||index>=d.questions.length||d.lives<=0)throw new HttpsError('failed-precondition','Bu soru zaten yanıtlandı veya sıra geçersiz.');
-  const q=d.questions[index];if(selected!==null&&!q.options.includes(selected))throw new HttpsError('invalid-argument','Cevap seçenekler arasında değil.');
-  const correct=selected===q.answer,streak=correct?d.streak+1:0,score=correct?d.score+10+Math.min(streak-1,5)*2:d.score,lives=correct?d.lives:d.lives-1;
-  const entry={selected,correct,answer:q.answer,at:Date.now()};
-  tx.update(ref,{answers:Field.arrayUnion(entry),nextIndex:index+1,score,correct:d.correct+(correct?1:0),streak,lives});
+  const now=Date.now(),timedOut=d.mode==='endless'&&Number(d.questionDeadlineAt)>0&&now>d.questionDeadlineAt+1500;if(selected===null&&d.mode!=='endless')throw new HttpsError('invalid-argument','Bu modda süre aşımı gönderilemez.');if(selected===null&&!timedOut)throw new HttpsError('failed-precondition','Süre henüz dolmadı.');if(selected!==null&&!q.options.includes(selected))throw new HttpsError('invalid-argument','Cevap seçenekler arasında değil.');
+  const effective=timedOut?null:selected,correct=effective===q.answer,streak=correct?d.streak+1:0,score=correct?d.score+10+Math.min(streak-1,5)*2:d.score,lives=correct?d.lives:d.lives-1;
+  const entry={selected:effective,correct,answer:q.answer,at:now};
+  tx.update(ref,{answers:Field.arrayUnion(entry),nextIndex:index+1,score,correct:d.correct+(correct?1:0),streak,lives,questionStartedAt:now,questionDeadlineAt:d.mode==='endless'?now+10000:null});
   result={correct,answer:q.answer,score,correctCount:d.correct+(correct?1:0),streak,lives,nextIndex:index+1};
  });
  return result;
