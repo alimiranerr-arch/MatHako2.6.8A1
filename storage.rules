@@ -6,7 +6,7 @@ service firebase.storage {
   function active(){return signedIn()&&request.auth.token.email_verified==true&&firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))&&firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.banned!=true;}
   function safeChatMedia(){
    return request.resource.size<15*1024*1024
-    && request.resource.contentType.matches('image/(png|jpeg|gif|webp)|audio/(mpeg|ogg|wav|webm)|video/(mp4|webm|ogg)');
+    && request.resource.contentType.matches('image/(png|jpeg|gif|webp)|audio/(mpeg|ogg|wav|webm|mp4)|video/(mp4|webm|ogg)');
   }
   match /chatMedia/{chatId}/{fileName}{
    allow read:if admin()||(active()&&request.auth.uid in firestore.get(/databases/(default)/documents/chats/$(chatId)).data.memberIds);
