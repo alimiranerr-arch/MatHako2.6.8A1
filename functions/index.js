@@ -298,7 +298,7 @@ function makeServerQuestion(topic,difficulty='normal'){
  if(topic==='Karışık')topic=gamePick(GAME_TOPICS);
  switch(topic){
   case 'Tam Sayılar':a=gameRand(-30-15*level,30+15*level);b=gameRand(-20-10*level,20+10*level);{const op=gamePick(['+','−','×']);ans=op==='+'?a+b:op==='−'?a-b:a*b;q=a+' '+op+' ('+b+') işleminin sonucu kaçtır?';}break;
-  case 'Rasyonel Sayılar':{const d=gamePick([2,3,4,5,6,8,10]);a=gameRand(1,d-1);b=gameRand(1,d-1);ans=(a+b)+'/'+d;q=a+'/'+d+' + '+b+'/'+d+' işleminin sonucu kaçtır?';break;}
+  case 'Rasyonel Sayılar':{const d=gamePick([2,3,4,5,6,8,10]);a=gameRand(1,d-1);b=gameRand(1,d-1);const num=a+b,gcd=(x,y)=>y?gcd(y,x%y):x,g=gcd(num,d);ans=num/g===d/g? '1':(d/g===1?String(num/g):(num/g)+'/'+(d/g));q=a+'/'+d+' + '+b+'/'+d+' işleminin sonucu kaçtır?';break;}
   case 'Cebirsel İfadeler':a=gameRand(2,9+3*level);b=gameRand(1,12+5*level);x=gameRand(1,8+4*level);q='x = '+x+' ise '+a+'x + '+b+' ifadesinin değeri kaçtır?';ans=a*x+b;break;
   case 'Eşitlik ve Denklem':a=gameRand(2,8+3*level);x=gameRand(1,12+5*level);b=gameRand(-10-5*level,15+5*level);q=a+'x '+(b<0?'− '+Math.abs(b):'+ '+b)+' = '+(a*x+b)+' denkleminde x kaçtır?';ans=x;break;
   case 'Oran ve Orantı':a=gameRand(2,8+3*level);b=gameRand(2,9+3*level);x=gameRand(2,6+2*level);q=a+' kalem '+(b*a)+' TL ise '+(a*x)+' kalem kaç TL\\'dir?';ans=b*a*x;break;
