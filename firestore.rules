@@ -15,7 +15,11 @@ service cloud.firestore {
     && (!data.keys().hasAny(['school']) || (data.school is string && data.school.size()<=120))
     && (!data.keys().hasAny(['nickname']) || (data.nickname is string && data.nickname.size()<=40))
     && (!data.keys().hasAny(['className']) || (data.className is string && data.className.size()<=30))
-    && (!data.keys().hasAny(['location']) || data.location is map);
+    && (!data.keys().hasAny(['location']) || data.location is map)
+    && (!data.keys().hasAny(['avatar']) || (data.avatar is string && data.avatar.size()<=8))
+    && (!data.keys().hasAny(['avatarPath']) || (data.avatarPath is string && (data.avatarPath.size()==0 || data.avatarPath.matches('avatars/'+request.auth.uid+'/.*'))))
+    && (!data.keys().hasAny(['status']) || data.status in ['online','sleep','offline'])
+    && (!data.keys().hasAny(['statusUpdatedAt']) || data.statusUpdatedAt is timestamp);
   }
   function safeMessage(){
    return request.resource.data.keys().hasOnly(['senderId','senderName','text','mediaUrl','mediaPath','mediaType','createdAt','type'])
@@ -33,7 +37,7 @@ service cloud.firestore {
   match /settings/{doc}{allow read:if signedIn();allow write:if admin();}
   match /users/{uid}{
    allow read:if owner(uid)||admin();
-   allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location'])&&validProfile(request.resource.data);
+   allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location','avatar','avatarPath','status','statusUpdatedAt'])&&validProfile(request.resource.data);
    allow update:if admin()||(owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.email==resource.data.email&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location'])&&validProfile(request.resource.data));
    allow delete:if admin();
   }
