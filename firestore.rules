@@ -19,7 +19,8 @@ service cloud.firestore {
    match /messages/{messageId}{
     allow read:if active()&&(request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds||admin());
     allow create:if active()&&request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds&&request.resource.data.senderId==request.auth.uid&&request.resource.data.keys().hasOnly(['senderId','senderName','text','mediaUrl','mediaPath','mediaType','createdAt','type']);
-    allow update:if admin()||(active()&&resource.data.senderId==request.auth.uid&&request.resource.data.senderId==resource.data.senderId);\n    allow delete:if admin()||(active()&&resource.data.senderId==request.auth.uid);
+    allow update:if admin()||(active()&&resource.data.senderId==request.auth.uid&&request.resource.data.senderId==resource.data.senderId);
+    allow delete:if admin()||(active()&&resource.data.senderId==request.auth.uid);
    }
   }
   match /groups/{groupId}{
