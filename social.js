@@ -1,13 +1,38 @@
 /* Firebase sosyal katmanı: DM/grup sohbeti, metin ve medya gönderimi. */
 (function(w){
  const $=id=>document.getElementById(id), cloud=()=>w.MMCloud;
- let activeChat=null, stopMessages=null, stopChatList=null, stopNotifications=null, recorder=null, chunks=[], notified=new Set();
+ let activeChat=null, stopMessages=null, stopChatList=null, stopNotifications=null, stopGroupCompetition=null, groupActiveCode='', groupTopic='Karışık', recorder=null, chunks=[], notified=new Set();
  const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function db(){return cloud()?.db} function uid(){return cloud()?.user?.uid} async function currentSenderName(){const p=await db().collection('users').doc(uid()).get();return String(p.data()?.displayName||cloud().user.displayName||cloud().user.email||'Kullanıcı').slice(0,80)}
  function note(s){const e=$('msgs'); if(e)e.insertAdjacentHTML('beforeend',`<p class="note">${esc(s)}</p>`)}
  function renderMessage(d){const e=$('msgs');if(!e)return;const media=d.mediaUrl? (String(d.mediaType||'').startsWith('audio/')?`<audio controls src="${esc(d.mediaUrl)}"></audio>`:String(d.mediaType||'').startsWith('video/')?`<video controls playsinline src="${esc(d.mediaUrl)}"></video>`:`<a href="${esc(d.mediaUrl)}" target="_blank" rel="noopener"><img loading="lazy" style="max-width:180px;max-height:180px;border-radius:12px" src="${esc(d.mediaUrl)}" alt="Sohbet eki"></a>`):'';e.insertAdjacentHTML('beforeend',`<article class="card" style="margin:6px 0;padding:9px"><b>${esc(d.senderName||'Kullanıcı')}</b><div>${esc(d.text||'')}</div>${media}<small class="note">${d.createdAt?.toDate?d.createdAt.toDate().toLocaleString('tr-TR'):''}</small></article>`);e.scrollTop=e.scrollHeight}
+ function watchGroupCompetition(code){
+  stopGroupCompetition?.();if(!code||!db())return;
+  stopGroupCompetition=db().collection('groupCompetitions').doc(code).onSnapshot(s=>{
+   if(!s.exists)return;const x=s.data(),tools=$('chatTools');if(!tools)return;
+   let start=tools.querySelector('#startGroupCompetition');
+   if(x.status==='playing'&&!start){start=document.createElement('button');start.id='startGroupCompetition';start.className='btn';start.textContent='▶️ Grup yarışmasını başlat';start.onclick=()=>w.MMGame?.startDuel(groupTopic);tools.appendChild(start);}
+   if(x.status==='playing'&&start)start.disabled=false;
+   if(x.status!=='playing'&&start)start.disabled=true;
+   const status=tools.querySelector('#groupCompetitionStatus');if(status)status.textContent=x.status==='playing'?'Rakip grup katıldı.': 'Rakip grup bekleniyor. Kod: '+code;
+  });
+ }
+ function setupGroupCompetition(id){
+  const tools=$('chatTools');if(!tools)return;
+  db().collection('chats').doc(id).get().then(s=>{
+   if(!s.exists||s.data().type!=='group')return;
+   const box=document.createElement('div');box.className='card';box.id='groupCompetitionControls';
+   const create=document.createElement('button');create.className='btn';create.textContent='⚔️ Grup yarışması oluştur';
+   const input=document.createElement('input');input.placeholder='Rakip grubun yarışma kodu';input.maxLength=6;
+   const join=document.createElement('button');join.className='btn';join.textContent='Koda katıl';
+   const status=document.createElement('p');status.id='groupCompetitionStatus';status.className='note';
+   create.onclick=async()=>{try{const r=await cloud().fn.httpsCallable('createGroupCompetition')({chatId:id,topic:'Karışık'});groupActiveCode=r.data.code;groupTopic=r.data.topic;status.textContent='Yarışma kodun: '+groupActiveCode+' · Rakip gruba gönder.';watchGroupCompetition(groupActiveCode);}catch(e){status.textContent=e.message;}};
+   join.onclick=async()=>{try{const r=await cloud().fn.httpsCallable('joinGroupCompetition')({chatId:id,code:input.value});groupActiveCode=r.data.code;status.textContent='Katıldın. Rakip grubun diğer üyeleri bekleniyor.';watchGroupCompetition(groupActiveCode);}catch(e){status.textContent=e.message;}};
+   box.append(create,input,join,status);tools.appendChild(box);
+  }).catch(e=>note('Grup yarışması yüklenemedi: '+e.message));
+ }
  function listenMessages(id){if(stopMessages)stopMessages();const el=$('msgs');if(el)el.innerHTML='';stopMessages=db().collection('chats').doc(id).collection('messages').orderBy('createdAt').limit(100).onSnapshot(s=>{if(el)el.innerHTML='';s.forEach(x=>renderMessage(x.data()))},e=>note('Mesajlar yüklenemedi: '+e.message));}
- function openChat(id,title){activeChat=id;$('chatRoom')?.classList.remove('hide');$('chatTitle').textContent=title||'Sohbet';listenMessages(id)}
+ function openChat(id,title){activeChat=id;stopGroupCompetition?.();$('chatTools')?.querySelector('#groupCompetitionControls')?.remove();$('chatTools')?.querySelector('#startGroupCompetition')?.remove();$('chatRoom')?.classList.remove('hide');$('chatTitle').textContent=title||'Sohbet';listenMessages(id);setupGroupCompetition(id)}
  async function createChat(group){const raw=prompt(group?'Grup üyelerinin e-posta adreslerini virgülle yaz (kendin otomatik eklenirsin):':'Sohbet edeceğin kişinin e-posta adresi:');if(!raw)return;const emails=[...new Set(raw.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean))];if(!group&&emails.length!==1)throw Error('Özel sohbet için yalnızca bir e-posta adresi gir.');if(group&&emails.length>9)throw Error('Bir gruba en fazla 9 kişi davet edebilirsin.');const result=await cloud().fn.httpsCallable('findChatMembers')({emails:emails.slice(0,9)});const ids=[uid(),...(result.data.uids||[])].filter((v,i,a)=>a.indexOf(v)===i);if(ids.length<2)throw Error('Belirtilen kullanıcı bulunamadı veya kayıtlı değil.');const ref=await db().collection('chats').add({memberIds:ids,type:group?'group':'dm',title:group?'Yeni grup':'Özel sohbet',createdBy:uid(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});openChat(ref.id,group?'Yeni grup':'Özel sohbet');}
  function watchNotifications(){
   if(!db()||!uid())return;stopNotifications?.();
@@ -48,5 +73,6 @@
  async function startVoice(){if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw Error('Bu tarayıcı ses kaydını desteklemiyor.');const stream=await navigator.mediaDevices.getUserMedia({audio:true});recorder=new MediaRecorder(stream);chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());try{await upload(new File(chunks,`ses-${Date.now()}.webm`,{type:chunks[0]?.type||'audio/webm'}))}catch(e){alert(e.message)}};recorder.start();alert('Ses kaydı başladı. Bitirmek için tekrar ses kaydı düğmesine bas.');}
  function bind(){ bindNotifications();watchNotifications();bindFriends(); $('newDm')?.addEventListener('click',()=>createChat(false).catch(e=>alert(e.message)));$('newGroup')?.addEventListener('click',()=>createChat(true).catch(e=>alert(e.message)));$('chatSend')?.addEventListener('click',()=>send().catch(e=>alert(e.message)));$('chatIn')?.addEventListener('keydown',e=>{if(e.key==='Enter')send().catch(x=>alert(x.message))});$('chatFile')?.addEventListener('change',e=>upload(e.target.files[0]).catch(x=>alert(x.message)));$('chatBack')?.addEventListener('click',()=>{$('chatRoom')?.classList.add('hide');activeChat=null;if(stopMessages)stopMessages()});$('chatEmoji')?.addEventListener('click',async()=>{const v=prompt('Mesaja eklenecek emoji veya GIF bağlantısı:');if(!v)return;if(/^https:\/\//i.test(v)){await db().collection('chats').doc(activeChat).collection('messages').add({senderId:uid(),senderName:await currentSenderName(),text:'',mediaUrl:v,mediaType:'image/gif',createdAt:firebase.firestore.FieldValue.serverTimestamp(),type:'media'});}else $('chatIn').value+=v});const tools=$('chatTools');if(tools&&!tools.dataset.voice){tools.dataset.voice='1';const b=document.createElement('button');b.className='btn';b.textContent='🎙️ Ses kaydet / bitir';b.onclick=()=>{if(recorder?.state==='recording')recorder.stop();else startVoice().catch(e=>alert(e.message))};tools.appendChild(b)} }
  document.addEventListener('DOMContentLoaded',()=>{let bound=false;window.addEventListener('mm-auth-ready',e=>{if(!e.detail.user){if(stopChatList)stopChatList();if(stopMessages)stopMessages();stopNotifications?.();stopNotifications=null;activeChat=null;if($('chatList'))$('chatList').innerHTML='';if($('chatRoom'))$('chatRoom').classList.add('hide');bound=false;return}if(!bound){bind();bound=true}watchChats();bindFriends();watchNotifications()});if(uid()&&db()){bind();bound=true;watchChats();bindFriends();watchNotifications()}});
+ w.MMGroupDuel={hasActive:()=>!!groupActiveCode,submit:async(score,correct)=>{if(!groupActiveCode)return;const r=await cloud().fn.httpsCallable('submitGroupCompetitionResult')({code:groupActiveCode,score,correct});const out=$('duelResult');if(out)out.textContent='Grup yarışması skorun kaydedildi. Takım toplamları: '+r.data.totals.a+' / '+r.data.totals.b;groupActiveCode='';stopGroupCompetition?.();stopGroupCompetition=null;}};
  w.MatematikMacerasi=w.MatematikMacerasi||{};w.MatematikMacerasi.register?.('social',{get activeChat(){return activeChat},openChat});
 })(window);
