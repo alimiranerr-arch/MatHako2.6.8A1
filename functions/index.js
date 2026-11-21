@@ -80,7 +80,7 @@ exports.sendFriendRequest=onCall(async req=>{
   if(snap.exists&&snap.data().status==='pending')throw new HttpsError('already-exists','Bekleyen bir arkadaşlık isteği var.');
   tx.set(ref,{from:uid,to:target,status:'pending',createdAt:Field.serverTimestamp(),updatedAt:Field.serverTimestamp()});
  });
- await db.collection('users').doc(target).collection('notifications').add({type:'friend-request',from:uid,createdAt:Field.serverTimestamp(),read:false});
+ const sender=await db.doc('users/'+uid).get();await db.collection('users').doc(target).collection('notifications').add({type:'friend-request',from:uid,fromName:String(sender.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,80),createdAt:Field.serverTimestamp(),read:false});
  return{ok:true};
 });
 exports.respondFriendRequest=onCall(async req=>{
@@ -88,9 +88,9 @@ exports.respondFriendRequest=onCall(async req=>{
  if(!id||id.length>140)throw new HttpsError('invalid-argument','İstek kimliği geçersiz.');
  await db.runTransaction(async tx=>{
   const ref=db.doc('friendRequests/'+id),s=await tx.get(ref);if(!s.exists||s.data().to!==uid||s.data().status!=='pending')throw new HttpsError('not-found','Bekleyen arkadaşlık isteği bulunamadı.');
-  const from=s.data().from;
+  const from=s.data().from,[sender,recipient]=await Promise.all([tx.get(db.doc('users/'+from)),tx.get(db.doc('users/'+uid))]);
   tx.update(ref,{status:accept?'accepted':'declined',respondedAt:Field.serverTimestamp()});
-  if(accept){tx.set(db.doc('users/'+uid+'/friends/'+from),{uid:from,createdAt:Field.serverTimestamp()});tx.set(db.doc('users/'+from+'/friends/'+uid),{uid,createdAt:Field.serverTimestamp()});}
+  if(accept){tx.set(db.doc('users/'+uid+'/friends/'+from),{uid:from,displayName:String(sender.data()?.displayName||'Oyuncu').slice(0,80),createdAt:Field.serverTimestamp()});tx.set(db.doc('users/'+from+'/friends/'+uid),{uid,displayName:String(recipient.data()?.displayName||'Oyuncu').slice(0,80),createdAt:Field.serverTimestamp()});}
  });
  return{ok:true,accepted:accept};
 });
