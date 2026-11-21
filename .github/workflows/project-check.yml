@@ -22,3 +22,5 @@ jobs:
         run: npm test
       - name: Check Cloud Functions syntax
         run: node --check functions/index.js
+      - name: Validate Firestore and Storage rules in emulators
+        run: npx --yes firebase-tools emulators:exec --only firestore,storage --project demo-mathako-check "echo Firebase rules compiled"
