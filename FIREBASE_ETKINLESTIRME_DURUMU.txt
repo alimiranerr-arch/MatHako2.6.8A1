@@ -1,0 +1,39 @@
+MATEMATİK MACERASI — ENTEGRASYON DURUMU
+========================================
+
+Bu paket, web istemcisini Firebase projesi hakomatonline261'e bağlamak için Firebase compat SDK'sını ve istemci entegrasyonunu içerir.
+Admin e-postası: alimiranerr@gmail.com
+
+BU PAKETTE BAĞLANANLAR
+- Firebase Auth durum dinleyicisi ve Google ile giriş düğmelerinin bağlanması.
+- Doğrulanmış alimiranerr@gmail.com hesabı için claimHakoAdmin çağrısı; yönetici menüsü yalnızca sunucu custom claim'i geldikten sonra görünür.
+- Bakım modu anahtarının setMaintenance callable fonksiyonuna bağlanması ve ortak ayarın izlenmesi.
+- Market yayınlama düğmesinin publishMarketItem callable fonksiyonuna bağlanması.
+- Dönem seçim kontrolünün setTermMode callable fonksiyonuna bağlanması.
+- Konum paylaşımında açık onay sorulması; reddedilirse site kullanımının engellenmemesi. Cihaz adı yerine yaklaşık cihaz türü kaydedilir.
+
+HALA TAMAMLANMASI GEREKENLER
+- Bu paket Firebase'e otomatik deploy edilmedi. Proje sahibinin kendi hesabıyla Firebase CLI üzerinden yayınlaması gerekir.
+- Google giriş sağlayıcısı Firebase Authentication'da açık olmalı; admin hesabı oluşturulup e-postası doğrulanmalı.
+- Cloud Functions için Blaze planı/faturalandırma gerekebilir; ücret doğabilir.
+- Orijinal oyun, soru havuzu, puanlama ve senkronizasyon kaynakları kayıp olduğundan birebir oyun davranışı yeniden kurulmuş değildir.
+- Grup/DM mesaj oluşturma ekranı ve gerçek zamanlı medya yükleme/oynatma akışı mevcut arayüze henüz bağlanmamıştır. Rules, koleksiyon erişim politikası olarak durur; sohbeti tamamlamaz.
+- Üyelik satın alma/ödül/entitlement, çark konfigürasyonu, unvan envanteri, mevsim temaları, profil düzenleme ve admin giriş başarısızlığı denetim paneli uçtan uca tamamlanmış değildir.
+- Ban callable backend'de bulunur; mevcut profil butonuna hedef UID aktarımıyla bağlanması gerekir.
+- E-posta değişimini 30 günde bir sınırlayan güvenli sunucu fonksiyonu henüz tamamlanmamıştır.
+
+GİZLİLİK VE GÜVENLİK
+- Konum yalnızca kullanıcı açıkça onaylarsa alınır.
+- Tarayıcı gerçek donanım cihaz adını vermez; cihaz türü/işletim sistemi tahmin edilir.
+- Özel sohbetlerin admin tarafından incelenmesi ancak kullanıcıya görünür aydınlatma ve uygun veri saklama politikasıyla açılmalıdır.
+- Şifre, OTP veya service-account private key kaydedilmez.
+
+YAYINLAMA
+Node.js 20 kurun. Proje klasöründe:
+  npm install -g firebase-tools
+  firebase login
+  firebase use --add   (hakomatonline261 seçin)
+  cd functions && npm install && cd ..
+  firebase deploy --only functions,firestore:rules,storage
+
+GitHub Pages için index.html ve diğer statik dosyaları GitHub deposuna ayrıca yükleyin. Firebase Hosting kullanmanız gerekmez.

@@ -1,0 +1,5 @@
+MATEMATİK MACERASI - ADMIN HESABI
+
+Doğru Hako admin e-posta adresi: alimiranerr@gmail.com
+
+Bu adres proje gereksinimidir. Yalnızca e-posta kontrolü güvenli admin yetkisi sağlamaz. Firebase Authentication custom claims ve sunucu tarafı güvenlik kuralları kurulmadan admin koruması etkin sayılmaz.

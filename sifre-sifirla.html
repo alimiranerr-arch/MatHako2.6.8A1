@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111827">
+  <title>Şifre Sıfırlama | Matematik Macerası</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at top,#253b70,#111827 58%);font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f8fafc}
+    .panel{width:min(100%,440px);padding:32px;border:1px solid #ffffff20;border-radius:24px;background:#172033eF;box-shadow:0 24px 80px #0006}
+    .logo{font-size:38px;text-align:center;margin-bottom:8px}.eyebrow{text-align:center;color:#93c5fd;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+    h1{text-align:center;font-size:27px;margin:8px 0}.desc{text-align:center;color:#cbd5e1;line-height:1.55;margin:0 0 24px}
+    label{display:block;font-size:14px;font-weight:650;margin:16px 0 7px}input{width:100%;padding:14px 15px;border-radius:12px;border:1px solid #475569;background:#0f172a;color:white;font-size:16px;outline:none}input:focus{border-color:#60a5fa;box-shadow:0 0 0 3px #3b82f633}
+    button,.link{display:block;width:100%;border:0;border-radius:12px;padding:14px 16px;margin-top:20px;background:#60a5fa;color:#0b1220;font-size:16px;font-weight:800;text-align:center;text-decoration:none;cursor:pointer}button:disabled{opacity:.6;cursor:wait}
+    #message{display:none;margin-top:16px;padding:12px;border-radius:10px;line-height:1.45;font-size:14px}#message.show{display:block}#message.error{background:#7f1d1d55;color:#fecaca}#message.success{background:#14532d66;color:#bbf7d0}
+    .small{text-align:center;color:#94a3b8;font-size:12px;margin:20px 0 0}
+  </style>
+</head>
+<body>
+  <main class="panel">
+    <div class="logo">🧮</div><div class="eyebrow">Matematik Macerası</div>
+    <h1>Yeni şifreni belirle</h1>
+    <p class="desc">Hesabın için güçlü ve hatırlayabileceğin yeni bir şifre oluştur.</p>
+    <form id="resetForm" hidden>
+      <label for="password">Yeni şifre</label>
+      <input id="password" type="password" minlength="6" autocomplete="new-password" placeholder="En az 6 karakter" required>
+      <label for="confirmPassword">Yeni şifreyi tekrar yaz</label>
+      <input id="confirmPassword" type="password" minlength="6" autocomplete="new-password" placeholder="Şifreni tekrar gir" required>
+      <button id="submitBtn" type="submit">Şifremi güncelle</button>
+    </form>
+    <div id="message" role="status" aria-live="polite"></div>
+    <a id="backLink" class="link" href="./" hidden>Matematik Macerası'na dön</a>
+    <p class="small">Güvenli hesap erişimi · Firebase</p>
+  </main>
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+    import { getAuth, verifyPasswordResetCode, confirmPasswordReset } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: 'AIzaSyDCsLQwKIQkpETXyX0bVVLYOWxEy52rLbo',
+      authDomain: 'hakomatonline261.firebaseapp.com',
+      projectId: 'hakomatonline261',
+      storageBucket: 'hakomatonline261.firebasestorage.app',
+      messagingSenderId: '213698338676',
+      appId: '1:213698338676:web:b876b839b0ccbc99429621'
+    };
+
+    const form = document.getElementById('resetForm');
+    const message = document.getElementById('message');
+    const backLink = document.getElementById('backLink');
+    const submitBtn = document.getElementById('submitBtn');
+    const params = new URLSearchParams(location.search);
+    const mode = params.get('mode');
+    const oobCode = params.get('oobCode');
+    const showMessage = (text, type='error') => { message.textContent=text; message.className=`show ${type}`; };
+
+    try {
+      if (mode !== 'resetPassword' || !oobCode) throw new Error('Bağlantı eksik veya geçersiz. E-postandaki en son şifre sıfırlama bağlantısını kullan.');
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      await verifyPasswordResetCode(auth, oobCode);
+      form.hidden = false;
+    } catch (err) {
+      const msg = err.code === 'auth/expired-action-code' || err.code === 'auth/invalid-action-code'
+        ? 'Bu bağlantının süresi dolmuş veya bağlantı daha önce kullanılmış. Yeni bir şifre sıfırlama e-postası iste.'
+        : (err.message || 'Bağlantı doğrulanamadı. Yeni bir sıfırlama bağlantısı iste.');
+      showMessage(msg);
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const password = document.getElementById('password').value;
+      const confirmation = document.getElementById('confirmPassword').value;
+      if (password.length < 6) return showMessage('Şifren en az 6 karakter olmalı.');
+      if (password !== confirmation) return showMessage('Girdiğin şifreler eşleşmiyor.');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Güncelleniyor…';
+      try {
+        const app = initializeApp(firebaseConfig, 'reset-confirm');
+        const auth = getAuth(app);
+        await confirmPasswordReset(auth, oobCode, password);
+        form.hidden = true;
+        showMessage('Şifren başarıyla güncellendi. Artık yeni şifrenle giriş yapabilirsin.', 'success');
+        backLink.hidden = false;
+      } catch (err) {
+        const msg = err.code === 'auth/weak-password' ? 'Bu şifre çok zayıf. Daha güçlü bir şifre dene.'
+          : err.code === 'auth/expired-action-code' || err.code === 'auth/invalid-action-code' ? 'Bağlantının süresi dolmuş veya kullanılmış. Yeni bağlantı iste.'
+          : 'Şifre güncellenemedi. Lütfen tekrar dene.';
+        showMessage(msg);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Şifremi güncelle';
+      }
+    });
+  </script>
+</body>
+</html>

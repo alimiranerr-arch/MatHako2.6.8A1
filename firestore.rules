@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn(){return request.auth!=null;}
+  function admin(){return signedIn() && request.auth.token.admin==true && request.auth.token.email=='alimiranerr@gmail.com' && request.auth.token.email_verified==true;}
+  function owner(uid){return signedIn() && request.auth.uid==uid;}
+  function active(){return signedIn() && (!exists(/databases/$(database)/documents/users/$(request.auth.uid)) || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.banned!=true);}
+  match /settings/{doc}{allow read:if signedIn();allow write:if admin();}
+  match /users/{uid}{allow read:if owner(uid)||admin();allow create:if owner(uid)&&!request.resource.data.keys().hasAny(['role','admin','banned','coins','inventory','membership','title']);allow update:if admin()||(owner(uid)&&!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role','admin','banned','emailChangeAt','coins','inventory','membership','title']));allow delete:if admin();}
+  match /chats/{chatId}{allow read:if active()&&(request.auth.uid in resource.data.memberIds||admin());allow create:if active()&&request.auth.uid in request.resource.data.memberIds;allow update:if admin()||(active()&&request.auth.uid in resource.data.memberIds);allow delete:if admin();match /messages/{messageId}{allow read:if active()&&(request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds||admin());allow create:if active()&&request.resource.data.senderId==request.auth.uid&&request.resource.data.keys().hasOnly(['senderId','senderName','text','mediaUrl','mediaPath','mediaType','createdAt','type']);allow update,delete:if admin()||(signedIn()&&resource.data.senderId==request.auth.uid);}}
+  match /groups/{groupId}{allow read:if active()&&(request.auth.uid in resource.data.memberIds||admin());allow write:if admin();match /messages/{messageId}{allow read:if admin()||(signedIn()&&request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds);allow create:if signedIn()&&request.resource.data.senderId==request.auth.uid;allow update,delete:if admin()||(signedIn()&&resource.data.senderId==request.auth.uid);}}
+  match /market/{id}{allow read:if signedIn();allow write:if false;}
+  match /scores/{id}{allow read:if admin()||(signedIn()&&resource.data.public==true);allow write:if false;}
+  match /duels/{id}{allow read:if admin()||(signedIn()&&request.auth.uid in resource.data.players);allow write:if false;}
+  match /wheelClaims/{uid}{allow read:if owner(uid)||admin();allow write:if false;}
+  match /miniPassClaims/{uid}{allow read:if owner(uid)||admin();allow write:if false;}
+  match /auditLogs/{id}{allow read:if admin();allow write:if false;}
+  match /loginFailures/{id}{allow read:if admin();allow write:if false;}
+  match /{path=**}/messages/{id}{allow read:if admin();}
+  match /{document=**}{allow read,write:if false;}
+ }
+}

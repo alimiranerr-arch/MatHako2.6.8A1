@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff7e0"/><stop offset="1" stop-color="#ffd166"/></linearGradient><linearGradient id="rocket" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffffff"/><stop offset="1" stop-color="#dbeafe"/></linearGradient></defs>
+<rect width="512" height="512" rx="112" fill="url(#bg)"/>
+<circle cx="390" cy="112" r="42" fill="#fff" opacity=".55"/><path d="M95 370l54-18-36 51z" fill="#f97316"/>
+<path d="M257 78c-78 72-103 161-78 231l48 48c70 25 159 0 231-78-48-8-93-35-123-79s-37-89-78-122z" fill="url(#rocket)" stroke="#1d3557" stroke-width="16" stroke-linejoin="round"/>
+<circle cx="300" cy="213" r="34" fill="#60a5fa" stroke="#1d3557" stroke-width="13"/>
+<path d="M179 309l-64 91 104-48M310 364l-48 82 94-70" fill="#fb923c" stroke="#1d3557" stroke-width="13" stroke-linejoin="round"/>
+<path d="M148 164l-37-25m68-19-8-41m-26 115-39 5" stroke="#f59e0b" stroke-width="13" stroke-linecap="round"/>
+<text x="256" y="476" text-anchor="middle" font-family="Arial,sans-serif" font-size="37" font-weight="900" fill="#1d3557">MATH</text>
+</svg>

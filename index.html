@@ -1,0 +1,1833 @@
+<!DOCTYPE html>
+
+<html lang="tr">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<meta name="theme-color" content="#fff7e0" media="(prefers-color-scheme: light)">
+
+<meta name="theme-color" content="#141a33" media="(prefers-color-scheme: dark)">
+
+<meta name="mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+<meta name="apple-mobile-web-app-title" content="Matematik Macerası">
+
+<meta name="format-detection" content="telephone=no">
+
+<meta name="description" content="7. sınıf matematik oyunu: konular, zorluk seviyeleri, sonsuz mod, düellolar, görevler ve daha fazlası.">
+
+<title>Hako/Presents · Matematik Macerası – 7. Sınıf</title>
+
+<link rel="manifest" href="manifest.webmanifest">
+
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<link rel="stylesheet" href="css/app.css">
+
+<style>
+
+/* Alimiranerr özel altın admin stili */
+.gold-admin-title {
+
+  background: linear-gradient(135deg, #ffd700, #ff8c00, #ffd700);
+
+  -webkit-background-clip: text;
+
+  -webkit-text-fill-color: transparent;
+
+  font-weight: 900;
+
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+
+  animation: goldShimmer 3s ease infinite;
+
+}
+
+@keyframes goldShimmer {
+
+  0% { filter: brightness(1); }
+
+  50% { filter: brightness(1.3); }
+
+  100% { filter: brightness(1); }
+
+}
+
+.gold-name {
+
+  color: #d4af37 !important;
+
+  font-weight: 800;
+
+  text-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
+
+}
+
+/* Güneşli hava tepedeki küçük güneş */
+#sunnyOrb {
+
+  position: fixed;
+
+  top: 12px;
+
+  right: 18px;
+
+  width: 48px;
+
+  height: 48px;
+
+  border-radius: 50%;
+
+  background: radial-gradient(circle, #fff799 20%, #ffd000 70%, #ff9900 100%);
+
+  box-shadow: 0 0 35px 15px rgba(255, 215, 0, 0.65), 0 0 80px 30px rgba(255, 190, 0, 0.35);
+
+  z-index: 9999;
+
+  pointer-events: none;
+
+  animation: sunPulse 4s ease-in-out infinite;
+
+}
+
+@keyframes sunPulse {
+
+  0%, 100% { transform: scale(1); box-shadow: 0 0 35px 15px rgba(255, 215, 0, 0.65); }
+
+  50% { transform: scale(1.08); box-shadow: 0 0 48px 22px rgba(255, 225, 40, 0.85); }
+
+}
+
+body.sunny-glow::before {
+
+  content: "";
+
+  position: fixed;
+
+  inset: 0;
+
+  background: radial-gradient(circle at top right, rgba(255, 235, 120, 0.25), transparent 60%);
+
+  pointer-events: none;
+
+  z-index: 9998;
+
+}
+
+/* Gece / Gündüz otomatik & manuel temalar */
+body.theme-night {
+
+  background-color: #101528 !important;
+
+  color: #eef2ff !important;
+
+}
+
+body.theme-night .card {
+
+  background: #1b223c !important;
+
+  color: #f1f5f9 !important;
+
+  border-color: rgba(255,255,255,0.08) !important;
+
+}
+
+body.theme-day {
+
+  background-color: #fffaf0 !important;
+
+  color: #1e293b !important;
+
+}
+
+/* Buhulu kilit katmanı (lockable) */
+.lockable { position: relative; }
+
+.lockover {
+
+  position: absolute;
+
+  inset: 0;
+
+  backdrop-filter: blur(7px);
+
+  -webkit-backdrop-filter: blur(7px);
+
+  background: rgba(20, 26, 51, 0.65);
+
+  border-radius: 16px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  z-index: 20;
+
+  color: #fff;
+
+  padding: 16px;
+
+}
+
+/* Admin giriş gizli / göze çarpmayan stil */
+.stealth-admin-box {
+
+  opacity: 0.35;
+
+  transition: opacity 0.25s;
+
+  border: 1px dashed rgba(128,128,128,0.25) !important;
+
+  background: transparent !important;
+
+  box-shadow: none !important;
+
+  padding: 8px 12px !important;
+
+}
+
+.stealth-admin-box:hover, .stealth-admin-box:focus-within {
+
+  opacity: 0.95;
+
+}
+
+/* Banlı ekran uyarısı */
+#bannedOverlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  background: #0f172a;
+
+  color: #fff;
+
+  z-index: 999999;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 24px;
+
+}
+
+
+
+/* Inline style özniteliklerinden dönüştürülen kurallar */
+.generated-style-01 { font-size:4rem; }
+.generated-style-02 { color:#cbd5e1; max-width:400px; }
+.generated-style-03 { align-items:center; justify-content:space-between; }
+.generated-style-04 { margin:2px 0 0; }
+.generated-style-05 { margin-top:12px; border-top:1px solid rgba(0,0,0,0.08); padding-top:10px; }
+.generated-style-06 { margin-top:0; }
+.generated-style-07 { margin-bottom:8px; }
+.generated-style-08 { gap:10px; margin-bottom:8px; }
+.generated-style-09 { flex:1; }
+.generated-style-10 { flex:0 0 auto; }
+.generated-style-11 { font-size:2rem; text-align:center; margin:6px 0; }
+.generated-style-12 { align-items:center; }
+.generated-style-13 { font-size:0.8rem; }
+.generated-style-14 { margin: 10px 0; display: flex; align-items: center; gap: 8px; }
+.generated-style-15 { margin-top:10px; padding-top:8px; border-top:1px dashed rgba(0,0,0,0.1); }
+.generated-style-16 { display:block; margin-bottom:4px; }
+.generated-style-17 { margin-top:10px; }
+.generated-style-18 { margin: 8px 0; display:flex; align-items:flex-start; gap:8px; }
+.generated-style-19 { display:block; margin:0; }
+.generated-style-20 { background:var(--c);color:#1d2b53; }
+.generated-style-21 { font-size:0.85rem; padding:6px; }
+.generated-style-22 { font-size:0.8rem; padding:6px 10px; }
+.generated-style-23 { font-size:0.75rem; }
+.generated-style-24 { width:100%; font-size:0.85rem; }
+.generated-style-25 { display:flex; justify-content:space-between; align-items:center; margin: 8px 0; font-weight: bold; background: rgba(0,0,0,0.05); padding: 6px 12px; border-radius: 8px; }
+.generated-style-26 { color: #e74c3c; font-size: 1.1rem; }
+.generated-style-27 { color: #2c3e50; }
+.generated-style-28 { font-weight:700;font-size:.9rem; }
+.generated-style-29 { text-align:center;font-size:1.4rem;font-weight:800;margin:.3em 0; }
+.generated-style-30 { text-align:center;font-weight:700;margin:.3em 0; }
+.generated-style-31 { text-align:center;font-weight:700; }
+.generated-style-32 { text-align:center;font-weight:800; }
+.generated-style-33 { background:var(--warn,#ff8c42); }
+.generated-style-34 { align-items:center; }
+.generated-style-35 { flex:1; }
+.generated-style-36 { flex:0 0 auto; }
+.generated-style-37 { font-weight: bold; color: var(--c); margin: 6px 0; }
+.generated-style-38 { background:rgba(0,0,0,0.04); padding:10px; border-radius:10px; margin-bottom:10px; }
+.generated-style-39 { margin:4px 0 8px; }
+.generated-style-40 { margin-top:10px; max-height:320px; overflow-y:auto; }
+.generated-style-41 { margin-top:10px; }
+.generated-style-42 { text-align:center; }
+.generated-style-43 { align-items:baseline; }
+.generated-style-44 { background:rgba(255,183,3,0.12); padding:10px; border-radius:10px; margin-bottom:10px; }
+.generated-style-45 { background:#ef4444; color:#fff; }
+.generated-style-46 { margin:10px 0; }
+.generated-style-47 { letter-spacing:0;text-align:left; }
+.generated-style-48 { margin:0; }
+.generated-style-49 { margin:8px 0; }
+.generated-style-50 { align-items:center;margin:8px 0; }
+.generated-style-51 { margin:0;flex:0 0 auto; }
+.generated-style-52 { letter-spacing:0;text-align:left;font-weight:600; }
+.generated-style-53 { width:100%;margin-top:10px; }
+.generated-style-54 { margin-top:8px; align-items:center; }
+.generated-style-55 { flex:1; margin:0 0 0 8px; }
+.generated-style-56 { margin-top:8px; }
+.generated-style-57 { font-size:2rem; }
+.generated-style-58 { margin:6px 0 10px; }
+.generated-style-59 { width:100%; }
+
+/* Helpy bakım / önemli işlem duyuruları */
+.hako-gif-admin{margin-top:18px;padding:16px;border:1px solid rgba(128,128,128,.25);border-radius:14px;background:rgba(127,127,127,.06)}
+.hako-gif-admin label:not(.switch){display:block;margin:12px 0;font-weight:600}
+.hako-gif-admin select{display:block;width:100%;margin-top:6px;padding:10px;border-radius:9px}
+.hako-notice[hidden]{display:none!important}
+.hako-notice{position:fixed;inset:0;z-index:1000000;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,10,25,.94);color:#fff;text-align:center}
+.hako-notice-card{width:min(560px,100%);max-height:92vh;overflow:auto;padding:22px;border:2px solid #facc15;border-radius:22px;background:#111827;box-shadow:0 20px 80px #0009}
+.hako-notice-card img{display:block;width:min(100%,330px);max-height:42vh;object-fit:contain;margin:0 auto 14px;border-radius:14px}
+.hako-notice-card h2{margin:8px 0;color:#facc15}
+.hako-notice-card p{line-height:1.55}
+body.hako-notice-open{overflow:hidden}
+</style>
+
+</head>
+
+<body>
+
+<div id="sunnyOrb" class="hide" aria-hidden="true"></div>
+
+<canvas id="wx" aria-hidden="true"></canvas>
+
+
+
+<div id="bannedOverlay" class="hide">
+
+  <div class="generated-style-01">🚫</div>
+
+  <h2>Hesabınız Askıya Alındı (Banlandı)</h2>
+
+  <p class="note generated-style-02">Yönetici tarafından erişiminiz kısıtlandı. Bir hata olduğunu düşünüyorsanız yöneticiyle iletişime geçin.</p>
+
+</div>
+
+
+
+<main>
+
+<header>
+
+  <div class="hdr">
+
+    <span class="brand">Hako/Presents</span>
+
+    <button class="me-chip" id="meChip" aria-label="Profilim"><span id="meAv">🙂</span><b id="meName">Misafir</b><span id="meTitleTag"></span></button>
+
+    <div class="hdr-right">
+
+      <button class="coinbox" id="coinBox" title="Paran (1 skor = 1 para)">🪙 <b data-coins>0</b><i class="lockmini hide" id="coinLock">🔒</i></button>
+
+      <button class="iconbtn" id="bellBtn" aria-label="Bildirimler">🔔<i class="badge hide" id="bellBadge">0</i></button>
+
+      <button class="iconbtn" id="gearBtn" aria-label="Ayarlar" data-go="s7">⚙️</button>
+
+    </div>
+
+  </div>
+
+  <div class="idsearch">
+
+    <span aria-hidden="true">🔎</span>
+
+    <input id="idSearch" placeholder="Kullanıcı ID ara (ör. MM-4821)" maxlength="10" autocomplete="off" aria-label="ID ile kullanıcı ara" autocapitalize="characters">
+
+    <button class="btn" id="idSearchBtn">Ara</button>
+    <div id="playerSearchResults" class="player-search-results" aria-live="polite"></div>
+
+  </div>
+
+  <h1>🚀 Matematik Macerası</h1>
+
+  <p class="season" id="seasonLine">🏁 Sezon 1 · Başlangıç</p>
+
+  <div class="pills">
+
+    <span class="pill" title="Altın"><span aria-hidden="true">🪙</span> <b data-coins>0</b></span>
+
+    <span class="pill" title="Günlük seri"><span aria-hidden="true">🔥</span> <b id="dayStreak">1</b> gün seri</span>
+
+    <button class="pill btnpill hide" id="installBtn">📲 Uygulamayı yükle</button>
+
+  </div>
+
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Bölümler">
+
+    <button role="tab" data-go="s0" aria-selected="true">🎮<span>Oyun</span></button>
+
+    <button role="tab" data-go="s4" aria-selected="false" id="tabRewards">🎡<span>Ödüller</span></button>
+
+    <button role="tab" data-go="s8" aria-selected="false" id="tabTasks">📋<span>Görevler</span><i class="dot" id="taskDot"></i></button>
+
+    <button role="tab" data-go="s9" aria-selected="false" id="tabCompete">⚔️<span>Rekabet</span></button>
+
+    <button role="tab" data-go="s5" aria-selected="false" id="tabMarket">🛒<span>Market</span></button>
+
+    <button role="tab" data-go="s6" aria-selected="false" id="tabSocial">👥<span>Sosyal</span><i class="dot" id="socialDot"></i></button>
+
+    <button role="tab" data-go="s7" aria-selected="false">⚙️<span>Ayarlar</span></button>
+
+    <button role="tab" data-go="s3" aria-selected="false" id="tabAdmin" class="hide">🛡️<span>Admin</span></button>
+
+  </nav>
+
+</header>
+
+
+
+<!-- ================= OYUN ================= -->
+<section id="s0">
+
+  <div class="card accountcard" id="accountCard">
+
+    <div id="gmailAuthBox">
+
+      <div class="row generated-style-03">
+
+        <div>
+
+          <b>🔐 Hesap & Mini Pass Girişi</b>
+
+          <p class="note generated-style-04">Gmail ile giriş yap; Mini Pass günlük hediyelerini, görevleri ve çarkı aç!</p>
+
+        </div>
+
+        <button class="btn gLogin" id="openRegModalBtn">G Gmail ile Giriş / Kayıt</button>
+
+      </div>
+
+      <div id="accountRegisterForm" class="hide generated-style-05">
+
+        <p class="note generated-style-06">⚠️ <b>Kayıt Kuralları:</b> Aynı soyad kullanılabilir ancak aynı ad ve aynı Gmail adresi ikinci kez kullanılamaz.</p>
+
+        <div class="form">
+
+          <label>Gmail Adresi<input id="regGmail" type="email" placeholder="ornek@gmail.com" required></label>
+
+          <div class="inline generated-style-07">
+
+            <input id="regVerifyCode" maxlength="6" placeholder="Doğrulama Kodu (İsteğe bağlı)">
+
+            <button type="button" class="btn" id="sendGmailVerifyBtn">Kod Gönder</button>
+
+          </div>
+
+          <label>Ad (Benzersiz)<input id="regFirstName" maxlength="20" placeholder="Adın" required></label>
+
+          <label>Soyad<input id="regLastName" maxlength="20" placeholder="Soyadın" required></label>
+
+          <label>Lakap<input id="regNick" maxlength="16" placeholder="Lakabın" required></label>
+
+          <label>Okul Adı<input id="regSchool" maxlength="60" placeholder="Okulunun adı" required></label>
+
+
+
+          <label><b>Profil Resmi / Avatar Seçimi:</b></label>
+
+          <div class="inline generated-style-08">
+
+            <select id="presetAvatarSelect" class="sel generated-style-09">
+
+              <option value="🦊">🦊 Tilki (Hazır)</option>
+
+              <option value="🦁">🦁 Aslan (Hazır)</option>
+
+              <option value="🚀">🚀 Roket (Hazır)</option>
+
+              <option value="⭐">⭐ Yıldız (Hazır)</option>
+
+              <option value="🧙‍♂️">🧙‍♂️ Büyücü (Hazır)</option>
+
+            </select>
+
+            <label class="btn filebtn generated-style-10">🖼️ Kendi Resmini Yükle<input type="file" id="customAvatarFile" accept="image/*" hidden></label>
+
+          </div>
+
+          <div id="avatarPreviewBox" class="generated-style-11">🙂</div>
+
+        </div>
+
+        <p class="msg err" id="regErrorMsg" aria-live="polite"></p>
+
+        <button class="go" id="completeGmailRegBtn">✅ Kaydı Tamamla & Başla</button>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Art arda 3 doğruya hediye kart yazısı kaldırıldı -->
+  <p class="mut">7. sınıf · Sonsuz modda 5 kalp & 10sn süre. Hızlı ve doğru cevap, daha çok puan! · 5 doğruda 🔥 Ateş Modu</p>
+
+
+
+  <div class="card">
+
+    <div class="row generated-style-12">
+
+      <label for="nm" class="generated-style-09"><b>Adın ne?</b></label>
+
+      <button type="button" class="btn hide generated-style-13" id="unlockNameBtn">✏️ Adı Değiştir (Admin İzni)</button>
+
+    </div>
+
+    <input id="nm" maxlength="16" placeholder="Adını yaz ve Enter'a bas" autocomplete="off" enterkeyhint="done">
+
+    <p class="note" id="nameFreezeNote">⚠️ Ad yazılıp Enter'a basıldığında kilitlenir. Eğer adınızı yanlış yazdıysanız geri bildirimde bulunun.</p>
+
+    <p class="msg err" id="nmMsg"></p>
+
+
+
+    <!-- "(Yalnızca admin panelinde görünür)" yazısı kaldırıldı -->
+    <label class="switch generated-style-14">
+
+      <input type="checkbox" id="hideFromPublicLb"> Skorumu herkese açık tabloda yayınlamak istemiyorum
+
+    </label>
+
+
+
+    <p><b>Oyun modu:</b></p>
+
+    <div class="modes" id="modes" role="radiogroup" aria-label="Oyun modu">
+
+      <button class="mode" data-m="classic" role="radio" aria-checked="true"><span class="e">🎯</span>Klasik<small>5 can · can bitene kadar</small></button>
+
+      <button class="mode" data-m="endless" role="radio" aria-checked="false"><span class="e">♾️</span>Sonsuz<small>5 can · 10 sn süre</small></button>
+
+      <button class="mode" data-m="retry" role="radio" aria-checked="false"><span class="e">🔁</span>10 Soruluk<small id="retryCount">Kısa mini oyun</small></button>
+
+      <button class="mode" data-m="balance" role="radio" aria-checked="false"><span class="e">⚖️</span>Denklem Terazisi<small>Hızlı X bulma</small></button>
+
+    </div>
+
+    <div id="topicBlock">
+
+      <div class="row generated-style-12">
+
+        <p class="generated-style-09"><b>1. Konu seç (7. Sınıf Müfredatı):</b></p>
+
+        <span class="tag" id="curriculumBadge">1. Dönem Konuları</span>
+
+      </div>
+
+      <div class="topics" id="tp"></div>
+
+    </div>
+
+    <div id="dwrap" class="hide">
+
+      <p><b>2. Zorluk seviyesi seç:</b></p>
+
+      <!-- Zorluk seviyesinde sonsuz modu olmayacak şekilde JS ile filtrelenir -->
+      <div class="diffs" id="df" role="radiogroup" aria-label="Zorluk seviyesi"></div>
+
+    </div>
+
+    <div id="duelBanner" class="duelban hide"></div>
+
+    <p class="msg err" id="stMsg"></p>
+
+    <button class="go" id="start">Başla!</button>
+
+  </div>
+
+
+
+  <!-- Envanter & Kart/Emoji Değiştirme Alanı -->
+  <div class="card">
+
+    <h2>🎒 Envanterim (Kart & Emoji)</h2>
+
+    <div class="inv" id="inv"></div>
+
+    <div class="generated-style-15">
+
+      <label class="note generated-style-16"><b>😊 Aktif Sohbet / Oyun Emojisi Seç:</b></label>
+
+      <select id="activeEmojiSelect" class="sel">
+
+        <option value="😎">😎 Havalı</option>
+
+        <option value="🔥">🔥 Ateş</option>
+
+        <option value="🎉">🎉 Kutlama</option>
+
+        <option value="🧠">🧠 Zeka Küpü</option>
+
+        <option value="👑">👑 Kral</option>
+
+      </select>
+
+    </div>
+
+    <p class="note">Kartları oyun sırasında soruların altından kullanabilirsin. Daha fazlası <button class="linkbtn" data-go="s5">🛒 Market</button>’te!</p>
+
+  </div>
+
+
+
+  <div class="card">
+
+    <h2>🎁 Özel şifre</h2>
+
+    <p class="note generated-style-06">4 haneli özel şifreni gir, hediye kartını kap! Her şifre tek seferlik.</p>
+
+    <div class="inline generated-style-17">
+
+      <input id="code" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autocomplete="off" aria-label="4 haneli özel şifre">
+
+      <button class="btn" id="codeBtn">Kullan</button>
+
+    </div>
+
+    <p class="msg" id="codeMsg" aria-live="polite"></p>
+
+  </div>
+
+
+
+  <div class="card lbcard">
+
+    <div class="lbhead">
+
+      <h2>🏆 Liderlik tablosu <span class="live">● canlı</span></h2>
+
+      <label class="hidebox"><input type="checkbox" class="lbHide"> 🙈 Gizle</label>
+
+    </div>
+
+    <div class="seg" role="tablist" aria-label="Tablo">
+
+      <button data-lb="classic" aria-selected="true">🎯 Klasik</button>
+
+      <button data-lb="endless" aria-selected="false">♾️ Sonsuz</button>
+
+      <button data-lb="duel" aria-selected="false">⚔️ Rekabet</button>
+
+    </div>
+
+    <ol class="lbList"></ol>
+
+    <p class="note lbHidden hide">Tablo gizlendi. Görmek için “Gizle” kutucuğunu kaldır.</p>
+
+  </div>
+
+
+
+  <div class="card">
+
+    <h2>📄 İlerleme raporum</h2>
+
+    <p class="note generated-style-06">Konu bazlı başarı ve son oyunlarını içeren raporu PDF olarak kaydet ya da öğretmenine gönder.</p>
+
+    <label class="switch generated-style-18">
+
+      <input type="checkbox" id="includeMistakesPdf">&#x20;
+
+      <span>Hataları PDF raporuna ekle <small class="note generated-style-19">(Hatalar PDF'e eklenirse çok yer kaplar)</small></span>
+
+    </label>
+
+    <button class="go generated-style-20" id="pdfBtn">📄 PDF rapor oluştur</button>
+
+  </div>
+
+
+
+  <!-- Admin Giriş Kutusu (Göze çarpmayan minimal tasarım + Admin panelden kapatılabilir) -->
+  <div class="card stealth-admin-box" id="adminLogin">
+
+    <div id="adminLocked">
+
+      <div class="inline">
+
+        <input id="apw" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="••••" autocomplete="off" class="generated-style-21">
+
+        <button class="btn generated-style-22" id="apwBtn">Giriş</button>
+
+      </div>
+
+      <p class="msg err generated-style-23" id="apwMsg" aria-live="polite"></p>
+
+    </div>
+
+    <div id="adminOpen" class="hide">
+
+      <button class="btn generated-style-24" id="openAdmin">🛡️ Yönetim</button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+
+<!-- ================= OYUN EKRANI ================= -->
+<section id="s1" class="hide">
+
+  <div class="top">
+
+    <button class="btn back" id="quit" aria-label="Geri, ana menüye dön">← Geri</button>
+
+    <div class="hud"><span id="lv"></span><span id="qn"></span><span id="sc"></span></div>
+
+  </div>
+
+  <div id="endlessHud" class="hide generated-style-25">
+
+    <span id="gameHearts" class="generated-style-26">❤️❤️❤️❤️❤️</span>
+
+    <span id="gameTimer" class="generated-style-27">Süre: 10sn</span>
+
+  </div>
+
+  <div class="mut generated-style-28" id="info"></div>
+
+  <div class="duelhead hide" id="duelHead"><span class="red" id="dhOpp">Rakip</span><b>VS</b><span class="blue" id="dhMe">Sen</span></div>
+
+  <div class="firebar hide" id="fireBar">🔥 ATEŞ MODU · puanlar ×2 <span id="fireLeft"></span></div>
+
+  <div class="bar" id="barw"><i id="tm"></i></div>
+
+  <div class="card" id="qcard">
+
+    <div class="q" id="q"></div>
+
+    <div class="opts" id="op"></div>
+
+    <div class="fb" id="fb" aria-live="polite"></div>
+
+    <div class="inv" id="gamecards"></div>
+
+  </div>
+
+  <div class="emojibar hide" id="emojiBar"></div>
+
+  <div class="spectate hide" id="spectate"></div>
+
+</section>
+
+
+
+<!-- ================= SONUÇ ================= -->
+<section id="s2" class="hide">
+
+  <div class="card">
+
+    <h2 id="end"></h2>
+
+    <p class="big" id="stars"></p>
+
+    <p id="fs" class="generated-style-29"></p>
+
+    <p class="mut generated-style-30" id="fsd"></p>
+
+    <p class="mut generated-style-31" id="rk"></p>
+
+    <div id="duelResult"></div>
+
+    <p id="earn" class="generated-style-32"></p>
+
+    <div id="newTitles"></div>
+
+    <div class="notes hide" id="mistakeNotes"></div>
+
+    <button class="go hide generated-style-33" id="retryMistakes">🔁 Hatalarımı Tekrar Çöz</button>
+
+    <div class="row">
+
+      <button class="btn back" id="back">← Geri</button>
+
+      <button class="go" id="again">Tekrar oyna</button>
+
+    </div>
+
+  </div>
+
+  <div class="card lbcard">
+
+    <div class="lbhead">
+
+      <h2>🏆 Liderlik tablosu <span class="live">● canlı</span></h2>
+
+      <label class="hidebox"><input type="checkbox" class="lbHide"> 🙈 Gizle</label>
+
+    </div>
+
+    <div class="seg" role="tablist" aria-label="Tablo">
+
+      <button data-lb="classic" aria-selected="true">🎯 Klasik</button>
+
+      <button data-lb="endless" aria-selected="false">♾️ Sonsuz</button>
+
+      <button data-lb="duel" aria-selected="false">⚔️ Rekabet</button>
+
+    </div>
+
+    <ol class="lbList"></ol>
+
+    <p class="note lbHidden hide">Tablo gizlendi. Görmek için “Gizle” kutucuğunu kaldır.</p>
+
+  </div>
+
+</section>
+
+
+
+<!-- ================= ADMIN ================= -->
+<section id="s3" class="hide">
+
+  <div class="card">
+
+    <div class="row generated-style-34">
+
+      <h2 class="generated-style-35">🛡️ Admin paneli <span class="tag hide" id="demoTag">DEMO</span></h2>
+
+      <button class="btn generated-style-36" id="arefresh">↻ Yenile</button>
+
+    </div>
+
+
+    <div class="stats" id="astats"></div>
+
+  </div>
+  <div class="card" id="adminScoresCard"><h2>🏆 Tüm Oyuncu Skorları (gizli skorlar dahil)</h2><p class="note">Genel tabloda görünmeyi kapatan oyuncuların skorları yalnızca burada görünür.</p><div id="adminScoresTable" class="sl">Yönetici oturumu bekleniyor…</div></div>
+
+
+
+  <!-- Admin: Sistem Kontrolleri, Müfredat Dönem Geçişi & Özellik Kapatma -->
+  <div class="card" id="adminSystemControls">
+
+    <h2>🎛️ Sistem & Özellik Kontrol Merkezi</h2>
+
+    <p class="note generated-style-06">Site modüllerini aç/kapat, 2. dönem konularına geçiş yap veya ana sayfadaki şifre kutusunu gizle.</p>
+
+
+
+    <div class="generated-style-38">
+
+      <b>📚 7. Sınıf Müfredat Dönem Kontrolü:</b>
+
+      <p class="note generated-style-39">Varsayılan olarak 1. Dönem konuları aktiftir. 2. Dönem'e geçildiğinde 1. ve 2. dönem konuları bir arada açılır.</p>
+
+      <button type="button" class="go" id="toggleSemesterBtn">📅 2. Dönem Konularına Geç (1. + 2. Dönem Birlikte)</button>
+
+    </div>
+
+
+
+    <div class="form">
+
+      <label class="switch"><input type="checkbox" id="admToggleAdminBox" checked> Ana sayfadaki Admin şifre kutusunu göster</label>
+
+      <label class="switch"><input type="checkbox" id="admToggleWheel" checked> 🎡 Günlük Çark özelliğini aktif tut</label>
+
+      <label class="switch"><input type="checkbox" id="admToggleTasks" checked> 📋 Görevler bölümünü aktif tut</label>
+
+      <label class="switch"><input type="checkbox" id="admToggleMarket" checked> 🛒 Market bölümünü aktif tut</label>
+
+      <label class="switch"><input type="checkbox" id="admToggleOnline" checked> 🌐 Online / Sosyal / Rekabet özelliklerini aktif tut</label>
+
+    </div>
+
+  </div>
+
+
+
+
+    <div class="card" id="adminCurriculumControl"><h3>📚 Müfredat Dönemi</h3><label>Dönem seçimi<select id="adminTermMode" data-admin-term><option value="first">1. dönem konuları</option><option value="second">1. ve 2. dönem konuları</option></select></label><p id="adminTermMsg" class="msg" aria-live="polite"></p></div>
+    <div class="hako-gif-admin">
+      <h3>🧰 Helpy · Duyuru ve Acil Durum Kontrolü</h3>
+      <p class="note">Bakım ekranı ve önemli işlem görsellerini yönet. Ayarlar bu tarayıcıda saklanır.</p>
+      <label class="switch"><input type="checkbox" id="hakoMaintenanceToggle"> 🔧 Bakım molası ekranını göster</label>
+      <label class="switch"><input type="checkbox" id="hakoImportantToggle"> ⚠️ Önemli işlem duyurusunu göster</label>
+      <label class="switch"><input type="checkbox" id="hakoSevereToggle"> 🚨 Büyük teknik sorun uyarısını göster</label>
+      <label>Bakım görseli<select id="hakoMaintenanceImage"><option value="bakim-molasi.png">Bakım Molası GIF</option><option value="helpy-teknik-onarim.gif">Helpy teknik onarım GIF</option></select></label>
+      <label>Önemli işlem görseli<select id="hakoImportantImage"><option value="helpy-onemli-is.webp">Helpy (önemli iş)</option><option value="helpy-teknik-onarim.gif">Helpy teknik onarım GIF</option><option value="bakim-molasi.png">Bakım Molası GIF</option></select></label>
+      <button type="button" class="go" id="hakoSaveGifSettings">💾 Duyuru ayarlarını kaydet</button>
+      <p class="msg" id="hakoGifAdminMsg" aria-live="polite"></p>
+      <p class="note">Önemli: Bu ZIP'te ortak sunucu ayarı ve doğrulanabilir admin backend'i bulunmuyor. Bu nedenle kaydetme yalnızca aynı tarayıcıda çalışır; tüm ziyaretçilere eş zamanlı yayın için backend entegrasyonu gerekir.</p>
+    </div>
+
+  <!-- Admin: Kullanıcı Yönetimi, Banlama, Ad Değiştirme İzni & Konum Verileri -->
+  <div class="card" id="adminVisitorsCard">
+
+    <h2>👁️ Kullanıcılar, Konum Verileri & Yönetici Yetkileri</h2>
+
+    <p class="note generated-style-06">Kullanıcıların açıkça paylaştığı yaklaşık konum ve tarayıcıdan tahmin edilen cihaz türü gösterilebilir. Konum paylaşımı isteğe bağlıdır; gerçek cihaz adı tarayıcıdan alınamaz.</p>
+
+    <div id="adminVisitorsList" class="sl"></div>
+
+  </div>
+
+
+
+  <!-- Admin: Geri Bildirim Gelen Kutusu ve Yanıt/Ban Paneli -->
+  <div class="card" id="adminFeedbackInbox">
+
+    <h2>📩 Gelen Geri Bildirimler & Ad Değişiklik Talepleri</h2>
+
+    <p class="note generated-style-06">Kullanıcıların gönderdiği geri bildirimler adları ve detaylı bilgileriyle burada görünür. Yanıt yazabilir, ad değişikliğine izin verebilir veya banlayabilirsin.</p>
+
+    <div id="adminFeedbackList" class="sl"></div>
+
+  </div>
+
+
+
+  <!-- Admin: Görev Oluşturucu (GIF + Yazı + Ücret) -->
+  <div class="card" id="adminTaskCreator">
+
+    <h2>📋 Görev Oluştur & Yayınla (GIF + Ödül)</h2>
+
+    <p class="note generated-style-06">Görevler bölümünde görünecek GIF animasyonlu görevleri ve verilecek altın ücretini belirleyip yayınla.</p>
+
+    <div class="form">
+
+      <label>Görev Başlığı / Yazısı<input id="admTaskText" maxlength="80" placeholder="Örn: Tam Sayılarda 20 doğru yap!"></label>
+
+      <label>Görev GIF Animasyonu Seç<input type="file" id="admTaskGifFile" accept="image/gif,image/webp,image/png"></label>
+
+      <label>Veya GIF URL<input id="admTaskGifUrl" placeholder="https://... (.gif)"></label>
+
+      <label>Verilecek Ödül (Altın)<input type="number" id="admTaskReward" min="5" placeholder="Örn: 50"></label>
+
+    </div>
+
+    <button type="button" class="go" id="admPublishTaskBtn">📢 Görevi Yayınla</button>
+
+    <p class="msg" id="admTaskMsg" aria-live="polite"></p>
+
+  </div>
+
+
+
+  <!-- Admin: Canlı Chat ve Grup Uzaktan İzleme -->
+  <div class="card" id="adminChatMonitor">
+
+    <h2>💬 Canlı Chat & Grup Denetim Merkezi</h2>
+
+    <p class="note generated-style-06">Görüşmelerin moderasyon amacıyla yetkili yöneticilerce incelenebileceğini kullanıcılar bilmelidir. Bu alan henüz gerçek zamanlı sohbet verisine bağlanmadı.</p>
+
+    <div class="seg" id="adminChatSeg">
+
+      <button type="button" data-achat="groups" aria-selected="true">👥 Tüm Gruplar</button>
+
+      <button type="button" data-achat="dms" aria-selected="false">✉️ Özel Sohbetler</button>
+
+      <button type="button" data-achat="reports" aria-selected="false">🚨 Bildirilenler</button>
+
+    </div>
+
+    <div id="adminChatFeed" class="generated-style-40"></div><div id="adminMessageFeed" class="generated-style-40"></div>
+
+  </div>
+
+
+
+  <!-- Admin: Mağaza İçerik, Özel Rozet & GIF Yayınlama Stüdyosu -->
+  <div class="card" id="adminMarketCreator">
+
+    <h2>🏭 Mağaza İçerik, Özel Rozet & GIF Yayınlama Stüdyosu</h2>
+
+    <p class="note generated-style-06">Emoji, Kart, Üyelik veya <b>Özel Rozet</b> oluştur. Animasyonlu GIF seç, ücretini belirle ve markette yayınla.</p>
+
+    <div class="form">
+
+      <label>İçerik Türü
+
+        <select id="admItemType">
+
+          <option value="badge">🏅 Özel Rozet (GIF)</option>
+
+          <option value="emoji">😊 Emoji (GIF)</option>
+
+          <option value="card">🃏 Oyun Kartı (GIF)</option>
+
+          <option value="membership">👑 Özel Üyelik (GIF)</option>
+          <option value="miniPass">🎟️ MiniPass (30 gün)</option>
+
+        </select>
+
+      </label>
+
+      <label>Ürün / Rozet Adı<input id="admItemName" maxlength="32" placeholder="Örn: Matematik Ustası Rozeti"></label>
+
+      <label>Animasyonlu GIF Seç / Yükle<input type="file" id="admItemGifFile" accept="image/gif"></label>
+
+      <label>Veya GIF URL Bağlantısı<input id="admItemGifUrl" placeholder="https://... (.gif)"></label>
+
+      <label>Market Ücreti (Altın)<input type="number" id="admItemPrice" min="0" placeholder="Örn: 250"></label>
+
+      <label>Açıklama / Günlük Avantaj<input id="admItemDesc" maxlength="100" placeholder="Özel rozet veya günlük ödül detayı"></label>
+
+    </div>
+
+    <div class="row generated-style-41">
+
+      <button type="button" class="go" id="admPublishMarketBtn">🚀 Markete Yayınla & Satışa Çıkar</button>
+
+      <button type="button" class="btn" id="admAddToInvSellBtn">🎒 Envantere Ekle & Satışa Çıkar</button>
+
+    </div>
+
+    <p class="msg" id="admMarketMsg" aria-live="polite"></p>
+
+  </div>
+
+
+
+  <div class="card">
+
+    <h2>📊 Konu bazlı zorluk analizi</h2>
+
+    <p class="note generated-style-06">Her konu için zorluk seviyesine göre doğru cevap oranı. Kırmızı çizgi %50 eşiğini gösterir.</p>
+
+    <div class="legend" id="chartLegend"></div>
+
+    <div id="topicCharts"></div>
+
+    <h3 class="sub">En zorlanılan konular</h3>
+
+    <ol id="hardest" class="hardest"></ol>
+
+  </div>
+
+  <div class="card">
+
+    <h2>⚠️ Admin panele giriş denemeleri</h2>
+
+    <ul class="sl" id="aattempts"></ul>
+
+  </div>
+
+  <div class="card">
+
+    <h2>📱 Cihazlar</h2>
+
+    <p class="note generated-style-06">Bir cihaza dokun, tüm skorlarını gör.</p>
+
+    <div id="adevices"></div>
+
+  </div>
+
+  <div id="adminMore">
+  <div class="card" id="adminSeasonCard"><h2>🎉 Mevsim Teması</h2><p class="note">Tüm ziyaretçiler için yayınlanan görünüm.</p><select id="adminSeasonTheme"><option value="default">Normal</option><option value="newyear">🎄 Yılbaşı</option><option value="halloween">🎃 Cadılar Bayramı</option><option value="ramadan">🌙 Ramazan Bayramı</option><option value="sacrifice">🐑 Kurban Bayramı</option></select><button class="go" id="saveSeasonTheme">Temayı yayınla</button><p id="seasonMsg" class="msg"></p></div>
+  <div class="card"><h2>🎡 Çark ödüllerini düzenle</h2><p class="note">Her satıra ödül adı ve altın miktarını Ödül|Altın biçiminde yaz.</p><textarea id="adminWheelRewards" rows="5">10 Altın|10
+25 Altın|25
+50 Altın|50
+5 Altın|5
+100 Altın|100</textarea><button class="go" id="saveWheelRewards">Çarkı kaydet</button><p id="wheelAdminMsg" class="msg"></p></div>
+  <div class="card"><h2>🏷️ Unvan oluştur</h2><input id="adminTitleName" maxlength="32" placeholder="Unvan adı"><input id="adminTitlePrice" type="number" min="0" placeholder="Altın fiyatı"><button class="go" id="publishTitle">Unvanı yayınla</button><p id="titleMsg" class="msg"></p></div>
+</div>
+
+</section>
+
+
+
+<!-- ================= ÖDÜLLER (Çark Gmail ile açılır) ================= -->
+<section id="s4" class="hide lockable" data-legacy-id="rewardsSection">
+
+  <div class="lockover" id="wheelLockOver">
+
+    <div>
+
+      <span class="lk">🔒</span>
+
+      <b>Günlük Çark kilitli</b>
+
+      <p>Çarkı çevirmek ve ödül kazanmak için Gmail ile giriş yap.</p>
+
+      <button class="go gLogin">G Gmail ile giriş yap</button>
+
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🎡 Günlük çark</h2>
+
+    <p class="note generated-style-06">Her gün bir kez çevir; altın ya da kart kazan!</p>
+
+    <div class="wheelwrap">
+
+      <div class="pointer" aria-hidden="true">▼</div>
+
+      <div class="wheel" id="wheel"></div>
+
+      <button class="hub" id="spinBtn">ÇEVİR</button>
+
+    </div>
+
+    <p class="msg generated-style-42" id="spinMsg" aria-live="polite"></p>
+
+  </div>
+
+  <div class="card">
+
+    <div class="row generated-style-43">
+
+      <h2 class="generated-style-35">🗓️ Haftalık görevler</h2>
+
+      <span class="note" id="weekLeft"></span>
+
+    </div>
+
+    <ul class="tasks" id="tasks"></ul>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🔥 Serilerin</h2>
+
+    <div class="stats">
+
+      <div><b id="stDay">0</b>günlük seri</div>
+
+      <div><b id="stBestDay">0</b>en uzun gün</div>
+
+      <div><b id="stBestStreak">0</b>en uzun doğru serisi</div>
+
+    </div>
+
+    <p class="note">Her gün oyna, serini koru. Oyunda art arda 5 doğru cevap Ateş Modu’nu açar: sonraki 5 soruda puanlar ikiye katlanır.</p>
+
+  </div>
+
+</section>
+
+
+
+<!-- ================= MARKET ================= -->
+<section id="s5" class="hide lockable">
+
+  <div class="lockover hide"><div><span class="lk">🔒</span><b>Market, envanter ve para kilitli</b><p>Kullanmak için Gmail ile giriş yap.</p><button class="go gLogin">G  Gmail ile giriş yap</button></div></div>
+
+
+
+  <div class="card" id="membershipSection">
+
+    <div class="row generated-style-34">
+
+      <h2 class="generated-style-35">👑 Üyelik & Mini Pass</h2>
+
+      <span class="tag" id="activePassBadge">Mini Pass Aktif</span>
+
+    </div>
+
+    <p class="note generated-style-06">Her yeni hesapta <b>Mini Pass</b> otomatik başlar: her gün küçük bir miktar altın ve temel oyun kartları kazandırır. Daha fazlası için marketten özel üyelik alabilirsin.</p>
+
+    <div id="miniPassBox" class="generated-style-44">
+
+      <div class="row generated-style-34">
+
+        <div class="generated-style-35">
+
+          <b>🎟️ Mini Pass (Başlangıç Üyeliği)</b>
+
+          <div class="note">Günlük hediye: +15 🪙 ve ara sıra Temel Kart</div>
+
+        </div>
+
+        <button class="btn" id="claimMiniPassBtn">🎁 Günlük Ödülü Al</button>
+
+      </div>
+
+    </div>
+
+    <div id="ownedMemberships"></div>
+
+  </div>
+
+
+
+  <div class="card">
+
+    <div class="row generated-style-34">
+
+      <h2 class="generated-style-35">🛒 Market</h2>
+
+      <span class="pill big-pill">🪙 <b data-coins>0</b></span>
+
+    </div>
+
+    <div class="seg" id="mktSeg">
+
+      <button data-mk="cards" aria-selected="true">🃏 Kartlar</button>
+
+      <button data-mk="badges" aria-selected="false">🏅 Özel Rozetler</button>
+
+      <button data-mk="emojis" aria-selected="false">😊 Emojiler (GIF)</button>
+
+      <button data-mk="memberships" aria-selected="false">👑 Üyelikler</button>
+
+      <button data-mk="themes" aria-selected="false">🎨 Temalar</button><button data-mk="titles" aria-selected="false">🏷️ Unvanlar</button>
+
+      <button data-mk="avatars" aria-selected="false">🦊 Avatarlar</button>
+
+    </div>
+
+    <div class="shop" id="shop"></div>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🎒 Envanter & Satışa Çıkar</h2>
+
+    <div id="inventory"></div>
+
+  </div>
+
+  <div class="card">
+
+    <h2>💸 Altın aktar</h2>
+
+    <p class="note generated-style-06">Arkadaşına altın gönder. Günde en fazla 100 altın aktarabilirsin.</p>
+
+    <div class="form">
+
+      <label>Kime?<select id="trTo"></select></label>
+
+      <label>Miktar<input id="trAmt" type="number" inputmode="numeric" min="1" max="100" placeholder="ör. 20"></label>
+
+      <label>Not (isteğe bağlı)<input id="trNote" maxlength="40" placeholder="Süper Can için 🙌"></label>
+
+    </div>
+
+    <button class="go" id="trBtn">💸 Gönder</button>
+
+    <p class="msg" id="trMsg" aria-live="polite"></p>
+
+    <h3 class="sub">Son aktarımlar</h3>
+
+    <ul class="sl" id="trList"></ul>
+
+  </div>
+
+</section>
+
+
+
+<!-- ================= SOSYAL ================= -->
+<section id="s6" class="hide lockable">
+
+  <div class="lockover hide"><div><span class="lk">🔒</span><b>Online özellikler kapalı</b><p>Arkadaşlar, düello ve sohbet için Gmail ile giriş yap.</p><button class="go gLogin">G  Gmail ile giriş yap</button></div></div>
+
+  <div class="card" id="profileCard">
+
+    <div class="row generated-style-12">
+
+      <h2 class="generated-style-35">👤 Profil</h2>
+
+      <button type="button" class="btn hide generated-style-45" id="adminProfileBanBtn">🚫 Kullanıcıyı Banla</button>
+
+    </div>
+
+    <div id="profileView"></div><button type="button" class="btn" id="profileEditBtn">✏️ Profili düzenle</button>
+
+  </div>
+
+  <div class="card">
+
+    <div class="seg" id="socSeg">
+
+      <button data-sc="friends" aria-selected="true">👥 Arkadaşlar</button>
+
+      <button data-sc="duel" aria-selected="false">⚔️ Düello</button>
+
+      <button data-sc="chat" aria-selected="false">💬 Sohbet<i class="dot" id="chatDot"></i></button>
+
+    </div>
+
+
+
+    <div id="sc-friends">
+
+      <div class="inline generated-style-46">
+
+        <input id="addFriend" placeholder="Arkadaş kodu ya da ad" maxlength="16" aria-label="Arkadaş ekle" class="generated-style-47">
+
+        <button class="btn" id="addFriendBtn">➕ Ekle</button>
+
+      </div>
+
+      <p class="note">Senin arkadaş kodun: <b id="myCode"></b></p>
+
+      <div id="reqs"></div>
+
+      <ul class="friends" id="friends"></ul>
+
+    </div>
+
+
+
+    <div id="sc-duel" class="hide">
+
+      <h3 class="sub">Yeni düello</h3>
+
+      <div class="form">
+
+        <label>Rakip<select id="duelVs"></select></label>
+
+        <label>Konu<select id="duelTopic"></select></label>
+
+        <label>Zorluk<select id="duelDiff"></select></label>
+
+      </div>
+
+      <button class="go" id="duelCreate">⚔️ Düello oluştur</button>
+
+      <div id="duelInvite" class="hide invite">
+
+        <p><b>Davet kodu:</b> <span class="code" id="duelCode"></span></p>
+
+        <div class="qr" id="duelQr" aria-label="Düello QR kodu"></div>
+
+        <p class="note">Rakibin bu QR kodu okutarak ya da kodu girerek katılır.</p>
+
+        <div class="row">
+
+          <button class="btn" id="duelShare">🔗 Paylaş</button>
+
+          <button class="go generated-style-48" id="duelPlay">▶️ Şimdi oyna</button>
+
+        </div>
+
+      </div>
+
+      <h3 class="sub">Düelloya katıl</h3>
+
+      <div class="inline">
+
+        <input id="joinCode" maxlength="6" placeholder="ABC123" aria-label="Düello kodu" autocapitalize="characters">
+
+        <button class="btn" id="joinBtn">Katıl</button>
+
+        <button class="btn" id="scanBtn" aria-label="QR okut">📷</button>
+
+      </div>
+
+      <div id="scanBox" class="hide scanbox"><video id="scanVid" playsinline muted></video><button class="btn" id="scanStop">Kapat</button></div>
+
+      <p class="msg" id="joinMsg" aria-live="polite"></p>
+
+      <h3 class="sub">Son düellolar</h3>
+
+      <ul class="sl" id="duelHist"></ul>
+
+    </div>
+
+
+
+    <div id="sc-chat" class="hide">
+
+      <div class="row generated-style-49"><button class="btn" id="newDm">✉️ Yeni özel sohbet</button></div>
+
+      <div id="chatList"></div>
+
+      <div id="chatRoom" class="hide">
+
+        <div class="row generated-style-50">
+
+          <button class="btn back generated-style-51" id="chatBack">←</button>
+
+          <b id="chatTitle" class="generated-style-35"></b>
+
+          <button class="btn generated-style-36" id="chatInfo" aria-label="Sohbet bilgisi">ℹ️</button>
+
+        </div>
+
+        <div class="chattools" id="chatTools"></div>
+
+        <div class="msgs" id="msgs" aria-live="polite"></div>
+
+        <div class="inline">
+
+          <input id="chatIn" maxlength="200" placeholder="Mesaj yaz…" aria-label="Mesaj" class="generated-style-52">
+
+          <button class="btn" id="chatEmoji" aria-label="Emoji ve GIF">😊</button>
+
+          <label class="btn filebtn" aria-label="Dosya ekle">📎<input type="file" id="chatFile" hidden></label>
+
+          <button class="btn" id="chatSend">Gönder</button>
+
+        </div>
+
+        <p class="note">Saygılı ol 💛 Mesajlar öğretmenler ve admin tarafından denetlenebilir.</p>
+
+      </div>
+
+      <button class="btn generated-style-53" id="newGroup">➕ Yeni grup oluştur</button>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+
+<!-- ================= AYARLAR ================= -->
+<section id="s7" class="hide">
+
+  <div class="card" id="setAccount"></div>
+
+  <div class="card">
+
+    <h2>🟢 Durumum</h2>
+
+    <div class="seg" id="statusSeg">
+
+      <button data-st="online" aria-selected="true">🟢 Online</button>
+
+      <button data-st="sleep" aria-selected="false">😴 Uyuyor</button>
+
+      <button data-st="offline" aria-selected="false">⚫ Çevrimdışı</button>
+
+    </div>
+
+    <p class="note">Uygulamadan çıktığında herkes seni otomatik olarak çevrimdışı görür.</p>
+
+    <label class="switch"><input type="checkbox" id="notifOn"> 🔔 Telefon / bilgisayar bildirimleri</label>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🎨 Görünüm</h2>
+
+    <label class="switch"><input type="checkbox" id="bwOn"> ⚫⚪ Siyah-beyaz mod</label>
+
+    <p><b>Tema</b></p>
+
+    <div class="themes" id="themeList"></div>
+
+    <p><b>Gece / gündüz (Açık ve Aktif)</b></p>
+
+    <div class="seg" id="modeSeg">
+
+      <button data-md="light" aria-selected="false">☀️ Gündüz</button>
+
+      <button data-md="auto" aria-selected="true">🌓 Otomatik (Sabah/Akşam)</button>
+
+      <button data-md="dark" aria-selected="false">🌙 Gece</button>
+
+    </div>
+
+    <p class="note" id="autoLockNote">Otomatik modda akşam saatlerinde karanlık, sabah saatlerinde aydınlık tema uygulanır.</p>
+
+    <p><b>Özel arka plan</b></p>
+
+    <label class="switch"><input type="checkbox" id="bgOn"> Özel arka planı kullan</label>
+
+    <div class="bgpick" id="bgPick"></div>
+
+    <p><b>Çift renk seçimi</b></p>
+
+    <div class="pairs" id="pairList"></div>
+
+    <label class="switch"><input type="checkbox" id="customOn"> Kendi renk çiftimi kullan</label>
+
+    <div class="colors">
+
+      <label>1. renk <input type="color" id="c1"></label>
+
+      <span class="swatch" id="swatch"></span>
+
+      <label>2. renk <input type="color" id="c2"></label>
+
+    </div>
+
+    <p><b>Mevsim / hava efekti</b></p>
+
+    <select id="fxSel" class="sel">
+
+      <option value="auto">🌍 Konuma Göre Otomatik</option>
+
+      <option value="sunny">☀️ Güneşli (Tepede Güneş)</option>
+
+      <option value="rain">🌧️ Yağmurlu</option>
+
+      <option value="snow">❄️ Karlı</option>
+
+      <option value="none">✨ Kapalı</option>
+
+    </select>
+
+    <div class="row generated-style-54">
+
+      <button type="button" class="btn generated-style-10" id="reqLocationBtn">📍 Konum İzni Ver & Hava Durumunu Al</button>
+
+      <span class="note generated-style-55" id="wxNow">Konum bekleniyor...</span>
+
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <h2>🔊 Ses ve titreşim</h2>
+
+    <label class="switch"><input type="checkbox" id="sndOn"> Ses efektleri</label>
+
+    <label class="switch"><input type="checkbox" id="vibOn"> Titreşim <span class="note" id="vibNote"></span></label>
+
+    <button class="btn generated-style-56" id="testFx">▶️ Dene</button>
+
+  </div>
+
+
+
+  <!-- Geri Bildirim (Gmail ile giriş yapılana kadar buhulu kilitli) -->
+  <div class="card lockable" id="feedbackCard">
+
+    <div class="lockover" id="fbLockOver">
+
+      <div>
+
+        <span class="lk generated-style-57">🔒</span>
+
+        <b>Bu özellik Gmail ile kullanılabilir</b>
+
+        <p class="generated-style-58">Geri bildirim göndermek ve ad düzeltme talebi açmak için Gmail ile giriş yap.</p>
+
+        <button type="button" class="go gLogin">G Gmail ile Giriş Yap</button>
+
+      </div>
+
+    </div>
+
+    <h2>💬 Geri bildirim (Maks 500 karakter)</h2>
+
+    <form name="geri-bildirim" id="fbForm" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+
+      <input type="hidden" name="form-name" value="geri-bildirim">
+
+      <p class="hide"><label>Doldurma: <input name="bot-field"></label></p>
+
+      <input type="hidden" name="oyuncu" id="fbName">
+
+      <input type="hidden" name="surum" value="2.7.0">
+
+      <div class="seg" id="fbKind">
+
+        <button type="button" data-k="Öneri" aria-selected="true">💡 Öneri</button>
+
+        <button type="button" data-k="Hata" aria-selected="false">🐞 Hata</button>
+
+        <button type="button" data-k="Ad Değişikliği" aria-selected="false">✏️ Ad Değişikliği</button>
+
+        <button type="button" data-k="Teşekkür" aria-selected="false">💛 Teşekkür</button>
+
+      </div>
+
+      <input type="hidden" name="tur" id="fbTur" value="Öneri">
+
+      <textarea name="mesaj" id="fbMsg" maxlength="500" rows="3" placeholder="Aklındakini yaz (Maks 500 karakter)…" required></textarea>
+
+      <div class="row generated-style-34">
+
+        <span class="note generated-style-35" id="fbChars">0/500</span>
+
+        <button class="btn generated-style-36" type="submit">Gönder</button>
+
+      </div>
+
+      <p class="msg" id="fbOut" aria-live="polite"></p>
+
+      <p class="counter">📨 Gönderdiğin geri bildirim: <b id="fbCount">0</b></p>
+
+      <p class="cooldown hide" id="fbCool"></p>
+
+    </form>
+
+  </div>
+
+
+
+  <!-- Öğretmen Formu (Branş ve Öğrenci sayısı kaldırıldı, Tercih edilen iletişime göre E-posta / Telefon dinamik değişir, Okul üzerinden kaldırıldı) -->
+  <div class="card">
+
+    <h2>👩‍🏫 Öğretmen formu</h2>
+
+    <p class="note generated-style-06">Öğretmenler sınıfları için erişim, rapor ya da yeni konu talebinde bulunabilir.</p>
+
+    <form name="ogretmen" id="teacherForm" class="form" method="POST" data-netlify="true" netlify-honeypot="bot-field">
+
+      <input type="hidden" name="form-name" value="ogretmen">
+
+      <p class="hide"><label>Doldurma: <input name="bot-field"></label></p>
+
+      <label>Ad soyad<input name="ad" required maxlength="60"></label>
+
+      <label>Tercih edilen iletişim
+
+        <select name="iletisim" id="teacherContactPref">
+
+          <option value="E-posta">E-posta</option>
+
+          <option value="Telefon">Telefon</option>
+
+        </select>
+
+      </label>
+
+      <label id="teacherEmailLabel">E-posta<input name="email" id="teacherEmailInput" type="email" required maxlength="80"></label>
+
+      <label id="teacherPhoneLabel" class="hide">Telefon<input name="telefon" id="teacherPhoneInput" type="tel" maxlength="20" placeholder="05XX XXX XX XX"></label>
+
+      <label>Okul<input name="okul" required maxlength="80"></label>
+
+      <label>Sınıf / şube<input name="sinif" placeholder="7-B" maxlength="20"></label>
+
+      <label>İl / ilçe<input name="il_ilce" maxlength="60"></label>
+
+      <label>Talep türü<select name="talep">
+
+        <option>Sınıf erişimi</option><option>Toplu PDF rapor</option><option>Yeni konu önerisi</option><option>Diğer</option>
+
+      </select></label>
+
+      <label>Mesaj<textarea name="mesaj" rows="3" maxlength="600"></textarea></label>
+
+      <button class="go" type="submit">📨 Formu gönder</button>
+
+      <p class="msg" id="tOut" aria-live="polite"></p>
+
+    </form>
+
+  </div>
+
+
+
+  <div class="card">
+
+    <h2>ℹ️ Hakkında</h2>
+
+    <p class="kv">Hako/Presents · Matematik Macerası</p>
+
+    <p class="version">Sürüm 2.7.0</p>
+
+    <button class="btn" id="resetBtn">🗑️ Bu cihazdaki ayarları sıfırla</button>
+
+  </div>
+
+  <div class="card">
+
+    <h2>📊 Verilerim</h2>
+
+    <p class="note generated-style-06">Skorların, hataların, harcamaların ve rekabetlerin ayrıntılı istatistik raporu.</p>
+
+    <button class="btn generated-style-59" id="statPdfBtn">📄 Ayrıntılı istatistik PDF’i talep et</button>
+
+  </div>
+
+  <button class="go savebar" id="saveSettings">💾 Ayarları kaydet</button>
+
+  <p class="hakofoot"><span id="hakoTap">hako</span> · sürüm: 2.7.0 <button class="ghostkey" id="ghostKey" aria-label="Yönetici">·</button></p>
+
+</section>
+
+
+
+<!-- ================= GÖREVLER (Gmail ile giriş yapılmadan kapalı) ================= -->
+<section id="s8" class="hide lockable">
+
+  <div class="lockover" id="tasksLockOver">
+
+    <div>
+
+      <span class="lk">🔒</span>
+
+      <b>Görevler kilitli</b>
+
+      <p>Günlük görevleri görmek ve ödül kazanmak için Gmail ile giriş yap.</p>
+
+      <button class="go gLogin">G Gmail ile giriş yap</button>
+
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <div class="row generated-style-43">
+
+      <h2 class="generated-style-35">📋 Günlük görevler</h2>
+
+      <span class="note" id="dailyLeft"></span>
+
+    </div>
+
+    <p class="note generated-style-06">Admin tarafından yayınlanan GIF görevleri tamamla, altın kazan!</p>
+
+    <ul class="dtasks" id="dailyTasks"></ul>
+
+  </div>
+
+</section>
+
+
+
+<!-- ================= REKABET ================= -->
+<section id="s9" class="hide lockable">
+
+  <div class="lockover hide"><div><span class="lk">🔒</span><b>Rekabet online bir özelliktir</b><p>Rakiplerle yarışmak için Gmail ile giriş yap.</p><button class="go gLogin">G  Gmail ile giriş yap</button></div></div>
+
+  <div class="card">
+
+    <div class="row generated-style-34">
+
+      <h2 class="generated-style-35">⚔️ Rekabet</h2>
+
+      <span class="pill">🟢 <b id="onlineCount">0</b> online</span>
+
+    </div>
+
+    <div class="arena" id="arena">
+
+      <div class="side red"><div class="av" id="arOppAv">❔</div><b id="arOppName">Rakip</b><small id="arOppDiff"></small></div>
+
+      <div class="vs">VS</div>
+
+      <div class="side blue"><div class="av" id="arMeAv">🙂</div><b id="arMeName">Sen</b><small id="arMeDiff"></small></div>
+
+    </div>
+
+    <p><b>Zorluk seç (iki oyuncu da aynısını seçince maç başlar):</b></p>
+
+    <div class="diffs" id="rvDiff"></div>
+
+    <div class="searching hide" id="rvSearch"><span class="spinner"></span> Rakip aranıyor…</div>
+
+    <div class="row">
+
+      <button class="go" id="rvFind">🔍 Rakip bul</button>
+
+      <button class="btn" id="rvQr">🔳 QR kod oluştur</button>
+
+    </div>
+
+    <div id="rvQrBox" class="hide invite"></div>
+
+    <p class="msg" id="rvMsg" aria-live="polite"></p>
+
+  </div>
+
+  <div class="card">
+
+    <h2>👥 Grup rekabeti</h2>
+
+    <p class="note generated-style-06">Gruplar sohbet ekranındaki ⚔️ butonuyla rakip gruba meydan okur. Grup rekabetinde yalnızca kendi ekranını görürsün; elendiğinde kendi grubunu ve rakip grubu izleyebilirsin.</p>
+
+    <ul class="sl" id="groupDuelHist"></ul>
+
+  </div>
+
+</section>
+
+
+
+<!-- ================= PDF RAPOR (yalnızca yazdırırken görünür) ================= -->
+<section id="report" class="report" aria-hidden="true"></section>
+
+
+<div id="hakoPublicNotice" class="hako-notice" hidden role="dialog" aria-modal="true" aria-labelledby="hakoNoticeTitle">
+ <div class="hako-notice-card">
+  <img id="hakoNoticeImage" src="assets/bakim-molasi.png" alt="Teknik duyuru görseli">
+  <h2 id="hakoNoticeTitle">Bakım Molası</h2>
+  <p id="hakoNoticeText">Sistem üzerinde çalışma yapılıyor. Lütfen daha sonra tekrar deneyin.</p>
+  <button type="button" id="hakoNoticeClose" class="btn">Anladım</button>
+ </div>
+</div>
+</main>
+
+
+
+<div id="gift" class="gift hide" role="dialog" aria-modal="true" aria-labelledby="gtitle">
+
+  <div class="rays"></div>
+
+  <p class="gtitle" id="gtitle"></p>
+
+  <div id="gslot"></div>
+
+  <button class="go" id="gok">Harika! 🎉</button>
+
+</div>
+
+<div id="toast" class="toastbar" role="status" aria-live="polite"></div>
+
+<div id="flames" class="flames hide" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+
+<div id="modal" class="modal hide" role="dialog" aria-modal="true"><div class="mbox"><button class="mclose" id="mclose" aria-label="Kapat">✕</button><div id="mbody"></div></div></div>
+
+<div id="notifPanel" class="notifpanel hide" aria-label="Bildirimler"></div>
+
+
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<script src="js/firebase-client.js"></script>
+<script src="vendor/qrcode.js"></script>
+
+<script src="js/fixtures.js"></script>
+
+<script src="js/core.js"></script>
+
+<script src="js/sync.js"></script>
+
+<script src="js/game.js"></script>
+<script src="js/player-search.js"></script>
+<script src="js/admin-scores.js"></script>
+
+<script src="js/features.js"></script>
+
+<script src="js/social.js"></script>
+<script src="js/duels.js"></script>
+
+<script src="js/admin.js"></script>
+
+<script src="js/hako_extensions.js"></script>
+
+<script src="js/helpy-notices.js"></script>
+</body>
+
+</html>

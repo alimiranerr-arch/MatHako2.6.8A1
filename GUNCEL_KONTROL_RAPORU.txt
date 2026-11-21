@@ -1,0 +1,43 @@
+MATEMATİK MACERASI – ENTEGRASYON VE KONTROL RAPORU
+Tarih: 21.11.2026
+
+UYGULANAN WEB / FIREBASE BAĞLANTILARI
+- Firebase Authentication: Google popup girişi, doğrulanmış admin custom claim kontrolü.
+- Admin hesabı: alimiranerr@gmail.com (tek admin; e-posta doğrulaması ve custom claim şartı).
+- Sohbet: kullanıcıların e-posta ile DM/grup başlatması, gerçek zamanlı Firestore mesajları.
+- Medya: görsel/ses/video dosyası yükleme ve sohbet mesajında gösterme; tarayıcı MediaRecorder ile ses kaydı.
+- Admin moderasyonu: sohbet/grup kayıtları ve son mesajları (medya dahil) admin panelinde izleme.
+- Market: admin GIF yükleme ve ürün yayınlama; altınla satın alma ve envanter kaydı.
+- Üyelik: üyelik tipi market ürünleri; satın alma sonrası kullanıcı belgesine üyelik ve 30 günlük süre.
+- Günlük çark: Cloud Function üzerinden günlük tek hak, sunucu tarafında rastgele ödül ve altın verme.
+- Çark ödül havuzu: admin panelinden düzenlenebilir.
+- Unvanlar: admin unvan yayınlar; kullanıcı altınla satın alır ve profilinde görünür.
+- Mevsim temaları: admin tarafından tüm kullanıcılara normal/yılbaşı/cadılar bayramı/ramazan/kurban teması yayınlama.
+- Profil: ad, soyad, okul, sınıf, takma ad düzenleme; profil alanlarının gerçek zamanlı gösterimi.
+- Ban: admin kullanıcı listesinden kalıcı ban; Auth hesabı devre dışı bırakılır, yenileme tokenları iptal edilir, Firestore kuralları erişimi keser. Hako admin korunur.
+- Başarısız giriş kaydı: e-posta, eşleşen bilinen ad ve zaman kaydedilir; parola veya OTP kaydedilmez.
+- Dönem seçimi: admin 1. dönem veya 1.+2. dönem konularını yayınlar; konu listesi bu seçime göre güncellenir.
+- Bakım modu ve kullanıcı onaylı yaklaşık konum önceki Firebase entegrasyonundan korunmuştur.
+
+GÜVENLİK NOTLARI
+- Sohbet alanında mesajların moderasyon amacıyla yönetici tarafından incelenebileceği açıkça belirtilmiştir.
+- Konum paylaşımı isteğe bağlıdır ve kullanıcı butonuyla başlatılır. Gerçek cihaz adı tarayıcıdan alınmaz; cihaz sınıfı tahmin edilir.
+- Market/çark/üyelik oyun içi altın sistemidir; gerçek para ödeme altyapısı değildir.
+- Admin yetkisi istemci e-posta kontrolüne dayanmaz; Firebase custom claim + doğrulanmış e-posta ve Cloud Functions kontrolü kullanılır.
+- Storage dosyaları sohbet üyeliğine göre kurallandırılmıştır. Firebase indirme URL'leri paylaşılırsa URL'yi bilen kişi erişebilir; bağlantıları herkese açık paylaşmayın.
+
+TESTLER
+- Tüm yerel JavaScript dosyaları ve Cloud Functions için `node --check` başarılı.
+- HTML'de yinelenen ID kalmadı; yerel script yolları doğrulandı.
+- Eklenen `node tests/smoke.test.js` otomatik test paketi 5/5 başarılı.
+- QR örnekleri QR kod çözücüyle doğrulandı; `MM:ABC123` içeriği başarıyla okundu.
+- HTML'deki yerel script, stil, ikon ve görsel yollarının tamamı mevcut.
+- ZIP bütünlük testi başarılı.
+- Firebase Emulator / canlı Firebase entegrasyon testi bu ortamda yapılamadı; Firebase projesine deploy edilmedi. Kamera donanımı da gerçek cihazda test edilmedi.
+
+TAMAMLANMAYAN / KAYNAK GEREKTİREN KONULAR
+- Orijinal game.js/core.js/sync.js kaynakları önceki arşivlerde yok. Bu nedenle orijinal oyun soru üretimi, puanlama, ilerleme ve çevrimdışı senkronizasyonu yeniden oluşturulmuş değildir.
+- Sezon temaları şimdilik mevcut paleti bozmayan küçük emoji/başlık görselleridir; özel GIF dosyaları henüz sağlanmadı.
+- E-posta değişimini 30 günde bir sınırlama akışı bu paket içinde henüz uygulanmadı.
+- Düello puan/doğru cevap alanları istemciden geldiği için hileye karşı kesin korumalı değildir; güvenli yarışma için soruların ve cevap doğrulamasının sunucu tarafına taşınması gerekir.
+- Bu ZIP Firebase'e otomatik yükleme yapmaz. `FIREBASE_KURULUM_TR.txt` adımlarına göre Firestore/Storage kuralları ve Cloud Functions deploy edilmelidir.

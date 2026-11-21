@@ -1,0 +1,2 @@
+/* Hako admin arayüz bağlayıcısı. Yetki sadece sunucunun verdiği custom claim ile tanınır. */
+(function(w){const a=w.MatematikMacerasi=w.MatematikMacerasi||{};a.register=a.register||function(n,v){(a.modules=a.modules||{})[n]=v||{};};a.admin={email:"alimiranerr@gmail.com",authorization:"Firebase custom claim (admin) + doğrulanmış e-posta",get active(){return !!w.MMCloud?.admin;}};a.register("admin",a.admin);})(window);
