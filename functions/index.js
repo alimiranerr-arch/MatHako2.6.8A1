@@ -69,6 +69,107 @@ exports.findChatMembers=onCall(async req=>{
  const snap=await db.collection('users').where('email','in',emails).limit(10).get();
  return {uids:snap.docs.filter(d=>!d.data().banned).map(d=>d.id)};
 });
+
+exports.sendFriendRequest=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||'');
+ if(!target||target===uid)throw new HttpsError('invalid-argument','Geçerli bir oyuncu seç.');
+ await userDoc(target);
+ const ids=[uid,target].sort(),id=ids.join('_'),ref=db.doc('friendRequests/'+id);
+ await db.runTransaction(async tx=>{
+  const snap=await tx.get(ref);if(snap.exists&&snap.data().status==='accepted')throw new HttpsError('already-exists','Bu oyuncu zaten arkadaşın.');
+  if(snap.exists&&snap.data().status==='pending')throw new HttpsError('already-exists','Bekleyen bir arkadaşlık isteği var.');
+  tx.set(ref,{from:uid,to:target,status:'pending',createdAt:Field.serverTimestamp(),updatedAt:Field.serverTimestamp()});
+ });
+ await db.collection('users').doc(target).collection('notifications').add({type:'friend-request',from:uid,createdAt:Field.serverTimestamp(),read:false});
+ return{ok:true};
+});
+exports.respondFriendRequest=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.requestId||''),accept=req.data?.accept===true;
+ if(!id||id.length>140)throw new HttpsError('invalid-argument','İstek kimliği geçersiz.');
+ await db.runTransaction(async tx=>{
+  const ref=db.doc('friendRequests/'+id),s=await tx.get(ref);if(!s.exists||s.data().to!==uid||s.data().status!=='pending')throw new HttpsError('not-found','Bekleyen arkadaşlık isteği bulunamadı.');
+  const from=s.data().from;
+  tx.update(ref,{status:accept?'accepted':'declined',respondedAt:Field.serverTimestamp()});
+  if(accept){tx.set(db.doc('users/'+uid+'/friends/'+from),{uid:from,createdAt:Field.serverTimestamp()});tx.set(db.doc('users/'+from+'/friends/'+uid),{uid,createdAt:Field.serverTimestamp()});}
+ });
+ return{ok:true,accepted:accept};
+});
+exports.removeFriend=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||'');if(!target||target===uid)throw new HttpsError('invalid-argument','Oyuncu geçersiz.');
+ const a=db.doc('users/'+uid+'/friends/'+target),b=db.doc('users/'+target+'/friends/'+uid);
+ await db.runTransaction(async tx=>{tx.delete(a);tx.delete(b);});
+ return{ok:true};
+});
+exports.transferCoins=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount);
+ if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>500)throw new HttpsError('invalid-argument','Transfer 1-500 altın arasında olmalı.');
+ await userDoc(target);
+ const day=istanbulDayKey(),sender=db.doc('users/'+uid),receiver=db.doc('users/'+target),limitRef=db.doc('coinTransferLimits/'+uid);
+ await db.runTransaction(async tx=>{
+  const [s,r,l]=await Promise.all([tx.get(sender),tx.get(receiver),tx.get(limitRef)]);
+  if(!s.exists||!r.exists)throw new HttpsError('not-found','Kullanıcı bulunamadı.');
+  if(r.data().banned)throw new HttpsError('permission-denied','Bu kullanıcıya transfer yapılamaz.');
+  const old=l.exists&&l.data().day===day?Number(l.data().amount)||0:0;
+  if(old+amount>1000)throw new HttpsError('resource-exhausted','Günlük 1000 altın transfer sınırına ulaştın.');
+  const coins=Number(s.data().coins)||0;if(coins<amount)throw new HttpsError('failed-precondition','Yeterli altının yok.');
+  tx.update(sender,{coins:coins-amount});tx.update(receiver,{coins:(Number(r.data().coins)||0)+amount});
+  tx.set(limitRef,{day,amount:old+amount,updatedAt:Field.serverTimestamp()},{merge:true});
+  const log=db.collection('coinTransfers').doc();tx.set(log,{from:uid,to:target,amount,createdAt:Field.serverTimestamp()});
+ });
+ return{ok:true,amount};
+});
+exports.publishDailyTask=onCall(async req=>{
+ const uid=requireAdmin(req),d=req.data||{},title=String(d.title||'').trim(),mode=String(d.mode||'classic'),minScore=Number(d.minScore||0),minQuestions=Number(d.minQuestions||1),reward=Number(d.reward||0);
+ if(!title||title.length>80||!['classic','endless','retry','balance','any'].includes(mode)||!Number.isInteger(minScore)||minScore<0||minScore>10000||!Number.isInteger(minQuestions)||minQuestions<1||minQuestions>500||!Number.isInteger(reward)||reward<0||reward>10000)throw new HttpsError('invalid-argument','Görev bilgileri geçersiz.');
+ const ref=await db.collection('dailyTasks').add({title,mode,minScore,minQuestions,reward,active:true,createdBy:uid,createdAt:Field.serverTimestamp()});return{ok:true,id:ref.id};
+});
+exports.claimDailyTask=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.taskId||'');if(!id)throw new HttpsError('invalid-argument','Görev seçilmedi.');
+ const taskRef=db.doc('dailyTasks/'+id),userRef=db.doc('users/'+uid),claimRef=db.doc('dailyTaskClaims/'+uid+'_'+id+'_'+istanbulDayKey());
+ await db.runTransaction(async tx=>{
+  const [t,u,claim]=await Promise.all([tx.get(taskRef),tx.get(userRef),tx.get(claimRef)]);
+  if(!t.exists||!t.data().active)throw new HttpsError('not-found','Görev artık etkin değil.');
+  if(claim.exists)throw new HttpsError('already-exists','Bu görevin bugünkü ödülünü zaten aldın.');
+  const d=t.data(),today=new Date();const start=new Date(today.toLocaleString('en-US',{timeZone:'Europe/Istanbul'}));start.setHours(0,0,0,0);
+  let q=db.collection('scores').where('uid','==',uid).where('createdAt','>=',start);
+  if(d.mode!=='any')q=q.where('mode','==',d.mode);
+  const scores=await tx.get(q);const done=scores.docs.some(x=>Number(x.data().score)>=d.minScore&&Number(x.data().questions)>=d.minQuestions);
+  if(!done)throw new HttpsError('failed-precondition','Görev henüz tamamlanmadı.');
+  tx.create(claimRef,{uid,taskId:id,day:istanbulDayKey(),claimedAt:Field.serverTimestamp(),reward:d.reward});
+  tx.update(userRef,{coins:(Number(u.data().coins)||0)+d.reward});
+ });
+ return{ok:true};
+});
+exports.getDailyTasks=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);
+ const snap=await db.collection('dailyTasks').where('active','==',true).limit(30).get(),day=istanbulDayKey();
+ const claims=await db.collection('dailyTaskClaims').where('uid','==',uid).where('day','==',day).get();
+ const claimed=new Set(claims.docs.map(x=>x.data().taskId));
+ return{tasks:snap.docs.map(x=>({id:x.id,...x.data(),claimed:claimed.has(x.id)}))};
+});
+exports.joinRandomMatch=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const topic=String(req.data?.topic||'Karışık').slice(0,40);
+ const waiting=await db.collection('matchmakingQueue').where('status','==','waiting').where('topic','==',topic).limit(10).get();
+ for(const candidate of waiting.docs){
+  if(candidate.data().uid===uid)continue;
+  const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+  const duelRef=db.doc('duels/'+code);
+  const matched=await db.runTransaction(async tx=>{
+   const q=await tx.get(candidate.ref);if(!q.exists||q.data().status!=='waiting'||q.data().uid===uid)return false;
+   tx.update(candidate.ref,{status:'matched',matchedAt:Field.serverTimestamp(),duelCode:code});
+   tx.create(duelRef,{code,hostUid:q.data().uid,players:[q.data().uid,uid],topic,status:'playing',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000,matchType:'random'});
+   return true;
+  });
+  if(matched)return{matched:true,code,topic};
+ }
+ const ref=await db.collection('matchmakingQueue').add({uid,topic,status:'waiting',createdAt:Field.serverTimestamp()});
+ return{matched:false,queueId:ref.id};
+});
+exports.cancelRandomMatch=onCall(async req=>{
+ const uid=requireUser(req);const snap=await db.collection('matchmakingQueue').where('uid','==',uid).where('status','==','waiting').limit(10).get();
+ const batch=db.batch();snap.docs.forEach(d=>batch.update(d.ref,{status:'cancelled',cancelledAt:Field.serverTimestamp()}));await batch.commit();return{ok:true};
+});
+
 exports.protectAdminProfile=onDocumentCreated('users/{uid}',async e=>{const uid=e.params.uid,u=await admin.auth().getUser(uid).catch(()=>null);if(u&&u.email===ADMIN_EMAIL&&u.emailVerified)await admin.auth().setCustomUserClaims(uid,{...(u.customClaims||{}),admin:true});});
 
 // Skorlar yalnızca callable üzerinden yazılır; oyuncu kendi puanını değiştiremez.
