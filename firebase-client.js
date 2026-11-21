@@ -168,9 +168,23 @@ window.firebaseConfig = {
   });
  }
  function bindConsent(){
-  const b=$('reqLocationBtn'); if(!b)return;
-  b.addEventListener('click',()=>{if(!state.user){alert('Konum paylaşmak için önce giriş yapmalısın.');return;}if(!confirm('Yaklaşık konumunu admin panelinde görünmesi için paylaşmak istiyor musun? İzin vermezsen siteyi kullanmaya devam edebilirsin.'))return;
-   navigator.geolocation?.getCurrentPosition(async pos=>{try{await state.db.collection('users').doc(state.user.uid).set({location:{lat:Number(pos.coords.latitude.toFixed(2)),lng:Number(pos.coords.longitude.toFixed(2)),sharedAt:firebase.firestore.FieldValue.serverTimestamp()}},{merge:true});const x=$('wxNow');if(x)x.textContent='Yaklaşık konum paylaşıldı.';}catch(e){alert('Konum kaydedilemedi: '+e.message);}},e=>alert('Konum alınamadı veya izin verilmedi.'),{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
+  const b=$('reqLocationBtn');if(!b)return;
+  b.addEventListener('click',()=>{if(!state.user){alert('Konum ve hava durumu için önce giriş yapmalısın.');return;}if(!confirm('Yaklaşık konumunu admin panelinde paylaşmayı ve hava durumu bilgisini almak için Open-Meteo servisine göndermeyi kabul ediyor musun? İzin vermezsen siteyi kullanmaya devam edebilirsin.'))return;
+   if(!navigator.geolocation){msg('wxNow','Bu tarayıcı konum özelliğini desteklemiyor.');return;}
+   b.disabled=true;msg('wxNow','Konum alınıyor…');
+   navigator.geolocation.getCurrentPosition(async pos=>{try{
+    const lat=pos.coords.latitude,lng=pos.coords.longitude;
+    await state.db.collection('users').doc(state.user.uid).set({location:{lat:Number(lat.toFixed(2)),lng:Number(lng.toFixed(2)),sharedAt:firebase.firestore.FieldValue.serverTimestamp()}},{merge:true});
+    msg('wxNow','Yaklaşık konum kaydedildi; hava durumu alınıyor…');
+    const url='https://api.open-meteo.com/v1/forecast?latitude='+encodeURIComponent(lat)+'&longitude='+encodeURIComponent(lng)+'&current=temperature_2m,weather_code&timezone=auto';
+    const response=await fetch(url);if(!response.ok)throw Error('Hava durumu servisi yanıt vermedi.');
+    const weather=await response.json(),current=weather.current||{},code=Number(current.weather_code);
+    const effect=code===0||code<=3?'sunny':[71,73,75,77,85,86].includes(code)?'snow':[45,48,51,53,55,56,57,61,63,65,66,67,80,81,82,95,96,99].includes(code)?'rain':'none';
+    const labels={sunny:'Açık / az bulutlu',rain:'Yağışlı',snow:'Karlı',none:'Bulutlu / sisli'};
+    if($('fxSel')){$('fxSel').value=effect;$('fxSel').dispatchEvent(new Event('change',{bubbles:true}));}
+    msg('wxNow',(current.temperature_2m??'—')+'°C · '+labels[effect]+' · Konum yaklaşık olarak kaydedildi.');
+   }catch(e){msg('wxNow','Konum kaydedildi; hava durumu alınamadı: '+e.message);}finally{b.disabled=false;}
+   },e=>{msg('wxNow','Konum alınamadı veya izin verilmedi.');b.disabled=false;},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   });
  }
  document.addEventListener('DOMContentLoaded',init);
