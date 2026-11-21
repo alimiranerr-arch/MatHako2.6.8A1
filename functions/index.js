@@ -253,7 +253,7 @@ exports.completeEmailChange=onCall(async req=>{
 
 
 exports.createGroupCompetition=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const chatId=String(req.data?.chatId||''),topic=String(req.data?.topic||'Karışık').slice(0,40);
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'createGroupCompetition',5);const chatId=String(req.data?.chatId||''),topic=String(req.data?.topic||'Karışık').slice(0,40);
  if(!chatId)throw new HttpsError('invalid-argument','Grup seçilmedi.');
  const chat=await db.doc('chats/'+chatId).get();if(!chat.exists||chat.data().type!=='group'||!chat.data().memberIds?.includes(uid))throw new HttpsError('permission-denied','Bu grup için yarışma oluşturamazsın.');
  const code=randomJoinCode();
@@ -261,7 +261,7 @@ exports.createGroupCompetition=onCall(async req=>{
  return{ok:true,code,topic};
 });
 exports.joinGroupCompetition=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const code=String(req.data?.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6),chatId=String(req.data?.chatId||'');
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'joinGroupCompetition',5);const code=String(req.data?.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6),chatId=String(req.data?.chatId||'');
  if(!code||!chatId)throw new HttpsError('invalid-argument','Yarışma kodu ve grup gerekli.');
  const chat=await db.doc('chats/'+chatId).get();if(!chat.exists||chat.data().type!=='group'||!chat.data().memberIds?.includes(uid))throw new HttpsError('permission-denied','Bu grup için katılım yetkin yok.');
  await db.runTransaction(async tx=>{const ref=db.doc('groupCompetitions/'+code),s=await tx.get(ref);if(!s.exists||s.data().expiresAt<Date.now())throw new HttpsError('not-found','Grup yarışması bulunamadı.');const x=s.data();if(x.status!=='waiting'||x.groupA===chatId)throw new HttpsError('failed-precondition','Yarışma dolu veya aynı grup seçildi.');tx.update(ref,{groupB:chatId,membersB:chat.data().memberIds,status:'playing',joinedAt:Field.serverTimestamp()});});
