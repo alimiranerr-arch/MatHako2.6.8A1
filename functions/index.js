@@ -119,7 +119,7 @@ exports.transferCoins=onCall(async req=>{
  return{ok:true,amount};
 });
 exports.publishDailyTask=onCall(async req=>{
- const uid=requireAdmin(req),d=req.data||{},title=String(d.title||'').trim(),mode=String(d.mode||'classic'),minScore=Number(d.minScore||0),minQuestions=Number(d.minQuestions||1),reward=Number(d.reward||0);
+ const uid=requireAdmin(req),d=req.data||{},title=String(d.title||'').trim(),mode=String(d.mode||'classic'),minScore=Number(d.minScore||0),minQuestions=Number(d.minQuestions||1),reward=Number(d.reward||0),gifUrl=String(d.gifUrl||'').slice(0,1000);
  if(!title||title.length>80||!['classic','endless','retry','balance','any'].includes(mode)||!Number.isInteger(minScore)||minScore<0||minScore>10000||!Number.isInteger(minQuestions)||minQuestions<1||minQuestions>500||!Number.isInteger(reward)||reward<0||reward>10000)throw new HttpsError('invalid-argument','Görev bilgileri geçersiz.');
  const ref=await db.collection('dailyTasks').add({title,mode,minScore,minQuestions,reward,gifUrl,active:true,createdBy:uid,createdAt:Field.serverTimestamp()});return{ok:true,id:ref.id};
 });
