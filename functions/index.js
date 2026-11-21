@@ -314,6 +314,17 @@ function makeServerQuestion(topic,difficulty='normal'){
  for(let i=opts.length-1;i>0;i--){const j=gameRand(0,i);[opts[i],opts[j]]=[opts[j],opts[i]];}
  return{q,options:opts.slice(0,4),answer:correct};
 }
+exports.startMistakeReview=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'startMistakeReview',5);
+ const sourceId=String(req.data?.sessionId||'');if(!sourceId)throw new HttpsError('invalid-argument','Önceki oyun oturumu gerekli.');
+ const source=await db.doc('gameSessions/'+sourceId).get();
+ if(!source.exists||source.data().uid!==uid||source.data().status!=='submitted')throw new HttpsError('permission-denied','Hata tekrarı için geçerli oyun kaydı bulunamadı.');
+ const d=source.data(),questions=d.questions.filter((q,i)=>d.answers?.[i]&&!d.answers[i].correct).slice(0,10);
+ if(!questions.length)throw new HttpsError('failed-precondition','Son oyunda tekrar edilecek hata yok.');
+ const id=crypto.randomBytes(16).toString('hex'),now=Date.now();
+ await db.doc('gameSessions/'+id).create({uid,mode:'retry',topic:d.topic,difficulty:d.difficulty||'normal',questions,competitionType:null,competitionCode:null,status:'active',answers:[],nextIndex:0,score:0,correct:0,streak:0,lives:5,questionStartedAt:now,questionDeadlineAt:null,sourceSessionId:sourceId,createdAt:Field.serverTimestamp(),expiresAt:now+2*60*60*1000});
+ return{sessionId:id,questions:questions.map(x=>({q:x.q,opts:x.options}))};
+});
 exports.startGameSession=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'startGameSession',10);const d=req.data||{},mode=String(d.mode||'classic');
  let topic=String(d.topic||'Karışık').slice(0,40);
