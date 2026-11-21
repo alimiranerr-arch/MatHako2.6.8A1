@@ -227,6 +227,20 @@ exports.cancelRandomMatch=onCall(async req=>{
 });
 
 
+exports.setInventoryLoadout=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'setInventoryLoadout',30);
+ const emojis=Array.isArray(req.data?.emojis)?req.data.emojis:[],cards=Array.isArray(req.data?.cards)?req.data.cards:[];
+ if(emojis.length!==5||cards.length!==5||[...emojis,...cards].some(x=>typeof x!=='string'||x.length>128)||new Set(emojis.filter(Boolean)).size!==emojis.filter(Boolean).length||new Set(cards.filter(Boolean)).size!==cards.filter(Boolean).length)throw new HttpsError('invalid-argument','Emoji ve kart alanları beşer benzersiz slottan oluşmalı.');
+ const ref=db.doc('users/'+uid);
+ await db.runTransaction(async tx=>{
+  const snap=await tx.get(ref);if(!snap.exists)throw new HttpsError('failed-precondition','Kullanıcı profili bulunamadı.');
+  const inventory=Array.isArray(snap.data().inventory)?snap.data().inventory:[];
+  const owns=(id,type)=>!id||inventory.some(x=>x.itemId===id&&x.type===type);
+  if(!emojis.every(id=>owns(id,'emoji'))||!cards.every(id=>owns(id,'card')))throw new HttpsError('permission-denied','Yalnızca envanterindeki emoji ve kartları kuşanabilirsin.');
+  tx.update(ref,{equippedEmojis:emojis,equippedCards:cards});
+ });
+ return{ok:true,emojis,cards};
+});
 exports.sellInventoryItem=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const itemId=String(req.data?.itemId||'');if(!itemId)throw new HttpsError('invalid-argument','Satılacak ürün seçilmedi.');
  const ref=db.doc('users/'+uid);
