@@ -25,8 +25,7 @@ DIŞ YAPILANDIRMA GEREKENLER
 5. Firebase CLI ile önce rules/indexes/Storage, sonra Functions deploy edilmeli. Cloud Functions Blaze planı/faturalandırma gerektirebilir.
 
 TEST DURUMU
-- Kullanıcının talimatı gereği yeni test çalıştırılmadı.
-- GitHub Actions otomatik push/PR tetikleri kapatıldı; workflow manuel tetikleme bekliyor.
+- Tarafımdan manuel test çalıştırılmadı. Workflow artık manuel tetiklemeye ayarlı; değişiklikten önceki push'lar otomatik Actions çalıştırmış olabilir.
 - Canlı Firebase üzerinde uçtan uca doğrulama yapılmadı.
 
 YAYIN DİSİPLİNİ
