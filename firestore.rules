@@ -78,6 +78,7 @@ service cloud.firestore {
   match /matchmakingQueue/{id}{allow read:if admin()||(active()&&resource.data.uid==request.auth.uid);allow write:if false;}
   match /market/{id}{allow read:if admin()||(active()&&resource.data.published==true);allow write:if false;}
   match /scores/{id}{allow read:if admin()||(active()&&(resource.data.public==true||resource.data.uid==request.auth.uid));allow write:if false;}
+  match /groupCompetitions/{id}{allow read:if admin()||(active()&&((resource.data.membersA is list&&request.auth.uid in resource.data.membersA)||(resource.data.membersB is list&&request.auth.uid in resource.data.membersB)));allow write:if false;}
   match /duels/{id}{allow read:if admin()||(active()&&request.auth.uid in resource.data.players);allow write:if false;}
   match /wheelClaims/{uid}{allow read:if owner(uid)||admin();allow write:if false;}
   match /miniPassClaims/{uid}{allow read:if owner(uid)||admin();allow write:if false;}
