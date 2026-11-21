@@ -8,12 +8,12 @@
 
   function sections() {
     return Array.from(d.querySelectorAll('main > section, body > section'))
-      .filter(section => /^s\\d+$/.test(section.id));
+      .filter(section => /^s\d+$/.test(section.id));
   }
 
   function navigate(id, options) {
     const target = d.getElementById(id);
-    if (!target || !/^s\\d+$/.test(id)) return false;
+    if (!target || !/^s\d+$/.test(id)) return false;
 
     // Admin bölümü yalnızca doğrulanmış yönetici oturumunda açılabilir.
     if (id === 's3' && !w.MMCloud?.admin) return false;
