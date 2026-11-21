@@ -14,7 +14,25 @@ window.firebaseConfig = {
  function status(text,isError=false){const el=$('firebaseStatus');if(el){el.textContent=text;el.classList.toggle('err',!!isError);el.classList.toggle('ok',!isError);}}
  function ready(user,error){state.authReady=true;window.dispatchEvent(new CustomEvent('mm-auth-ready',{detail:{user:user||null,admin:!!state.admin,error:error||null}}));}
  function call(name,data){if(!state.fn)throw Error('Firebase henüz başlatılmadı.');return state.fn.httpsCallable(name)(data||{});}
- function showAdmin(on){const t=$('tabAdmin'); if(t)t.classList.toggle('hide',!on);}
+ const DEFAULT_FLAGS={adminBox:true,wheel:true,tasks:true,market:true,online:true};
+ function showAdmin(on){const t=$('tabAdmin');if(t)t.classList.toggle('hide',!on);$('adminLocked')?.classList.add('hide');$('adminOpen')?.classList.toggle('hide',!on);const box=$('adminLogin');if(box)box.classList.toggle('hide',!on||state.featureFlags?.adminBox===false);}
+ function applyFeatureFlags(flags){
+  state.featureFlags={...DEFAULT_FLAGS,...(flags||{})};
+  const f=state.featureFlags;
+  const map=[['wheel','tabRewards','s4'],['tasks','tabTasks','s8'],['market','tabMarket','s5'],['online','tabSocial','s6'],['online','tabCompete','s9']];
+  map.forEach(([key,tabId,sectionId])=>{const disabled=!f[key];$(tabId)?.classList.toggle('hide',disabled);$(sectionId)?.classList.toggle('hide',disabled);});
+  showAdmin(state.admin);
+  const current=window.MatematikMacerasi?.activeSection;
+  if(current&&['s4','s5','s6','s8','s9'].includes(current)&&$(current)?.classList.contains('hide'))window.MatematikMacerasi?.navigate('s0');
+  window.dispatchEvent(new CustomEvent('mm-feature-flags',{detail:state.featureFlags}));
+ }
+ function watchFeatureFlags(){
+  state.stopFeatures?.();state.stopFeatures=state.db.doc('settings/features').onSnapshot(s=>applyFeatureFlags(s.exists?s.data().flags:DEFAULT_FLAGS),e=>{console.warn('Özellik ayarları okunamadı:',e);applyFeatureFlags(DEFAULT_FLAGS);});
+ }
+ async function saveFeatureFlags(){
+  const flags={adminBox:!!$('admToggleAdminBox')?.checked,wheel:!!$('admToggleWheel')?.checked,tasks:!!$('admToggleTasks')?.checked,market:!!$('admToggleMarket')?.checked,online:!!$('admToggleOnline')?.checked};
+  try{await call('setFeatureFlags',flags);msg('adminFeatureFlagsMsg','Özellik ayarları sunucuya kaydedildi.');}catch(e){msg('adminFeatureFlagsMsg','Kaydedilemedi: '+e.message);}
+ }
  function init(){
   if(!window.firebase||!window.firebaseConfig){
    const e=new Error('Firebase SDK yüklenemedi. İnternet bağlantısını ve Firebase CDN erişimini kontrol edin.');
@@ -27,7 +45,7 @@ window.firebaseConfig = {
    auth.onAuthStateChanged(async user=>{
     state.user=user;state.admin=false;showAdmin(false);
     if(!user){
-     state.stopPublic?.();state.stopTheme?.();status('Firebase bağlantısı hazır. Gmail ile giriş yapabilirsin.');
+     state.stopPublic?.();state.stopTheme?.();state.stopFeatures?.();applyFeatureFlags(DEFAULT_FLAGS);status('Firebase bağlantısı hazır. Gmail ile giriş yapabilirsin.');
      ready(null);return;
     }
     status('Hesap doğrulanıyor…');
@@ -64,7 +82,7 @@ window.firebaseConfig = {
     else status('Hesap hazır. İyi eğlenceler!');
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     ready(user);
-    watchPublicSettings();watchSeasonTheme();
+    watchPublicSettings();watchSeasonTheme();watchFeatureFlags();
     state.db.collection('users').doc(user.uid).onSnapshot(d=>{
      if(d.exists&&d.data().banned){$('bannedOverlay')?.classList.remove('hide');$('bannedOverlay')?.setAttribute('aria-hidden','false');auth.signOut().catch(()=>{});}
     },e=>console.warn('Ban durumu okunamadı:',e));
@@ -92,8 +110,10 @@ window.firebaseConfig = {
  async function loadAdminSettings(){
   const d=await state.db.doc('settings/site').get();if(d.exists){const x=d.data();if($('hakoMaintenanceToggle'))$('hakoMaintenanceToggle').checked=!!x.maintenance;if($('hakoImportantToggle'))$('hakoImportantToggle').checked=!!x.important;if($('hakoSevereToggle'))$('hakoSevereToggle').checked=!!x.severe;if($('hakoMaintenanceImage'))$('hakoMaintenanceImage').value=x.maintenanceImage||'bakim-molasi.png';if($('hakoImportantImage'))$('hakoImportantImage').value=x.importantImage||'helpy-onemli-is.webp';}
   const t=await state.db.doc('settings/curriculum').get(); if(t.exists){const el=$('adminTermMode');if(el)el.value=t.data().mode||'first';}
+  const f=await state.db.doc('settings/features').get(),flags=f.exists?f.data().flags:DEFAULT_FLAGS;if(flags){if($('admToggleAdminBox'))$('admToggleAdminBox').checked=flags.adminBox!==false;if($('admToggleWheel'))$('admToggleWheel').checked=flags.wheel!==false;if($('admToggleTasks'))$('admToggleTasks').checked=flags.tasks!==false;if($('admToggleMarket'))$('admToggleMarket').checked=flags.market!==false;if($('admToggleOnline'))$('admToggleOnline').checked=flags.online!==false;}
  }
  function bindAdmin(){
+  ['admToggleAdminBox','admToggleWheel','admToggleTasks','admToggleMarket','admToggleOnline'].forEach(id=>$(id)?.addEventListener('change',saveFeatureFlags));
   $('adminCreateGiftCodeBtn')?.addEventListener('click',async()=>{const b=$('adminCreateGiftCodeBtn'),out=$('adminGiftCodeMsg');b.disabled=true;try{const r=await call('createGiftCode');if(out)out.textContent='Yeni kod: '+r.data.code+' · 25 altın + Temel Oyun Kartı';}catch(e){if(out)out.textContent='Kod oluşturulamadı: '+e.message;}finally{b.disabled=false;}});
   $('saveSeasonTheme')?.addEventListener('click',async()=>{try{await call('setSeasonTheme',{theme:$('adminSeasonTheme')?.value||'default'});msg('seasonMsg','Tema tüm kullanıcılara yayınlandı.');}catch(e){msg('seasonMsg',e.message);}});
   $('saveWheelRewards')?.addEventListener('click',async()=>{try{const items=($('adminWheelRewards')?.value||'').split('\n').map(x=>{const a=x.split('|');return {label:(a[0]||'').trim(),coins:Number(a[1])}});await call('setWheelRewards',{items});msg('wheelAdminMsg','Çark ödülleri kaydedildi.');}catch(e){msg('wheelAdminMsg',e.message);}});
