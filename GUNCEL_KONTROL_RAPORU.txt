@@ -29,7 +29,7 @@ GÜVENLİK NOTLARI
 TESTLER
 - Tüm yerel JavaScript dosyaları ve Cloud Functions için `node --check` başarılı.
 - HTML'de yinelenen ID kalmadı; yerel script yolları doğrulandı.
-- Eklenen `node tests/smoke.test.js` otomatik test paketi 5/5 başarılı.
+- `npm test` komutu depo kökündeki smoke.test.js dosyasını çalıştırır; testler bu değişiklik dalında CI ile doğrulanacaktır.
 - QR örnekleri QR kod çözücüyle doğrulandı; `MM:ABC123` içeriği başarıyla okundu.
 - HTML'deki yerel script, stil, ikon ve görsel yollarının tamamı mevcut.
 - ZIP bütünlük testi başarılı.
