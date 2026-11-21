@@ -101,7 +101,7 @@ exports.removeFriend=onCall(async req=>{
  return{ok:true};
 });
 exports.transferCoins=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount);
+ const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount),note=String(req.data?.note||'').trim().slice(0,40);
  if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>500)throw new HttpsError('invalid-argument','Tek seferde 1-500 altın gönderebilirsin.');
  await userDoc(target);
  const day=istanbulDayKey(),sender=db.doc('users/'+uid),receiver=db.doc('users/'+target),limitRef=db.doc('coinTransferLimits/'+uid);
@@ -114,7 +114,7 @@ exports.transferCoins=onCall(async req=>{
   const coins=Number(s.data().coins)||0;if(coins<amount)throw new HttpsError('failed-precondition','Yeterli altının yok.');
   tx.update(sender,{coins:coins-amount});tx.update(receiver,{coins:(Number(r.data().coins)||0)+amount});
   tx.set(limitRef,{day,amount:old+amount,updatedAt:Field.serverTimestamp()},{merge:true});
-  const log=db.collection('coinTransfers').doc();tx.set(log,{from:uid,to:target,amount,createdAt:Field.serverTimestamp()});
+  const log=db.collection('coinTransfers').doc();tx.set(log,{from:uid,to:target,amount,note,createdAt:Field.serverTimestamp()});
  });
  return{ok:true,amount};
 });
