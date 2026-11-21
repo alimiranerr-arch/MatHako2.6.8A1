@@ -64,6 +64,9 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(social.includes('currentSenderName'));
   assert.ok(social.includes('image\\/(png|jpeg|gif|webp)'));
   assert.ok(features.includes('membershipActive'));
+  const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
+  assert.ok(game.includes('opts:[`${a+b}/${d}`,`${a+b}/${d*2}`,`${a*b}/${d}`,`${a+b+1}/${d}`].sort'));
+  assert.ok(game.includes('genel liderlik tablosuna eklenmedi'));
 });
 
 console.log('\n' + passed + ' test başarılı.');
