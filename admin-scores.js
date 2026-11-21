@@ -51,7 +51,7 @@
               text.textContent =
                 `${data.playerName || 'Oyuncu'} · ` +
                 `${data.score || 0} puan · ` +
-                `${data.mode === 'classic' ? 'Klasik' : 'Sonsuz'} · ` +
+                `${({classic:'Klasik',endless:'Sonsuz',retry:'Hata tekrarı',balance:'Denge'}[data.mode] || data.mode || 'Bilinmeyen')} · ` +
                 `${data.public === true
                   ? 'Genel tabloda'
                   : 'Yalnızca admin'}`;
