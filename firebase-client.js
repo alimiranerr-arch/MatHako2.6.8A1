@@ -82,8 +82,7 @@ window.firebaseConfig = {
      ]);
     }catch(e){console.warn('Profil kaydı tamamlanamadı:',e);status('Oturum açıldı ancak profil kaydedilemedi: '+e.message,true);}
     if(!profileSaved)status('Oturum açıldı; profil eşitlemesi gecikiyor. İnternet bağlantısını kontrol et.',true);
-    try{const p=await state.db.collection('users').doc(user.uid).get();if(!p.data()?.surname||!p.data()?.school){const form=$('accountRegisterForm');form?.classList.remove('hide');if($('regGmail'))$('regGmail').value=user.email||'';if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';}}catch(e){console.warn('Profil formu hazırlanamadı:',e);}
-    else status('Hesap hazır. İyi eğlenceler!');
+    try{const p=await state.db.collection('users').doc(user.uid).get();if(!p.data()?.surname||!p.data()?.school){const form=$('accountRegisterForm');form?.classList.remove('hide');if($('regGmail'))$('regGmail').value=user.email||'';if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';}else status('Hesap hazır. İyi eğlenceler!');}catch(e){console.warn('Profil formu hazırlanamadı:',e);}
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     ready(user);
     state.db.collection('users').doc(user.uid).onSnapshot(d=>{
