@@ -30,7 +30,7 @@ window.firebaseConfig = {
       catch(e){console.warn('Admin claim:',e.message);}
     }
     if(state.admin)loadAdminSettings();
-    recordVisitor(user).catch(()=>{});
+    await recordVisitor(user).catch(e=>console.warn('Profil kaydı tamamlanamadı:',e));
     window.dispatchEvent(new CustomEvent('mm-auth-ready',{detail:{user,admin:state.admin}}));
     watchPublicSettings();watchSeasonTheme();
     state.db.collection('users').doc(user.uid).onSnapshot(d=>{if(d.exists&&d.data().banned){$('bannedOverlay')?.classList.remove('hide');$('bannedOverlay')?.setAttribute('aria-hidden','false');auth.signOut().catch(()=>{});}});
