@@ -1,10 +1,11 @@
 const {onCall, HttpsError} = require('firebase-functions/v2/https');
 const {onDocumentCreated} = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
+const crypto = require('crypto');
 admin.initializeApp();
 const db=admin.firestore(), Field=admin.firestore.FieldValue;
 const ADMIN_EMAIL='alimiranerr@gmail.com';
-function requireUser(req){if(!req.auth)throw new HttpsError('unauthenticated','Önce giriş yapmalısın.');return req.auth.uid;}
+function requireUser(req){if(!req.auth)throw new HttpsError('unauthenticated','Önce giriş yapmalısın.');if(req.auth.token.email_verified!==true)throw new HttpsError('permission-denied','Önce e-posta adresini doğrulamalısın.');return req.auth.uid;}
 function requireAdmin(req){const uid=requireUser(req);if(req.auth.token.admin!==true||req.auth.token.email!==ADMIN_EMAIL||req.auth.token.email_verified!==true)throw new HttpsError('permission-denied','Bu işlem yalnızca doğrulanmış Hako admin hesabına açıktır.');return uid;}
 async function userDoc(uid){const d=await db.doc(`users/${uid}`).get();if(d.exists&&d.data().banned)throw new HttpsError('permission-denied','Hesabın yönetici tarafından kalıcı olarak yasaklandı.');}
 exports.claimHakoAdmin=onCall(async req=>{if(!req.auth||req.auth.token.email!==ADMIN_EMAIL||req.auth.token.email_verified!==true)throw new HttpsError('permission-denied','Admin e-postası doğrulanmış olmalı.');const u=await admin.auth().getUser(req.auth.uid);await admin.auth().setCustomUserClaims(u.uid,{...(u.customClaims||{}),admin:true});await db.collection('auditLogs').add({action:'admin-claim-granted',uid:u.uid,email:ADMIN_EMAIL,at:Field.serverTimestamp()});return{ok:true};});
@@ -18,7 +19,41 @@ exports.publishTitle=onCall(async req=>{const uid=requireAdmin(req),name=String(
 exports.purchaseMarketItem=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const id=String(req.data.itemId||'');if(!id)throw new HttpsError('invalid-argument','Ürün seçilmedi.');const result=await db.runTransaction(async tx=>{const ur=db.doc(`users/${uid}`),ir=db.doc(`market/${id}`);const [u,i]=await Promise.all([tx.get(ur),tx.get(ir)]);if(!i.exists||!i.data().published)throw new HttpsError('not-found','Ürün bulunamadı.');const price=Number(i.data().price)||0,coins=Number(u.data()?.coins)||0;if(coins<price)throw new HttpsError('failed-precondition','Yeterli altının yok.');if(['membership','miniPass'].includes(i.data().type)&&u.data()?.membershipUntil>Date.now())throw new HttpsError('failed-precondition','Aynı anda yalnızca bir aktif üyelik veya MiniPass alabilirsin.');tx.set(ur,{coins:coins-price,inventory:Field.arrayUnion({itemId:id,name:i.data().name,type:i.data().type,ownedAt:Date.now()}),...(['membership','miniPass'].includes(i.data().type)?{membership:i.data().name,membershipType:i.data().type,membershipUntil:Date.now()+30*86400000}:{}),...(i.data().type==='title'?{title:i.data().name}:{})},{merge:true});return{coins:coins-price,name:i.data().name};});return result;});
 exports.spinDailyWheel=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const ref=db.doc(`wheelClaims/${uid}`);const cfg=await db.doc('settings/wheel').get();const rewards=cfg.exists&&Array.isArray(cfg.data().items)?cfg.data().items:[{label:'10 Altın',coins:10},{label:'25 Altın',coins:25},{label:'50 Altın',coins:50},{label:'5 Altın',coins:5},{label:'100 Altın',coins:100}];const r=rewards[Math.floor(Math.random()*rewards.length)];await db.runTransaction(async tx=>{const [claim,user]=await Promise.all([tx.get(ref),tx.get(db.doc(`users/${uid}`))]);const today=new Date().toISOString().slice(0,10);if(claim.exists&&claim.data().day===today)throw new HttpsError('failed-precondition','Bugünkü çark hakkını kullandın.');tx.set(ref,{day:today,at:Field.serverTimestamp(),reward:r});tx.set(db.doc(`users/${uid}`),{coins:(Number(user.data()?.coins)||0)+r.coins},{merge:true});});return r;});
 exports.claimMiniPass=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const ref=db.doc(`miniPassClaims/${uid}`),u=db.doc(`users/${uid}`),today=new Date().toISOString().slice(0,10);let reward;await db.runTransaction(async tx=>{const [c,us]=await Promise.all([tx.get(ref),tx.get(u)]);if(c.exists&&c.data().day===today)throw new HttpsError('failed-precondition','Günlük Mini Pass ödülünü zaten aldın.');const card=Math.random()<0.22;reward={coins:15,card:card?{id:'basic-'+today,name:'Temel Oyun Kartı',type:'card'}:null};const inv=Array.isArray(us.data()?.inventory)?us.data().inventory:[];tx.set(ref,{day:today,at:Field.serverTimestamp(),reward});tx.set(u,{coins:(Number(us.data()?.coins)||0)+reward.coins,...(card?{inventory:[...inv,{...reward.card,ownedAt:Date.now()}]}:{})},{merge:true});});return reward;});
-exports.logLoginFailure=onCall(async req=>{const email=String(req.data?.email||'').trim().toLowerCase().slice(0,254);let displayName='Bilinmeyen kullanıcı';if(email){const matches=await db.collection('users').where('email','==',email).limit(1).get();if(!matches.empty)displayName=String(matches.docs[0].data().displayName||displayName).slice(0,80);}await db.collection('loginFailures').add({email:email||'Bilinmeyen',displayName,createdAt:Field.serverTimestamp(),source:'client-auth-error'});return{ok:true};});
+exports.logLoginFailure=onCall(async req=>{
+ const email=String(req.data?.email||'').trim().toLowerCase().slice(0,254);
+ const ip=String(req.rawRequest?.ip||'unknown');
+ const key=crypto.createHash('sha256').update(ip).digest('hex').slice(0,40);
+ const rateRef=db.doc('loginFailureRateLimits/'+key);
+ const now=Date.now(),windowMs=10*60*1000;
+ await db.runTransaction(async tx=>{
+  const snap=await tx.get(rateRef),old=snap.exists?snap.data():{};
+  const count=old.windowStart&&now-old.windowStart<windowMs?Number(old.count)||0:0;
+  if(count>=8)throw new HttpsError('resource-exhausted','Çok fazla deneme yapıldı. Biraz sonra tekrar dene.');
+  tx.set(rateRef,{windowStart:count?old.windowStart:now,count:count+1,updatedAt:Field.serverTimestamp()});
+ });
+ await db.collection('loginFailures').add({email:email||'Bilinmeyen',displayName:'Bilinmeyen kullanıcı',createdAt:Field.serverTimestamp(),source:'client-auth-error'});
+ return{ok:true};
+});
+exports.searchPlayers=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);
+ const q=String(req.data?.query||'').trim().slice(0,40);
+ if(q.length<2)throw new HttpsError('invalid-argument','En az 2 karakter yaz.');
+ let docs=[];
+ const exact=await db.doc('users/'+q).get();
+ if(exact.exists&&!exact.data().banned)docs=[exact];
+ else {
+  const snap=await db.collection('users').orderBy('displayName').startAt(q).endAt(q+'\uf8ff').limit(10).get();
+  docs=snap.docs.filter(d=>!d.data().banned);
+ }
+ return {players:docs.map(d=>({uid:d.id,displayName:String(d.data().displayName||d.data().nickname||'Oyuncu').slice(0,40),playerId:String(d.data().playerId||d.id).slice(0,64)}))};
+});
+exports.findChatMembers=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);
+ const emails=Array.isArray(req.data?.emails)?[...new Set(req.data.emails.map(x=>String(x||'').trim().toLowerCase()).filter(x=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x)))].slice(0,10):[];
+ if(!emails.length)throw new HttpsError('invalid-argument','Geçerli e-posta adresi gir.');
+ const snap=await db.collection('users').where('email','in',emails).limit(10).get();
+ return {uids:snap.docs.filter(d=>!d.data().banned).map(d=>d.id)};
+});
 exports.protectAdminProfile=onDocumentCreated('users/{uid}',async e=>{const uid=e.params.uid,u=await admin.auth().getUser(uid).catch(()=>null);if(u&&u.email===ADMIN_EMAIL&&u.emailVerified)await admin.auth().setCustomUserClaims(uid,{...(u.customClaims||{}),admin:true});});
 
 // Skorlar yalnızca callable üzerinden yazılır; oyuncu kendi puanını değiştiremez.
