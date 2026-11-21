@@ -33,11 +33,11 @@ TESTLER
 - QR örnekleri QR kod çözücüyle doğrulandı; `MM:ABC123` içeriği başarıyla okundu.
 - HTML'deki yerel script, stil, ikon ve görsel yollarının tamamı mevcut.
 - ZIP bütünlük testi başarılı.
-- Firebase Emulator / canlı Firebase entegrasyon testi bu ortamda yapılamadı; Firebase projesine deploy edilmedi. Kamera donanımı da gerçek cihazda test edilmedi.
+- Firebase Emulator'da Firestore ve Storage kuralları derleme testi CI'da başarılıdır. Bu, canlı Firebase üzerinde uçtan uca yetki testi değildir; projeye deploy edilmedi. Kamera donanımı da gerçek cihazda test edilmedi.
 
 TAMAMLANMAYAN / KAYNAK GEREKTİREN KONULAR
 - Orijinal game.js/core.js/sync.js kaynakları önceki arşivlerde yok. Bu nedenle orijinal oyun soru üretimi, puanlama, ilerleme ve çevrimdışı senkronizasyonu yeniden oluşturulmuş değildir.
 - Sezon temaları şimdilik mevcut paleti bozmayan küçük emoji/başlık görselleridir; özel GIF dosyaları henüz sağlanmadı.
-- E-posta değişimini 30 günde bir sınırlama akışı bu paket içinde henüz uygulanmadı.
-- Düello puan/doğru cevap alanları istemciden geldiği için hileye karşı kesin korumalı değildir; güvenli yarışma için soruların ve cevap doğrulamasının sunucu tarafına taşınması gerekir.
+- E-posta değişimini 30 günde bir sınırlama akışı henüz uygulanmadı; doğrudan Auth e-posta değişikliği kullanıcı arayüzünde açılmamalıdır.
+- Düello puan/doğru cevap alanları hâlâ istemciden geldiği için hileye karşı kesin korumalı değildir; soru ve cevap doğrulaması sunucu tarafına taşınmalıdır.
 - Bu ZIP Firebase'e otomatik yükleme yapmaz. `FIREBASE_KURULUM_TR.txt` adımlarına göre Firestore/Storage kuralları ve Cloud Functions deploy edilmelidir.
