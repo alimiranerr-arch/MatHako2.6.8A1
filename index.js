@@ -190,6 +190,7 @@ exports.requestEmailChange=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const email=String(req.data?.email||'').trim().toLowerCase();
  if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254)throw new HttpsError('invalid-argument','Geçerli bir e-posta adresi gir.');
  if(email===String(req.auth.token.email||'').toLowerCase())throw new HttpsError('invalid-argument','Yeni e-posta mevcut adresinle aynı.');
+ try{const existing=await admin.auth().getUserByEmail(email);if(existing.uid!==uid)throw new HttpsError('already-exists','Bu e-posta başka bir hesapta kullanılıyor.');}catch(e){if(e.code!=='auth/user-not-found'&&!(e instanceof HttpsError))throw e;}
  const ref=db.doc('emailChangeLimits/'+uid),now=Date.now(),period=30*86400000;
  await db.runTransaction(async tx=>{const s=await tx.get(ref),last=Number(s.data()?.lastRequestedAt)||0;if(last&&now-last<period){const days=Math.ceil((period-(now-last))/86400000);throw new HttpsError('failed-precondition','E-posta değişikliği için '+days+' gün daha beklemelisin.');}tx.set(ref,{lastRequestedAt:now,requestedEmail:email,status:'verification-pending'},{merge:true});});
  return{ok:true,email};
