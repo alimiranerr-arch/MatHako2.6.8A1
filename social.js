@@ -45,7 +45,7 @@
   },e=>{panel.textContent='Bildirimler yüklenemedi: '+e.message;});
  }
  function bindNotifications(){
-  const tabs=$('tabs');if(tabs&&!$('mmNotifButton')){const b=document.createElement('button');b.type='button';b.id='mmNotifButton';b.className='btn';b.textContent='🔔';b.setAttribute('aria-label','Bildirimleri aç');b.addEventListener('click',()=>{$('notifPanel')?.classList.toggle('hide');});tabs.appendChild(b);}
+  const tabs=$('tabs');if(tabs&&!$('mmNotifButton')){const b=document.createElement('button');b.type='button';b.id='mmNotifButton';b.className='btn';b.textContent='🔔';b.setAttribute('aria-label','Bildirimleri aç');b.addEventListener('click',async()=>{const panel=$('notifPanel');panel?.classList.toggle('hide');if(panel&&!panel.classList.contains('hide')&&uid()){try{const s=await db().collection('users').doc(uid()).collection('notifications').where('read','==',false).limit(20).get(),batch=db().batch();s.docs.forEach(d=>batch.update(d.ref,{read:true}));await batch.commit();}catch(e){console.warn('Bildirim okundu işaretlenemedi:',e);}}});tabs.appendChild(b);}
   const pref=$('notifOn');if(pref&&!pref.dataset.bound){pref.dataset.bound='1';pref.checked=localStorage.getItem('mm_notifications')==='1';pref.addEventListener('change',async()=>{localStorage.setItem('mm_notifications',pref.checked?'1':'0');if(pref.checked&&'Notification'in window&&Notification.permission==='default')await Notification.requestPermission();});}
  }
  function bindFriends(){
