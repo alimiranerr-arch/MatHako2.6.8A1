@@ -33,7 +33,8 @@
   btn.addEventListener('click',async()=>{if(!c()?.user){alert('PDF raporu için giriş yapmalısın.');return;}const report=$('report');if(!report)return;
    try{const snap=await c().db.collection('scores').where('uid','==',c().user.uid).orderBy('createdAt','desc').limit(100).get();
     const rows=snap.docs.map(d=>{const x=d.data();return '<tr><td>'+safe(x.mode)+'</td><td>'+safe(x.topic)+'</td><td>'+(Number(x.score)||0)+'</td><td>'+(Number(x.questions)||0)+'</td><td>'+(x.createdAt?.toDate?.().toLocaleString('tr-TR')||'')+'</td></tr>';}).join('');
-    report.innerHTML='<h1>Matematik Macerası · Kişisel Rapor</h1><p>'+safe(c().user.displayName||c().user.email||'Oyuncu')+'</p><table><thead><tr><th>Mod</th><th>Konu</th><th>Puan</th><th>Soru</th><th>Tarih</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">Henüz skor yok.</td></tr>')+'</tbody></table>';
+    const mistakes=$('includeMistakesPdf')?.checked?(w.MMGame?.getMistakes?.()||[]):[];const mistakeRows=mistakes.map(x=>'<li><b>'+safe(x.q)+'</b><br>Seçimin: '+safe(x.chosen)+' · Doğru cevap: '+safe(x.answer)+'</li>').join('');
+    report.innerHTML='<h1>Matematik Macerası · Kişisel Rapor</h1><p>'+safe(c().user.displayName||c().user.email||'Oyuncu')+'</p><table><thead><tr><th>Mod</th><th>Konu</th><th>Puan</th><th>Soru</th><th>Tarih</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5">Henüz skor yok.</td></tr>')+'</tbody></table>'+(mistakeRows?'<h2>Son oyundaki hatalar</h2><ul>'+mistakeRows+'</ul>':'');
     report.setAttribute('aria-hidden','false');window.print();report.setAttribute('aria-hidden','true');
    }catch(e){alert('Rapor oluşturulamadı: '+e.message);}
   });
