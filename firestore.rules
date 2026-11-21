@@ -35,7 +35,7 @@ service cloud.firestore {
     && (!request.resource.data.keys().hasAny(['mediaPath']) || (request.resource.data.mediaPath is string && request.resource.data.mediaPath.size()<=500 && request.resource.data.mediaPath.matches('chatMedia/[^/]+/'+request.auth.uid+'_.*')))
     && (!request.resource.data.keys().hasAny(['mediaType']) || (request.resource.data.mediaType is string && request.resource.data.mediaType.matches('(image|audio|video)/[a-zA-Z0-9.+-]+')));
   }
-  match /settings/{doc}{allow read:if true;allow write:if admin();}
+  match /settings/{doc}{allow read:if doc in ['site','theme','curriculum','features']||admin();allow write:if admin();}
   match /users/{uid}{
    allow read:if owner(uid)||admin();
    allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location','avatar','avatarPath','status','statusUpdatedAt'])&&validProfile(request.resource.data);
