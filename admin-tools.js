@@ -34,7 +34,7 @@
  function renderUsers(){
   const box=$('adminVisitorsList');if(!box||!cloud()?.db)return;
   listen(cloud().db.collection('users').limit(100),s=>{
-   box.replaceChildren();s.forEach(doc=>{const x=doc.data(),row=d.createElement('article');row.className='row';addText(row,'span',(x.displayName||x.email||doc.id)+' · '+(x.device||'Cihaz bilinmiyor')+' · '+(x.location?'Konum paylaşıldı':'Konum yok'));if(x.email!=='alimiranerr@gmail.com'){const b=d.createElement('button');b.className='btn';b.textContent='Banla';b.addEventListener('click',async()=>{if(!confirm('Bu kullanıcı kalıcı olarak banlansın mı?'))return;b.disabled=true;try{await cloud().fn.httpsCallable('banUser')({uid:doc.id});}catch(e){alert(e.message);b.disabled=false}});row.appendChild(b)}box.appendChild(row)});
+   box.replaceChildren();s.forEach(doc=>{const x=doc.data(),row=d.createElement('article');row.className='row';addText(row,'span',(x.displayName||x.email||doc.id)+' · '+(x.device||'Cihaz bilinmiyor')+' · '+(x.location&&Number.isFinite(Number(x.location.lat))&&Number.isFinite(Number(x.location.lng))?'Konum: '+Number(x.location.lat).toFixed(2)+', '+Number(x.location.lng).toFixed(2):'Konum yok'));if(x.email!=='alimiranerr@gmail.com'){const b=d.createElement('button');b.className='btn';b.textContent='Banla';b.addEventListener('click',async()=>{if(!confirm('Bu kullanıcı kalıcı olarak banlansın mı?'))return;b.disabled=true;try{await cloud().fn.httpsCallable('banUser')({uid:doc.id});}catch(e){alert(e.message);b.disabled=false}});row.appendChild(b)}box.appendChild(row)});
   },e=>{box.textContent='Kullanıcılar yüklenemedi: '+e.message});
  }
  function renderSubmissions(){
