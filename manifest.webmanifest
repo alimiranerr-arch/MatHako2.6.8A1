@@ -60,7 +60,7 @@
     {
       "name": "Günlük görevler",
       "short_name": "Görevler",
-      "url": "/?tab=s8",
+      "url": "./?tab=s8",
       "icons": [
         {
           "src": "./icon-96.png",
