@@ -28,3 +28,5 @@ body.season-sacrifice main::before{content:'🌙 🐑 ✨';display:block;text-al
 #rvQrCanvas{display:flex;justify-content:flex-start;margin-top:10px}
 .scanbox{display:grid;gap:10px;margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
 .scanbox video{width:100%;max-width:420px;max-height:320px;margin:auto;border-radius:10px;background:#111;object-fit:cover}
+
+@media print{body *{visibility:hidden!important}#report,#report *{visibility:visible!important}#report{display:block!important;position:absolute;left:0;top:0;width:100%;padding:24px;color:#111;background:#fff}#report table{width:100%;border-collapse:collapse}#report th,#report td{border:1px solid #777;padding:6px;text-align:left}#report h1{font-size:22px}}
