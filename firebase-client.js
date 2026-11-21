@@ -84,7 +84,7 @@ window.firebaseConfig = {
  }
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
-  await if(!user.email)throw Error('Google hesabından e-posta bilgisi alınamadı.');
+  if(!user.email)throw Error('Google hesabından e-posta bilgisi alınamadı.');
   await state.db.collection('users').doc(user.uid).set({email:user.email.toLowerCase(),displayName:String(user.displayName||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
  }
  async function loadAdminSettings(){
