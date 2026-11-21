@@ -17,6 +17,7 @@ service firebase.storage {
    allow update:if false;
    allow delete:if admin();
   }
+  match /taskMedia/{fileName}{allow read:if active()||admin();allow create,update:if admin()&&request.resource.size<10*1024*1024&&request.resource.contentType.matches('image/(gif|png|webp)');allow delete:if admin();}
   match /market/{fileName}{
    allow read:if true;
    allow create,update:if admin()&&request.resource.size<10*1024*1024&&request.resource.contentType.matches('image/(gif|png|jpeg|webp)');
