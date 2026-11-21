@@ -33,6 +33,13 @@ exports.setFeatureFlags=onCall(async req=>{
 });
 exports.setMaintenance=onCall(async req=>{const uid=requireAdmin(req),d=req.data||{},enabled=!!d.maintenance,important=!!d.important,severe=!!d.severe,allowed=['bakim-molasi.png','helpy-onemli-is.webp','helpy-teknik-onarim.gif'],maintenanceImage=allowed.includes(d.maintenanceImage)?d.maintenanceImage:'bakim-molasi.png',importantImage=allowed.includes(d.importantImage)?d.importantImage:'helpy-onemli-is.webp';await db.doc('settings/site').set({maintenance:enabled,important,severe,maintenanceImage,importantImage,updatedAt:Field.serverTimestamp()},{merge:true});return{ok:true,maintenance:enabled,important,severe};});
 exports.setTermMode=onCall(async req=>{const uid=requireAdmin(req),mode=req.data.mode;if(!['first','second'].includes(mode))throw new HttpsError('invalid-argument','Dönem first veya second olmalı.');await db.doc('settings/curriculum').set({mode,updatedAt:Field.serverTimestamp(),updatedBy:uid},{merge:true});return{ok:true,mode};});
+exports.setEconomySettings=onCall(async req=>{
+ const uid=requireAdmin(req),d=req.data||{};
+ const dailyTransferLimit=Number(d.dailyTransferLimit),singleTransferLimit=Number(d.singleTransferLimit),coinsPerScore=Number(d.coinsPerScore),maxGameReward=Number(d.maxGameReward);
+ if(!Number.isSafeInteger(dailyTransferLimit)||dailyTransferLimit<1||dailyTransferLimit>1000000||!Number.isSafeInteger(singleTransferLimit)||singleTransferLimit<1||singleTransferLimit>50000||singleTransferLimit>dailyTransferLimit||!Number.isSafeInteger(coinsPerScore)||coinsPerScore<0||coinsPerScore>100||!Number.isSafeInteger(maxGameReward)||maxGameReward<0||maxGameReward>1000000)throw new HttpsError('invalid-argument','Ekonomi ayarları geçersiz. Günlük limit 1-1.000.000, tek transfer 1-50.000, skor oranı 0-100 ve oyun ödül üst sınırı 0-1.000.000 olmalı.');
+ await db.doc('settings/economy').set({dailyTransferLimit,singleTransferLimit,coinsPerScore,maxGameReward,updatedAt:Field.serverTimestamp(),updatedBy:uid},{merge:true});
+ return{ok:true,dailyTransferLimit,singleTransferLimit,coinsPerScore,maxGameReward};
+});
 exports.setSeasonTheme=onCall(async req=>{const uid=requireAdmin(req),theme=req.data.theme;if(!['default','newyear','halloween','ramadan','sacrifice'].includes(theme))throw new HttpsError('invalid-argument','Geçersiz tema.');await db.doc('settings/theme').set({theme,updatedAt:Field.serverTimestamp(),updatedBy:uid},{merge:true});return{ok:true,theme};});
 exports.banUser=onCall(async req=>{const uid=requireAdmin(req),targetUid=String(req.data.uid||'');if(!targetUid||targetUid===uid)throw new HttpsError('invalid-argument','Geçersiz kullanıcı.');const target=await admin.auth().getUser(targetUid);if(target.email===ADMIN_EMAIL)throw new HttpsError('permission-denied','Hako admin banlanamaz.');await admin.auth().updateUser(targetUid,{disabled:true});await admin.auth().revokeRefreshTokens(targetUid);await db.doc(`users/${targetUid}`).set({banned:true,bannedAt:Field.serverTimestamp(),bannedBy:uid},{merge:true});return{ok:true};});
 exports.publishMarketItem=onCall(async req=>{const uid=requireAdmin(req),d=req.data||{},name=String(d.name||'').trim(),type=String(d.type||'item'),price=Number(d.price),gifUrl=String(d.gifUrl||'').trim().slice(0,1000);if(!name||name.length>80||!['badge','emoji','card','membership','miniPass','theme','avatar','title','item'].includes(type)||!Number.isSafeInteger(price)||price<0||price>1000000||(gifUrl&&!/^https:\/\//i.test(gifUrl)))throw new HttpsError('invalid-argument','Ürün adı, türü veya fiyatı geçersiz.');const ref=await db.collection('market').add({name,type,price,emoji:String(d.emoji||'🎁').slice(0,8),gifUrl,description:String(d.description||'').slice(0,300),published:true,createdBy:uid,createdAt:Field.serverTimestamp()});return{ok:true,id:ref.id};});
@@ -125,7 +132,8 @@ exports.removeFriend=onCall(async req=>{
 });
 exports.transferCoins=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'transferCoins',5);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount),note=String(req.data?.note||'').trim().slice(0,40);
- if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>500)throw new HttpsError('invalid-argument','Tek seferde 1-500 altın gönderebilirsin.');
+ const economySnap=await db.doc('settings/economy').get(),economy=economySnap.exists?economySnap.data():{},singleLimit=Number.isSafeInteger(economy.singleTransferLimit)?economy.singleTransferLimit:500,dailyLimit=Number.isSafeInteger(economy.dailyTransferLimit)?economy.dailyTransferLimit:1000;
+ if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>singleLimit)throw new HttpsError('invalid-argument','Tek seferlik transfer limiti: '+singleLimit+' altın.');
  await userDoc(target);
  const day=istanbulDayKey(),sender=db.doc('users/'+uid),receiver=db.doc('users/'+target),limitRef=db.doc('coinTransferLimits/'+uid);
  await db.runTransaction(async tx=>{
@@ -133,7 +141,7 @@ exports.transferCoins=onCall(async req=>{
   if(!s.exists||!r.exists)throw new HttpsError('not-found','Kullanıcı bulunamadı.');
   if(r.data().banned)throw new HttpsError('permission-denied','Bu kullanıcıya transfer yapılamaz.');
   const old=l.exists&&l.data().day===day?Number(l.data().amount)||0:0;
-  if(old+amount>1000)throw new HttpsError('resource-exhausted','Günlük 1000 altın transfer sınırına ulaştın.');
+  if(old+amount>dailyLimit)throw new HttpsError('resource-exhausted','Günlük '+dailyLimit+' altın transfer sınırına ulaştın.');
   const coins=Number(s.data().coins)||0;if(coins<amount)throw new HttpsError('failed-precondition','Yeterli altının yok.');
   tx.update(sender,{coins:coins-amount});tx.update(receiver,{coins:(Number(r.data().coins)||0)+amount});
   tx.set(limitRef,{day,amount:old+amount,updatedAt:Field.serverTimestamp()},{merge:true});
@@ -390,7 +398,13 @@ exports.finishGameSession=onCall(async req=>{
   const s=await tx.get(sessionRef);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
   const d=s.data(),finished=d.lives<=0||d.nextIndex>=d.questions.length||(d.mode==='retry'&&d.nextIndex>=10);
   if(!finished)throw new HttpsError('failed-precondition','Oyun henüz tamamlanmadı.');
-  result={score:d.score,correct:d.correct,questions:d.nextIndex,mode:d.mode,topic:d.topic};
+  const userRef=db.doc('users/'+uid),economyRef=db.doc('settings/economy');
+  const [userSnap,economySnap]=await Promise.all([tx.get(userRef),tx.get(economyRef)]);
+  if(!userSnap.exists)throw new HttpsError('failed-precondition','Kullanıcı profili bulunamadı.');
+  const economy=economySnap.exists?economySnap.data():{},coinsPerScore=Number.isSafeInteger(economy.coinsPerScore)?economy.coinsPerScore:5,maxGameReward=Number.isSafeInteger(economy.maxGameReward)?economy.maxGameReward:50000;
+  const coinsEarned=Math.min(Math.max(0,Math.floor(Number(d.score)||0)*coinsPerScore),maxGameReward);
+  tx.update(userRef,{coins:(Number(userSnap.data().coins)||0)+coinsEarned});
+  result={score:d.score,correct:d.correct,questions:d.nextIndex,mode:d.mode,topic:d.topic,difficulty:d.difficulty||'medium',coinsEarned};
   if(d.competitionType==='duel'){
    const ref=db.doc('duels/'+d.competitionCode),duel=await tx.get(ref);if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('failed-precondition','Düello artık aktif değil.');
    const scores={...(duel.data().scores||{}),[uid]:{score:d.score,correct:d.correct,questions:d.nextIndex,at:Date.now()}},complete=Object.keys(scores).length===2;
@@ -402,8 +416,8 @@ exports.finishGameSession=onCall(async req=>{
    const complete=Object.keys(scores).length>=(x.membersA||[]).length+(x.membersB||[]).length;
    tx.update(ref,{scores,totals,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='group';result.completed=complete;result.totals=totals;
   }else{
-   const user=await tx.get(db.doc('users/'+uid)),name=String(user.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32);
-   tx.create(db.collection('scores').doc(),{uid,playerName:name,score:d.score,mode:d.mode,topic:d.topic,public:req.data?.public===true,questions:d.nextIndex,createdAt:Field.serverTimestamp()});
+   const name=String(userSnap.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32);
+   tx.create(db.collection('scores').doc(),{uid,playerName:name,score:d.score,mode:d.mode,topic:d.topic,difficulty:d.difficulty||'medium',public:req.data?.public===true,questions:d.nextIndex,coinsEarned,createdAt:Field.serverTimestamp()});
   }
   tx.update(sessionRef,{status:'submitted',submittedAt:Field.serverTimestamp()});
  });
