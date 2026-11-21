@@ -280,7 +280,7 @@ exports.startGameSession=onCall(async req=>{
  else if(competitionType==='group'){const comp=await db.doc('groupCompetitions/'+competitionCode).get();if(!comp.exists||comp.data().status!=='playing'||(!(comp.data().membersA||[]).includes(uid)&&!(comp.data().membersB||[]).includes(uid))||comp.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif grup yarışması bulunamadı.');}
  else if(competitionType)throw new HttpsError('invalid-argument','Yarışma türü geçersiz.');
  const count=mode==='retry'?10:500,questions=Array.from({length:count},()=>makeServerQuestion(topic)),id=crypto.randomBytes(16).toString('hex');
- await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',createdAt:Field.serverTimestamp(),expiresAt:Date.now()+2*60*60*1000});
+ await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',answers:[],nextIndex:0,score:0,correct:0,streak:0,lives:5,createdAt:Field.serverTimestamp(),expiresAt:Date.now()+2*60*60*1000});
  return{sessionId:id,questions:questions.map(x=>({q:x.q,opts:x.options}))};
 });
 exports.submitGameSession=onCall(async req=>{
@@ -313,14 +313,51 @@ exports.submitGameSession=onCall(async req=>{
  return{ok:true,...result};
 });
 
-// Eski istemci puan uç noktası kapalı; yalnızca sunucu oturumları kabul edilir.
-exports.submitGameScore=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const d=req.data||{},score=Number(d.score),questions=Number(d.questions),mode=String(d.mode||'classic'),topic=String(d.topic||'Karışık');
- if(!Number.isInteger(score)||score<0||!Number.isInteger(questions)||questions<1||questions>10000||score>questions*20||!['classic','endless','retry','balance'].includes(mode)||(mode==='retry'&&questions>10))throw new HttpsError('invalid-argument','Skor, soru sayısı veya oyun modu geçersiz.');
- const ur=db.doc(`users/${uid}`),u=await ur.get(),name=String(u.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32),publicScore=d.public===true;
- const ref=await db.collection('scores').add({uid,playerName:name,score,mode,topic:topic.slice(0,40),public:publicScore,questions,createdAt:Field.serverTimestamp()});
- return {ok:true,id:ref.id};
+
+exports.submitGameAnswer=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.sessionId||''),index=Number(req.data?.index),selected=req.data?.answer===null?null:String(req.data?.answer);
+ if(!id||!Number.isInteger(index)||index<0)throw new HttpsError('invalid-argument','Cevap bilgisi geçersiz.');
+ const ref=db.doc('gameSessions/'+id);let result;
+ await db.runTransaction(async tx=>{
+  const s=await tx.get(ref);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
+  const d=s.data();if(index!==d.nextIndex||index>=d.questions.length||d.lives<=0)throw new HttpsError('failed-precondition','Bu soru zaten yanıtlandı veya sıra geçersiz.');
+  const q=d.questions[index];if(selected!==null&&!q.options.includes(selected))throw new HttpsError('invalid-argument','Cevap seçenekler arasında değil.');
+  const correct=selected===q.answer,streak=correct?d.streak+1:0,score=correct?d.score+10+Math.min(streak-1,5)*2:d.score,lives=correct?d.lives:d.lives-1;
+  const entry={selected,correct,answer:q.answer,at:Date.now()};
+  tx.update(ref,{answers:Field.arrayUnion(entry),nextIndex:index+1,score,correct:d.correct+(correct?1:0),streak,lives});
+  result={correct,answer:q.answer,score,correctCount:d.correct+(correct?1:0),streak,lives,nextIndex:index+1};
+ });
+ return result;
 });
+exports.finishGameSession=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.sessionId||'');if(!id)throw new HttpsError('invalid-argument','Oyun oturumu gerekli.');
+ const sessionRef=db.doc('gameSessions/'+id);let result;
+ await db.runTransaction(async tx=>{
+  const s=await tx.get(sessionRef);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
+  const d=s.data(),finished=d.lives<=0||d.nextIndex>=d.questions.length||(d.mode==='retry'&&d.nextIndex>=10);
+  if(!finished)throw new HttpsError('failed-precondition','Oyun henüz tamamlanmadı.');
+  result={score:d.score,correct:d.correct,questions:d.nextIndex,mode:d.mode,topic:d.topic};
+  if(d.competitionType==='duel'){
+   const ref=db.doc('duels/'+d.competitionCode),duel=await tx.get(ref);if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('failed-precondition','Düello artık aktif değil.');
+   const scores={...(duel.data().scores||{}),[uid]:{score:d.score,correct:d.correct,questions:d.nextIndex,at:Date.now()}},complete=Object.keys(scores).length===2;
+   tx.update(ref,{scores,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='duel';result.completed=complete;
+  }else if(d.competitionType==='group'){
+   const ref=db.doc('groupCompetitions/'+d.competitionCode),comp=await tx.get(ref);if(!comp.exists||comp.data().status!=='playing'||comp.data().scores?.[uid])throw new HttpsError('failed-precondition','Grup yarışması artık aktif değil.');
+   const x=comp.data(),side=(x.membersA||[]).includes(uid)?'a':(x.membersB||[]).includes(uid)?'b':null;if(!side)throw new HttpsError('permission-denied','Bu grup yarışmasında değilsin.');
+   const scores={...(x.scores||{}),[uid]:{score:d.score,correct:d.correct,side,at:Date.now()}},totals={a:0,b:0};for(const v of Object.values(scores))totals[v.side]+=v.score;
+   const complete=Object.keys(scores).length>=(x.membersA||[]).length+(x.membersB||[]).length;
+   tx.update(ref,{scores,totals,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='group';result.completed=complete;result.totals=totals;
+  }else{
+   const user=await tx.get(db.doc('users/'+uid)),name=String(user.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32);
+   tx.create(db.collection('scores').doc(),{uid,playerName:name,score:d.score,mode:d.mode,topic:d.topic,public:req.data?.public===true,questions:d.nextIndex,createdAt:Field.serverTimestamp()});
+  }
+  tx.update(sessionRef,{status:'submitted',submittedAt:Field.serverTimestamp()});
+ });
+ return{ok:true,...result};
+});
+
+// Oturum puanları yalnızca sunucuda doğrulanır.
+exports.submitGameScore=onCall(async()=>{throw new HttpsError('failed-precondition','Doğrudan skor gönderimi kapalı. Sunucu oturumu kullan.');});
 
 
 // Asenkron, kodla katılınan düellolar: her iki oyuncu da skorunu ayrı gönderir.
