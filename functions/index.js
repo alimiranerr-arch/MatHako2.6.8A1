@@ -94,7 +94,7 @@ exports.findChatMembers=onCall(async req=>{
 });
 
 exports.sendFriendRequest=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||'');
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'sendFriendRequest',20);const target=String(req.data?.targetUid||'');
  if(!target||target===uid)throw new HttpsError('invalid-argument','Geçerli bir oyuncu seç.');
  await userDoc(target);
  const ids=[uid,target].sort(),id=ids.join('_'),ref=db.doc('friendRequests/'+id);
@@ -124,7 +124,7 @@ exports.removeFriend=onCall(async req=>{
  return{ok:true};
 });
 exports.transferCoins=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount),note=String(req.data?.note||'').trim().slice(0,40);
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'transferCoins',5);const target=String(req.data?.targetUid||''),amount=Number(req.data?.amount),note=String(req.data?.note||'').trim().slice(0,40);
  if(!target||target===uid||!Number.isSafeInteger(amount)||amount<1||amount>500)throw new HttpsError('invalid-argument','Tek seferde 1-500 altın gönderebilirsin.');
  await userDoc(target);
  const day=istanbulDayKey(),sender=db.doc('users/'+uid),receiver=db.doc('users/'+target),limitRef=db.doc('coinTransferLimits/'+uid);
@@ -235,7 +235,7 @@ exports.sellInventoryItem=onCall(async req=>{
  return result;
 });
 exports.requestEmailChange=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const email=String(req.data?.email||'').trim().toLowerCase();
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'requestEmailChange',5);const email=String(req.data?.email||'').trim().toLowerCase();
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw new HttpsError('invalid-argument','Geçerli bir e-posta adresi gir.');
  if(email===String(req.auth.token.email||'').toLowerCase())throw new HttpsError('invalid-argument','Yeni e-posta mevcut adresinle aynı.');
  try{const existing=await admin.auth().getUserByEmail(email);if(existing.uid!==uid)throw new HttpsError('already-exists','Bu e-posta başka bir hesapta kullanılıyor.');}catch(e){if(e.code!=='auth/user-not-found'&&!(e instanceof HttpsError))throw e;}
@@ -416,7 +416,7 @@ exports.submitGameScore=onCall(async()=>{throw new HttpsError('failed-preconditi
 
 // Asenkron, kodla katılınan düellolar: her iki oyuncu da skorunu ayrı gönderir.
 exports.createDuel=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const topic=String(req.data?.topic||'Karışık').slice(0,40),targetUid=String(req.data?.targetUid||''),difficulty=String(req.data?.difficulty||'normal');
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'createDuel',5);const topic=String(req.data?.topic||'Karışık').slice(0,40),targetUid=String(req.data?.targetUid||''),difficulty=String(req.data?.difficulty||'normal');
  if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Düello konusu geçersiz.');if(!['easy','normal','hard'].includes(difficulty))throw new HttpsError('invalid-argument','Düello zorluğu geçersiz.');
  if(targetUid){if(targetUid===uid)throw new HttpsError('invalid-argument','Kendine düello gönderemezsin.');await userDoc(targetUid);const friend=await db.doc('users/'+uid+'/friends/'+targetUid).get();if(!friend.exists)throw new HttpsError('permission-denied','Yalnızca arkadaşlarına doğrudan düello gönderebilirsin.');}
  const code=randomJoinCode(),ref=db.collection('duels').doc(code);
