@@ -23,13 +23,14 @@ service cloud.firestore {
   }
   function validAppearance(data){return data.keys().hasOnly(['bw','mode','theme','bgOn','bg','custom','c1','c2','effect','sound','vibration','updatedAt'])&&data.bw is bool&&data.mode in ['light','dark','auto']&&data.theme is int&&data.theme>=0&&data.theme<=4&&data.bgOn is bool&&data.bg is int&&data.bg>=0&&data.bg<=3&&data.custom is bool&&data.c1.matches('#[0-9a-fA-F]{6}')&&data.c2.matches('#[0-9a-fA-F]{6}')&&data.effect in ['none','sunny','rain','snow','auto']&&data.sound is bool&&data.vibration is bool&&data.updatedAt is timestamp;}
   function safeMessage(){
-   return request.resource.data.keys().hasOnly(['senderId','senderName','text','mediaUrl','mediaPath','mediaType','createdAt','type'])
+   return request.resource.data.keys().hasOnly(['senderId','senderName','text','emoji','mediaUrl','mediaPath','mediaType','createdAt','type'])
     && request.resource.data.senderId==request.auth.uid
     && request.resource.data.senderName is string
     && request.resource.data.senderName.size()<=80
     && request.resource.data.senderName==get(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayName
     && request.resource.data.text is string
     && request.resource.data.text.size()<=4000
+    && (!request.resource.data.keys().hasAny(['emoji']) || (request.resource.data.emoji is string && request.resource.data.emoji.size()<=8))
     && request.resource.data.type in ['text','media']
     && (!request.resource.data.keys().hasAny(['mediaUrl']) || (request.resource.data.mediaUrl is string && request.resource.data.mediaUrl.matches('https://.*')))
     && (!request.resource.data.keys().hasAny(['mediaPath']) || (request.resource.data.mediaPath is string && request.resource.data.mediaPath.size()<=500 && request.resource.data.mediaPath.matches('chatMedia/[^/]+/'+request.auth.uid+'_.*')))
