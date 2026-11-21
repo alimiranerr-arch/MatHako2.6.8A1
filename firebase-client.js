@@ -19,6 +19,7 @@ window.firebaseConfig = {
  function applyFeatureFlags(flags){
   state.featureFlags={...DEFAULT_FLAGS,...(flags||{})};
   const f=state.featureFlags;
+  if($('admToggleAdminBox'))$('admToggleAdminBox').checked=f.adminBox;if($('admToggleWheel'))$('admToggleWheel').checked=f.wheel;if($('admToggleTasks'))$('admToggleTasks').checked=f.tasks;if($('admToggleMarket'))$('admToggleMarket').checked=f.market;if($('admToggleOnline'))$('admToggleOnline').checked=f.online;
   const map=[['wheel','tabRewards','s4'],['tasks','tabTasks','s8'],['market','tabMarket','s5'],['online','tabSocial','s6'],['online','tabCompete','s9']];
   map.forEach(([key,tabId,sectionId])=>{const disabled=!f[key];$(tabId)?.classList.toggle('hide',disabled);$(sectionId)?.classList.toggle('hide',disabled);});
   showAdmin(state.admin);
