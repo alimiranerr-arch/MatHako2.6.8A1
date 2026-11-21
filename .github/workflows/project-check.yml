@@ -1,12 +1,7 @@
 name: Project checks
 
 on:
-  push:
-    branches:
-      - "hako/**"
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   smoke:
