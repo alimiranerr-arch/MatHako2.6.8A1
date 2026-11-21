@@ -28,7 +28,8 @@ service cloud.firestore {
    match /messages/{messageId}{
     allow read:if admin()||(active()&&request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds);
     allow create:if active()&&request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.memberIds&&request.resource.data.senderId==request.auth.uid;
-    allow update,delete:if admin()||(active()&&resource.data.senderId==request.auth.uid&&request.resource.data.senderId==resource.data.senderId);
+    allow update:if admin()||(active()&&resource.data.senderId==request.auth.uid&&request.resource.data.senderId==resource.data.senderId);
+    allow delete:if admin()||(active()&&resource.data.senderId==request.auth.uid);
    }
   }
   match /market/{id}{allow read:if signedIn();allow write:if false;}
