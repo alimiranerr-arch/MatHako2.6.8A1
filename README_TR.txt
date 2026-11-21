@@ -1,11 +1,12 @@
 MATEMATİK MACERASI – GÜNCEL ENTEGRASYON PAKETİ
 
-Bu ZIP'i GitHub deposunun köküne çıkar. index.html, css/, js/, assets/, icons/, vendor/, functions/, firebase.json, firestore.rules ve storage.rules aynı kök dizinde olmalı.
+Bu depo düz (flat) dosya yapısı kullanır. index.html, app.css, oyun ve özellik JavaScript dosyaları, görseller, ikonlar, firebase.json, firestore.rules, storage.rules ve functions/ klasörü depo kökünde bulunur. Eski css/, js/, assets/, icons/ ve vendor/ klasörlerini oluşturman gerekmez.
 
 Firebase kurulum ve yayınlama adımları: FIREBASE_KURULUM_TR.txt
 Uygulanan özellikler, testler ve bilinen eksikler: GUNCEL_KONTROL_RAPORU.txt
+Güvenlik denetimi: GUVENLIK_DENETIMI_2026-11-21.md
 
-Admin hesabı: alimiranerr@gmail.com
-Admin yetkisi yalnızca bu e-postayla Google girişi, e-posta doğrulaması ve sunucu custom claim'i ile açılır.
+Hako yönetici hesabı: alimiranerr@gmail.com
+Admin yetkisi doğrulanmış e-posta ve sunucu custom claim'i ile açılır.
 
-Bu paket GitHub Pages için hazırlanmıştır. Firebase Cloud Functions ve kurallar GitHub Pages tarafından yayınlanmaz; Firebase CLI ile ayrıca deploy gerekir.
+Bu paket GitHub Pages için hazırlanmıştır. Firebase Cloud Functions ve güvenlik kuralları GitHub Pages tarafından yayınlanmaz; Firebase CLI ile ayrıca deploy gerekir. Canlı projeye deploy etmeden önce PR değişikliklerini incele ve test Firebase projesinde doğrula.
