@@ -123,6 +123,9 @@ test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı
   const settings=fs.readFileSync(path.join(root,'settings.js'),'utf8');
   const social=fs.readFileSync(path.join(root,'social.js'),'utf8');
   const admin=fs.readFileSync(path.join(root,'admin-tools.js'),'utf8');
+  const sync=fs.readFileSync(path.join(root,'sync.js'),'utf8');
+  const extensions=fs.readFileSync(path.join(root,'hako_extensions.js'),'utf8');
+  const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
   const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
   const storage=fs.readFileSync(path.join(root,'storage.rules'),'utf8');
   assert.equal(backend,mirror,'Root ve Functions backend kaynakları eşleşmeli.');
@@ -134,6 +137,9 @@ test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı
   assert.ok(html.includes('./settings.js'));
   assert.ok(html.includes('./admin-tools.js'));
   assert.ok(settings.includes("navigator.serviceWorker.register('./sw.js')"));
+  assert.ok(sync.includes('loadAppearance')&&sync.includes('saveAppearance'));
+  assert.ok(extensions.includes('available:true'));
+  assert.ok(client.includes('apiKey: ""'),'Doğrulanmamış Firebase API key depoda tutulmamalı.');
   assert.ok(settings.includes("httpsCallable('redeemGiftCode')"));
   assert.ok(social.includes('ensureNotificationPanel'));
   assert.ok(social.includes('displayName') && social.includes('friend.data()'));
