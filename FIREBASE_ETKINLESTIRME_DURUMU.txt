@@ -17,10 +17,10 @@ HALA TAMAMLANMASI GEREKENLER
 - Google giriş sağlayıcısı Firebase Authentication'da açık olmalı; admin hesabı oluşturulup e-postası doğrulanmalı.
 - Cloud Functions için Blaze planı/faturalandırma gerekebilir; ücret doğabilir.
 - Orijinal oyun, soru havuzu, puanlama ve senkronizasyon kaynakları kayıp olduğundan birebir oyun davranışı yeniden kurulmuş değildir.
-- Grup/DM mesaj oluşturma ekranı ve gerçek zamanlı medya yükleme/oynatma akışı mevcut arayüze henüz bağlanmamıştır. Rules, koleksiyon erişim politikası olarak durur; sohbeti tamamlamaz.
+- DM/grup sohbeti, gerçek zamanlı mesajlar ve medya akışı arayüze bağlanmıştır. Admin moderasyon görünümü de mevcuttur; canlı Firebase üzerinde gerçek hesaplarla uçtan uca doğrulama hâlâ gereklidir.
 - Üyelik satın alma/ödül/entitlement, çark konfigürasyonu, unvan envanteri, mevsim temaları, profil düzenleme ve admin giriş başarısızlığı denetim paneli uçtan uca tamamlanmış değildir.
-- Ban callable backend'de bulunur; mevcut profil butonuna hedef UID aktarımıyla bağlanması gerekir.
-- E-posta değişimini 30 günde bir sınırlayan güvenli sunucu fonksiyonu henüz tamamlanmamıştır.
+- Ban callable ve yönetici kullanıcı listesindeki hedef UID düğmesi bağlanmıştır; gerçek Auth projesinde test edilmelidir.
+- E-posta değişimini 30 günde bir sınırlayan güvenli sunucu akışı henüz tamamlanmamıştır; mevcut istemciye böyle bir akış eklenmeden Auth e-posta değiştirme açılmamalıdır.
 
 GİZLİLİK VE GÜVENLİK
 - Konum yalnızca kullanıcı açıkça onaylarsa alınır.
