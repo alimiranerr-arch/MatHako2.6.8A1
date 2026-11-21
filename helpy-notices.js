@@ -21,7 +21,7 @@
   }
   function asset(name) {
     const allowed = ["bakim-molasi.png", "helpy-onemli-is.webp", "helpy-teknik-onarim.gif"];
-    return "/assets/" + (allowed.includes(name) ? name : "bakim-molasi.png");
+    return "/" + (allowed.includes(name) ? name : "bakim-molasi.png");
   }
   function render() {
     const state = read();
