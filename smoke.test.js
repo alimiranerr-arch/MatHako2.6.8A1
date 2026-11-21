@@ -57,7 +57,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(functions.includes('exports.findChatMembers=onCall'));
   assert.ok(functions.includes('function rateLimit'));
   assert.ok(functions.includes("timeZone:'Europe/Istanbul'"));
-  assert.ok(functions.includes('resource-exhausted'));
+  assert.ok(functions.includes('resource-exhausted'));\n  assert.ok(functions.includes('score>questions*20'));\n  assert.ok(functions.includes('score>correct*20'));
   assert.ok(social.includes('emails.length>9'));
   assert.ok(social.includes('currentSenderName'));
   assert.ok(social.includes('image\\/(png|jpeg|gif|webp)'));
