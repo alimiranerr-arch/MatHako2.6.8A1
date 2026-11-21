@@ -1,2 +1,90 @@
-/* Admin-only score ledger. Firestore rules require the verified admin custom claim. */
-(function(w){'use strict';const $=id=>document.getElementById(id);let stop=null;function start(){const c=w.MMCloud,box=$('adminScoresTable');if(!box||!c?.admin||!c.db)return;stop?.();stop=c.db.collection('scores').orderBy('createdAt','desc').limit(100).onSnapshot(s=>{box.innerHTML='';if(s.empty){box.textContent='Henüz skor kaydı yok.';return;}s.forEach(d=>{const x=d.data(),r=document.createElement('div');r.className='row';const t=document.createElement('span');t.textContent=`${x.playerName||'Oyuncu'} · ${x.score||0} puan · ${x.mode==='classic'?'Klasik':'Sonsuz'} · ${x.public===true?'Genel tabloda':'Yalnızca admin'}`;r.appendChild(t);box.appendChild(r);});},e=>{box.textContent='Skor tablosu açılamadı: '+e.message;});}window.addEventListener('mm-auth-ready',e=>{if(e.detail?.admin)start();else{stop?.();stop=null;}});document.addEventListener('DOMContentLoaded',start);})(window);
+
+/* Admin-only score ledger.
+   Firestore rules require the verified admin custom claim.
+*/
+(function (w) {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  let stop = null;
+
+  function stopListening() {
+    if (typeof stop === 'function') {
+      stop();
+      stop = null;
+    }
+  }
+
+  function start() {
+    const cloud = w.MMCloud;
+    const box = $('adminScoresTable');
+
+    if (!box || !cloud || !cloud.admin || !cloud.db) {
+      return;
+    }
+
+    stopListening();
+
+    box.textContent = 'Skor kayıtları yükleniyor...';
+
+    try {
+      stop = cloud.db
+        .collection('scores')
+        .orderBy('createdAt', 'desc')
+        .limit(100)
+        .onSnapshot(
+          (snapshot) => {
+            box.innerHTML = '';
+
+            if (snapshot.empty) {
+              box.textContent = 'Henüz skor kaydı yok.';
+              return;
+            }
+
+            snapshot.forEach((doc) => {
+              const data = doc.data();
+              const row = document.createElement('div');
+              const text = document.createElement('span');
+
+              row.className = 'row';
+
+              text.textContent =
+                `${data.playerName || 'Oyuncu'} · ` +
+                `${data.score || 0} puan · ` +
+                `${data.mode === 'classic' ? 'Klasik' : 'Sonsuz'} · ` +
+                `${data.public === true
+                  ? 'Genel tabloda'
+                  : 'Yalnızca admin'}`;
+
+              row.appendChild(text);
+              box.appendChild(row);
+            });
+          },
+          (error) => {
+            console.error('Admin skor tablosu hatası:', error);
+            box.textContent =
+              'Skor tablosu açılamadı: ' + error.message;
+          }
+        );
+    } catch (error) {
+      console.error('Skor tablosu başlatılamadı:', error);
+      box.textContent = 'Skor tablosu başlatılamadı.';
+    }
+  }
+
+  w.addEventListener('mm-auth-ready', (event) => {
+    if (event.detail && event.detail.admin === true) {
+      start();
+    } else {
+      stopListening();
+
+      const box = $('adminScoresTable');
+      if (box) {
+        box.textContent = 'Admin yetkisi gerekli.';
+      }
+    }
+  });
+
+  document.addEventListener('DOMContentLoaded', start);
+
+})(window);
