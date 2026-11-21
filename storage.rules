@@ -4,14 +4,22 @@ service firebase.storage {
   function signedIn(){return request.auth!=null;}
   function admin(){return signedIn()&&request.auth.token.admin==true&&request.auth.token.email=='alimiranerr@gmail.com'&&request.auth.token.email_verified==true;}
   function active(){return signedIn()&&request.auth.token.email_verified==true&&firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))&&firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.banned!=true;}
+  function safeChatMedia(){
+   return request.resource.size<15*1024*1024
+    && request.resource.contentType.matches('image/(png|jpeg|gif|webp)|audio/(mpeg|ogg|wav|webm)|video/(mp4|webm|ogg)');
+  }
   match /chatMedia/{chatId}/{fileName}{
    allow read:if admin()||(active()&&request.auth.uid in firestore.get(/databases/(default)/documents/chats/$(chatId)).data.memberIds);
-   allow create:if active()&&request.auth.uid in firestore.get(/databases/(default)/documents/chats/$(chatId)).data.memberIds&&request.resource.size<15*1024*1024&&request.resource.contentType.matches('image/.*|audio/.*|video/.*');
+   allow create:if active()
+    && request.auth.uid in firestore.get(/databases/(default)/documents/chats/$(chatId)).data.memberIds
+    && fileName.matches(request.auth.uid+'_.*')
+    && safeChatMedia();
+   allow update:if false;
    allow delete:if admin();
   }
   match /market/{fileName}{
    allow read:if true;
-   allow create,update:if admin()&&request.resource.size<10*1024*1024&&request.resource.contentType.matches('image/gif|image/png|image/jpeg|image/webp');
+   allow create,update:if admin()&&request.resource.size<10*1024*1024&&request.resource.contentType.matches('image/(gif|png|jpeg|webp)');
    allow delete:if admin();
   }
  }
