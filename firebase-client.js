@@ -59,6 +59,7 @@ window.firebaseConfig = {
      ]);
     }catch(e){console.warn('Profil kaydı tamamlanamadı:',e);status('Oturum açıldı ancak profil kaydedilemedi: '+e.message,true);}
     if(!profileSaved)status('Oturum açıldı; profil eşitlemesi gecikiyor. İnternet bağlantısını kontrol et.',true);
+    try{const p=await state.db.collection('users').doc(user.uid).get();if(!p.data()?.surname||!p.data()?.school){const form=$('accountRegisterForm');form?.classList.remove('hide');if($('regGmail'))$('regGmail').value=user.email||'';if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';}}catch(e){console.warn('Profil formu hazırlanamadı:',e);}
     else status('Hesap hazır. İyi eğlenceler!');
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     ready(user);
@@ -77,7 +78,7 @@ window.firebaseConfig = {
     catch(e){try{await call('logLoginFailure',{email:$('regGmail')?.value||''});}catch(_){}alert('Giriş yapılamadı: '+e.message);}
     finally{b.disabled=false;}
    }));
-   bindAdmin(); bindConsent(); bindEmailChange(auth);
+   bindAdmin(); bindConsent(); bindEmailChange(auth); bindRegistrationForm(auth);
   }catch(e){
    console.error('Firebase başlatılamadı',e);status('Firebase başlatılamadı: '+e.message,true);ready(null,e);
   }
@@ -105,6 +106,22 @@ window.firebaseConfig = {
   state.stopPublic?.();state.stopPublic=state.db.doc('settings/site').onSnapshot(s=>{if(!s.exists)return;const d=s.data();const overlay=$('hakoPublicNotice');if(overlay){overlay.classList.toggle('hide',!d.maintenance||state.admin);}},e=>console.warn('Genel site ayarları okunamadı:',e));
  }
  function watchSeasonTheme(){state.stopTheme?.();state.stopTheme=state.db.doc('settings/theme').onSnapshot(s=>{if(!s.exists)return;const t=s.data().theme||'default';document.body.dataset.season=t;document.body.classList.remove('season-newyear','season-halloween','season-ramadan','season-sacrifice');if(t!=='default')document.body.classList.add('season-'+t);},e=>console.warn('Sezon teması okunamadı:',e));}
+ function bindRegistrationForm(auth){
+  const verify=$('sendGmailVerifyBtn'),complete=$('completeGmailRegBtn');
+  if(verify&&!verify.dataset.bound){verify.dataset.bound='1';verify.addEventListener('click',async()=>{
+   const out=$('regVerifyMsg');try{if(!auth.currentUser)throw Error('Önce Gmail ile giriş yap.');if(auth.currentUser.emailVerified){if(out)out.textContent='E-posta adresin zaten doğrulanmış.';return;}await auth.currentUser.sendEmailVerification();if(out)out.textContent='Doğrulama bağlantısı e-posta adresine gönderildi.';}catch(e){if(out)out.textContent=e.message;}
+  });}
+  if(complete&&!complete.dataset.bound){complete.dataset.bound='1';complete.addEventListener('click',async()=>{
+   const out=$('regErrorMsg');try{
+    if(!auth.currentUser)throw Error('Önce Gmail ile giriş yap.');
+    const displayName=String($('regFirstName')?.value||'').trim().slice(0,20),surname=String($('regLastName')?.value||'').trim().slice(0,80),nickname=String($('regNick')?.value||'').trim().slice(0,40),school=String($('regSchool')?.value||'').trim().slice(0,120);
+    if(!displayName||!surname||!nickname||!school)throw Error('Ad, soyad, lakap ve okul alanlarını doldur.');
+    await auth.currentUser.updateProfile({displayName});
+    await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email.toLowerCase(),displayName,surname,nickname,school,className:'7. sınıf'},{merge:true});
+    const form=$('accountRegisterForm');form?.classList.add('hide');if(out)out.textContent='Profilin kaydedildi. Maceraya hoş geldin!';
+   }catch(e){if(out)out.textContent=e.message;}
+  });}
+ }
  function bindEmailChange(auth){
   const b=$('requestEmailChangeBtn');if(!b||b.dataset.bound)return;b.dataset.bound='1';
   b.addEventListener('click',async()=>{
