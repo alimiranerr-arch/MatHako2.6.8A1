@@ -45,7 +45,7 @@
   await w.firebase.storage().ref(path).put(file,{contentType:file.type});
   return{avatar:'🖼️',avatarPath:path};
  }
- async function syncAppearance(){const c=w.MMCloud;if(!c?.user||!w.MMCloudSync||syncedUid===c.user.uid)return;syncedUid=c.user.uid;try{const remote=await w.MMCloudSync.loadAppearance();if(remote){state={...defaults,...remote};persist();state=read();syncControls();apply();}else await w.MMCloudSync.saveAppearance(state);}catch(e){console.warn('Görünüm ayarları buluta eşitlenemedi:',e);}}
+ async function syncAppearance(){const c=w.MMCloud;if(!c?.user||!w.MMCloudSync||syncedUid===c.user.uid)return;syncedUid=c.user.uid;try{const remote=await w.MMCloudSync.loadAppearance();if(remote){state={...defaults,...remote};persist();state=read();syncControls();apply();}else await w.MMCloudSync.saveAppearance(state);}catch(e){syncedUid='';console.warn('Görünüm ayarları buluta eşitlenemedi:',e);}}
  function watchProfile(){
   const c=w.MMCloud;if(!c?.user||!c?.db)return;stopProfile?.();
   stopProfile=c.db.collection('users').doc(c.user.uid).onSnapshot(s=>{if(!s.exists)return;const u=s.data();c.profile=u;avatarView(u.avatar||'🙂',u.avatarPath||'');syncControls();syncAppearance();const name=$('meName');if(name)name.textContent=u.nickname||u.displayName||'Oyuncu';if($('fbName'))$('fbName').value=u.nickname||u.displayName||'Oyuncu';},e=>console.warn('Profil görünümü:',e));
