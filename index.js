@@ -322,10 +322,10 @@ exports.submitGameAnswer=onCall(async req=>{
  await db.runTransaction(async tx=>{
   const s=await tx.get(ref);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
   const d=s.data();if(index!==d.nextIndex||index>=d.questions.length||d.lives<=0)throw new HttpsError('failed-precondition','Bu soru zaten yanıtlandı veya sıra geçersiz.');
-  const now=Date.now(),timedOut=d.mode==='endless'&&Number(d.questionDeadlineAt)>0&&now>d.questionDeadlineAt+1500;if(selected===null&&d.mode!=='endless')throw new HttpsError('invalid-argument','Bu modda süre aşımı gönderilemez.');if(selected===null&&!timedOut)throw new HttpsError('failed-precondition','Süre henüz dolmadı.');if(selected!==null&&!q.options.includes(selected))throw new HttpsError('invalid-argument','Cevap seçenekler arasında değil.');
-  const effective=timedOut?null:selected,correct=effective===q.answer,streak=correct?d.streak+1:0,score=correct?d.score+10+Math.min(streak-1,5)*2:d.score,lives=correct?d.lives:d.lives-1;
+  const now=Date.now(),deadline=Number(d.questionDeadlineAt)||0,timeoutSignal=d.mode==='endless'&&deadline>0&&now>=deadline,lateAnswer=d.mode==='endless'&&deadline>0&&now>deadline+1500;if(selected===null&&d.mode!=='endless')throw new HttpsError('invalid-argument','Bu modda süre aşımı gönderilemez.');if(selected===null&&!timeoutSignal)throw new HttpsError('failed-precondition','Süre henüz dolmadı.');if(selected!==null&&!q.options.includes(selected))throw new HttpsError('invalid-argument','Cevap seçenekler arasında değil.');
+  const effective=lateAnswer?null:selected,correct=effective===q.answer,streak=correct?d.streak+1:0,score=correct?d.score+10+Math.min(streak-1,5)*2:d.score,lives=correct?d.lives:d.lives-1;
   const entry={selected:effective,correct,answer:q.answer,at:now};
-  tx.update(ref,{answers:Field.arrayUnion(entry),nextIndex:index+1,score,correct:d.correct+(correct?1:0),streak,lives,questionStartedAt:now,questionDeadlineAt:d.mode==='endless'?now+10000:null});
+  tx.update(ref,{answers:Field.arrayUnion(entry),nextIndex:index+1,score,correct:d.correct+(correct?1:0),streak,lives,questionStartedAt:now,questionDeadlineAt:d.mode==='endless'?now+10850:null});
   result={correct,answer:q.answer,score,correctCount:d.correct+(correct?1:0),streak,lives,nextIndex:index+1};
  });
  return result;
