@@ -5,11 +5,11 @@
 
 ## Yapılan düzeltmeler
 
-- Firestore profil oluşturma/güncelleme işlemlerinde doğrulanmış e-posta şartı eklendi. Kullanıcı kendi profilinde yalnızca izin verilen alanları değiştirebilir; profil e-postasını doğrudan değiştiremez.
+- Firestore profil oluşturma/güncelleme işlemlerinde doğrulanmış e-posta şartı ve alan türü/uzunluğu kontrolleri eklendi. Kullanıcı kendi profilinde yalnızca izin verilen alanları değiştirebilir; profil e-postasını doğrudan değiştiremez.
 - Sohbet oluşturma kuralları kurucu kimliğini, üye listesini (2–10 kişi), sohbet türünü ve başlığı doğrular.
 - Mesaj oluşturma işlemleri aktif sohbet üyeliği, oturum açmış gönderen UID'si ve kullanıcı profilindeki görünen ad ile sınırlandırıldı. Kullanıcılar başka bir ad taklit edemez veya mevcut mesajların gönderen kimliğini değiştirerek mesaj güncelleyemez.
 - Storage sohbet medyası yüklemelerinde üyelik, dosya yolu, boyut ve MIME türü kontrolleri sıkılaştırıldı; istemci dosya güncellemesi kapatıldı.
-- Market koleksiyonu normal kullanıcılara yalnızca yayımlanmış ürünleri gösterir. Skor, düello, ödül ve denetim kayıtlarının istemciden doğrudan yazılması kapalıdır.
+- Market koleksiyonu normal kullanıcılara yalnızca yayımlanmış ürünleri gösterir. Rasyonel sayılar sorularının seçenek sırası karıştırıldı; düello skorları artık genel liderlik tablosuna gönderilmiyor. Skor, düello, ödül ve denetim kayıtlarının istemciden doğrudan yazılması kapalıdır.
 - Oyuncu arama ve sohbet alıcısı bulma, özel kullanıcı belgelerini istemciye açmak yerine sınırlı alan/UID döndüren callable fonksiyonlara taşındı.
 - Başarısız giriş kaydı endpoint'ine IP bazlı 10 dakikada 8 istek sınırı eklendi; endpoint artık e-posta üzerinden profil arayıp kullanıcı adı ifşa etmez.
 - Callable kullanıcı işlemlerine doğrulanmış e-posta kontrolü eklendi.
