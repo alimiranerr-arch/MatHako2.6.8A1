@@ -1,39 +1,35 @@
-MATEMATİK MACERASI – ENTEGRASYON KURULUMU
+MATEMATİK MACERASI – FIREBASE KURULUMU
 
-ÖNEMLİ: Bu paket kaynak kodudur. GitHub Pages'e ZIP'i atmak Firebase Cloud Functions'ı yayımlamaz. Sunucu özellikleri için Firebase CLI ile deploy gerekir.
+ÖNEMLİ: Bu depo kaynak kodudur. GitHub Pages'e dosya göndermek Cloud Functions'ı dağıtmaz. Bu çalışma dalında canlı Firebase'e deploy yapılmamıştır.
 
-1) Firebase Console > Authentication > Sign-in method bölümünde Google sağlayıcısını etkinleştir.
-2) Authentication > Settings > Authorized domains bölümünde alimiranerr-arch.github.io alan adının bulunduğunu doğrula.
-3) Firestore Database oluştur ve Storage'ı etkinleştir.
-4) Bilgisayarda Node.js LTS kur. Terminalde proje klasörüne gir:
+1) Firebase Console > Project settings > Your apps bölümünde web uygulamasını aç. Web SDK yapılandırmasındaki gerçek `apiKey`, `authDomain`, `projectId`, `storageBucket`, `messagingSenderId` ve `appId` değerlerini `firebase-client.js` içindeki `window.firebaseConfig` alanlarıyla eşleştir. `apiKey` alanı şu anda bilerek boştur; daha önce doğrulanmamış bir anahtar kullanılmaması için kaldırılmıştır. Anahtar uydurma veya başka projeden kopyalama.
+2) Authentication > Sign-in method bölümünde Google sağlayıcısını etkinleştir.
+3) Authentication > Settings > Authorized domains bölümünde GitHub Pages alan adını (ör. `alimiranerr-arch.github.io`) ekle.
+4) Firestore Database oluştur ve Storage'ı etkinleştir.
+5) Bilgisayarda Node.js 20+ kur. Terminalde proje klasörüne gir:
    npm install -g firebase-tools
    firebase login
    firebase use hakomatonline261
-5) Depo kökünde firebase.json, firestore.rules, storage.rules ve functions/ klasörünün bulunduğunu doğrula.
-6) functions klasöründe npm install çalıştır.
-7) Proje kökünde şu komutları çalıştır:
-   firebase deploy --only firestore:rules,storage
+6) `functions/` klasöründe `npm install` çalıştır.
+7) Önce kuralları ve indeksleri, ardından Functions'ı dağıt:
+   firebase deploy --only firestore:rules,firestore:indexes,storage
    firebase deploy --only functions
-8) GitHub Pages için index.html ve diğer web dosyalarını repository köküne yükle. Bu depoda web dosyaları kök dizindedir.
-9) Admin olarak alimiranerr@gmail.com hesabıyla Google üzerinden giriş yap. E-postayı doğrula. İlk doğrulanmış giriş claimHakoAdmin fonksiyonunu çağırır; çıkış yapıp tekrar giriş yap.
+8) Cloud Functions dağıtımı Blaze (kullandıkça öde) planı ve faturalandırma hesabı gerektirebilir. Ücretleri incelemeden plan yükseltme veya deploy yapma.
+9) GitHub Pages için web dosyalarını repository kökünden yayınla. Bu depoda web dosyaları kök dizindedir.
+10) Yönetici hesabı yalnızca doğrulanmış `alimiranerr@gmail.com` hesabıdır. İlk doğrulanmış girişte `claimHakoAdmin` custom claim'i tanımlar.
+11) App Check için `APP_CHECK_KURULUMU_TR.md` dosyasındaki Firebase Console adımlarını tamamla. Site key girilmeden enforcement açma.
 
-BİLİNEN SINIRLAR / GÜVENLİK
-- Cloud Functions dağıtımı Firebase Blaze (kullandıkça öde) planı ve faturalandırma hesabı gerektirebilir. Ücretleri Firebase Console'da kontrol etmeden yükseltme yapma.
-- Sohbet metni, gönderilen görsel/ses/video dosyaları Firestore/Storage'a yazılır. Kullanıcı arayüzünde admin moderasyon açıklaması bulunur. Kullanıcıların göndermediği dosyalar toplanmaz.
-- Konum yalnızca kullanıcı butona basıp tarayıcı izni verirse kaydedilir. Cihaz adı değil, tarayıcıdan tahmin edilen cihaz sınıfı tutulur.
-- Ban kalıcıdır ve admin e-postası için engellenmiştir.
-- Giriş denemesi kaydı e-posta ve zaman bilgisini içerir; parola/OTP asla kaydedilmez.
+GÜVENLİK VE İŞLEYİŞ NOTLARI
+- Kullanıcı e-posta değişimi doğrulama bağlantısı ile tamamlanır; başarılı değişiklikten sonra 30 gün dolmadan ikinci değişiklik kabul edilmez.
+- Skorlar ve cevap doğruluğu sunucu oturumunda hesaplanır. Sonsuz mod zaman aşımı sunucu tarafından denetlenir.
+- Arkadaşlar, sohbetler, düellolar, grup yarışmaları, görevler, altın transferi ve hediye kodları callable backend üzerinden yönetilir.
+- Kullanıcı görünüm tercihleri cihazda saklanır ve giriş yapıldığında kullanıcının özel preferences belgesine eşitlenir.
+- Konum paylaşımı isteğe bağlıdır. Kullanıcı açıkça onaylarsa yaklaşık koordinat (iki ondalık basamağa yuvarlanmış) admin paneline kaydedilir; hava durumu sorgusu Open-Meteo servisine yapılır.
+- Sohbet medyası ve profil avatarları Storage kurallarıyla sınırlandırılır. Kullanıcıların göndermediği dosyalar toplanmaz.
 - Üyelik/market satın alımları oyun altınıyla yapılır; gerçek ödeme altyapısı yoktur.
-- Sezon temaları şu an emoji/başlık katmanıdır. Özel GIF'ler kullanıcı tarafından sağlandığında eklenebilir.
-- Kaybolan orijinal game.js/core.js kaynakları arşivde bulunmadığı için orijinal soru/puanlama akışı yeniden üretilemez. Bu pakette kayıp oyun mantığı yerine sahte bir kopya konulmamıştır.
-- E-posta değişiminde ayda bir sınır ve tam Firebase e-posta doğrulama akışı henüz bu entegrasyon paketinde tamamlanmış değildir.
+- Hediye kodları dört haneli, tek kullanımlık ve sunucu tarafından üretilir.
+- Service worker yalnızca aynı origin'deki statik uygulama kabuğunu önbelleğe alır; Firebase istekleri ve kullanıcı verileri önbelleğe alınmaz.
+- API key web uygulaması yapılandırmasının parçasıdır, gizli servis hesabı anahtarı değildir; yine de doğru Firebase projesinden alınmalıdır.
+- Canlı Firebase doğrulaması ve tarayıcı uçtan uca testleri henüz yapılmadı. Kullanıcının “test et” talimatı bekleniyor.
+- Otomatik GitHub Actions test tetikleyicileri kullanıcı test isteyene kadar kapalıdır; workflow manuel tetiklemeye ayarlanmıştır.
 
-DÜELLO VE MİNİPASS EK UÇLARI
-Yeni functions/index.js dosyasını dağıtın: createDuel, joinDuel, submitDuelResult, claimMiniPass ve purchaseMarketItem.
-Firestore rules dosyasındaki /duels kuralı düello kayıtlarını katılımcı ve admin ile sınırlar.
-Admin panelinde Market ürün türünden “MiniPass (30 gün)” seçerek MiniPass ürünü yayınlanabilir.
-
-QR / DÜELLO NOTU
-- QR kod üretimi tarayıcıda yerel çalışır; Firebase dışı QR servisine veri göndermez.
-- QR kamerayla okutma için site HTTPS üzerinden açılmalı ve kamera izni verilmelidir. Tarayıcı BarcodeDetector desteklemiyorsa davet kodunu elle yazın.
-- Düello değişiklikleri için functions/index.js dosyasını ve Firestore kurallarını yeniden dağıtın.
