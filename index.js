@@ -148,8 +148,8 @@ exports.getDailyTasks=onCall(async req=>{
  return{tasks:snap.docs.map(x=>({id:x.id,...x.data(),claimed:claimed.has(x.id)}))};
 });
 exports.joinRandomMatch=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'joinRandomMatch',5);const existing=await db.collection('matchmakingQueue').where('uid','==',uid).where('status','==','waiting').limit(1).get();if(!existing.empty)return{matched:false,queueId:existing.docs[0].id};const topic=String(req.data?.topic||'Karışık').slice(0,40);
- const waiting=await db.collection('matchmakingQueue').where('status','==','waiting').where('topic','==',topic).limit(10).get();
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'joinRandomMatch',5);const existing=await db.collection('matchmakingQueue').where('uid','==',uid).where('status','==','waiting').where('expiresAt','>',Date.now()).limit(1).get();if(!existing.empty)return{matched:false,queueId:existing.docs[0].id};const topic=String(req.data?.topic||'Karışık').slice(0,40);
+ const waiting=await db.collection('matchmakingQueue').where('status','==','waiting').where('topic','==',topic).where('expiresAt','>',Date.now()).limit(10).get();
  for(const candidate of waiting.docs){
   if(candidate.data().uid===uid)continue;
   const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
@@ -162,7 +162,7 @@ exports.joinRandomMatch=onCall(async req=>{
   });
   if(matched)return{matched:true,code,topic};
  }
- const ref=await db.collection('matchmakingQueue').add({uid,topic,status:'waiting',createdAt:Field.serverTimestamp()});
+ const ref=await db.collection('matchmakingQueue').add({uid,topic,status:'waiting',createdAt:Field.serverTimestamp(),expiresAt:Date.now()+120000});
  return{matched:false,queueId:ref.id};
 });
 exports.cancelRandomMatch=onCall(async req=>{
