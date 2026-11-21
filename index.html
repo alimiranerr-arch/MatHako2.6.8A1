@@ -205,32 +205,22 @@ body.theme-day {
 
 }
 
-#bannedOverlay.hide {
-  display: none !important;
+#bannedOverlay {
+  position: fixed;
+  inset: 0;
+  background: #0f172a;
+  color: #fff;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
 }
 
-  position: fixed;
-
-  inset: 0;
-
-  background: #0f172a;
-
-  color: #fff;
-
-  z-index: 999999;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  text-align: center;
-
-  padding: 24px;
-
+#bannedOverlay.hide {
+  display: none !important;
 }
 
 
