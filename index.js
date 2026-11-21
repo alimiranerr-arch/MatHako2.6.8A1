@@ -258,7 +258,7 @@ function makeServerQuestion(topic){
  return{q,options:opts.slice(0,4),answer:correct};
 }
 exports.startGameSession=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const d=req.data||{},mode=String(d.mode||'classic');
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'startGameSession',10);const d=req.data||{},mode=String(d.mode||'classic');
  let topic=String(d.topic||'Karışık').slice(0,40);
  if(!['classic','endless','retry','balance'].includes(mode))throw new HttpsError('invalid-argument','Oyun modu geçersiz.');
  if(mode==='balance')topic='Eşitlik ve Denklem';
@@ -273,7 +273,7 @@ exports.startGameSession=onCall(async req=>{
 });
 exports.submitGameSession=onCall(async()=>{throw new HttpsError('failed-precondition','Bu eski puan uç noktası kapalı.');});
 exports.submitGameAnswer=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.sessionId||''),index=Number(req.data?.index),selected=req.data?.answer===null?null:String(req.data?.answer);
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'submitGameAnswer',600);const id=String(req.data?.sessionId||''),index=Number(req.data?.index),selected=req.data?.answer===null?null:String(req.data?.answer);
  if(!id||!Number.isInteger(index)||index<0)throw new HttpsError('invalid-argument','Cevap bilgisi geçersiz.');
  const ref=db.doc('gameSessions/'+id);let result;
  await db.runTransaction(async tx=>{
@@ -288,7 +288,7 @@ exports.submitGameAnswer=onCall(async req=>{
  return result;
 });
 exports.finishGameSession=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.sessionId||'');if(!id)throw new HttpsError('invalid-argument','Oyun oturumu gerekli.');
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'finishGameSession',10);const id=String(req.data?.sessionId||'');if(!id)throw new HttpsError('invalid-argument','Oyun oturumu gerekli.');
  const sessionRef=db.doc('gameSessions/'+id);let result;
  await db.runTransaction(async tx=>{
   const s=await tx.get(sessionRef);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
