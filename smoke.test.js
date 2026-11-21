@@ -45,7 +45,7 @@ test('Güvenlik kuralları sohbet üyeliğini ve profil gizliliğini doğruluyor
   const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
   const storage=fs.readFileSync(path.join(root,'storage.rules'),'utf8');
   const functions=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
-  assert.match(rules,/request\.auth\.uid in get\\(/);
+  assert.match(rules,/request\.auth\.uid in get\(/);
   assert.match(rules,/request\.resource\.data\.senderId==request\.auth\.uid/);
   assert.match(rules,/resource\.data\.published==true/);
   assert.match(storage,/request\.auth\.token\.email_verified==true/);
