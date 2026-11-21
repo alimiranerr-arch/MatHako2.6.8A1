@@ -219,6 +219,28 @@ exports.submitGroupCompetitionResult=onCall(async req=>{
  return{ok:true,totals};
 });
 
+
+async function publicSubmissionLimit(req,action){
+ const ip=String(req.rawRequest?.ip||'unknown'),key=crypto.createHash('sha256').update(action+':'+ip).digest('hex').slice(0,40),ref=db.doc('publicRateLimits/'+key),now=Date.now();
+ await db.runTransaction(async tx=>{const s=await tx.get(ref),old=s.exists?s.data():{},active=old.windowStart&&now-old.windowStart<10*60*1000,count=active?Number(old.count)||0:0;if(count>=5)throw new HttpsError('resource-exhausted','Çok fazla form gönderildi. Daha sonra tekrar dene.');tx.set(ref,{windowStart:active?old.windowStart:now,count:count+1,updatedAt:Field.serverTimestamp()});});
+}
+exports.submitFeedback=onCall(async req=>{
+ const d=req.data||{};if(String(d.honeypot||''))return{ok:true};
+ await publicSubmissionLimit(req,'feedback');
+ const kind=String(d.kind||'Öneri'),message=String(d.message||'').trim();
+ if(!['Öneri','Hata','Ad Değişikliği','Teşekkür'].includes(kind)||!message||message.length>500)throw new HttpsError('invalid-argument','Geri bildirim türü veya mesajı geçersiz.');
+ await db.collection('feedback').add({kind,message,uid:req.auth?.uid||null,playerName:String(d.playerName||'').slice(0,40),createdAt:Field.serverTimestamp(),status:'new'});
+ return{ok:true};
+});
+exports.submitTeacherRequest=onCall(async req=>{
+ const d=req.data||{};if(String(d.honeypot||''))return{ok:true};
+ await publicSubmissionLimit(req,'teacher');
+ const name=String(d.name||'').trim(),contact=String(d.contact||'E-posta'),email=String(d.email||'').trim().slice(0,100),phone=String(d.phone||'').trim().slice(0,20),school=String(d.school||'').trim(),className=String(d.className||'').trim(),location=String(d.location||'').trim(),request=String(d.request||'Diğer'),message=String(d.message||'').trim();
+ if(!name||name.length>60||!school||school.length>80||!['E-posta','Telefon'].includes(contact)||(contact==='E-posta'&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))||(contact==='Telefon'&&!/^[+0-9 ()-]{7,20}$/.test(phone))||message.length>600)throw new HttpsError('invalid-argument','Öğretmen başvuru bilgileri geçersiz.');
+ await db.collection('teacherRequests').add({name,contact,email:contact==='E-posta'?email:'',phone:contact==='Telefon'?phone:'',school,className,location,request,message,createdAt:Field.serverTimestamp(),status:'new'});
+ return{ok:true};
+});
+
 exports.protectAdminProfile=onDocumentCreated('users/{uid}',async e=>{const uid=e.params.uid,u=await admin.auth().getUser(uid).catch(()=>null);if(u&&u.email===ADMIN_EMAIL&&u.emailVerified)await admin.auth().setCustomUserClaims(uid,{...(u.customClaims||{}),admin:true});});
 
 // Skorlar yalnızca callable üzerinden yazılır; oyuncu kendi puanını değiştiremez.
