@@ -1039,6 +1039,19 @@ body.hako-notice-open{overflow:hidden}
 50 Altın|50
 5 Altın|5
 100 Altın|100</textarea><button class="go" id="saveWheelRewards">Çarkı kaydet</button><p id="wheelAdminMsg" class="msg"></p></div>
+  <div class="card" id="adminEconomySettings">
+    <h2>💰 Altın Ekonomisi</h2>
+    <p class="note">Transfer sınırlarını ve oyun/düello skorlarının vereceği altını buradan yönet.</p>
+    <div class="form">
+      <label>Günlük transfer limiti (altın)<input id="admDailyTransferLimit" type="number" min="1" max="1000000" value="1000"></label>
+      <label>Tek seferlik transfer limiti (altın)<input id="admSingleTransferLimit" type="number" min="1" max="50000" value="500"></label>
+      <label>Her 1 skor için verilecek altın<input id="admCoinsPerScore" type="number" min="0" max="100" value="5"></label>
+      <label>Oyun başına en fazla ödül (altın)<input id="admMaxGameReward" type="number" min="0" max="1000000" value="50000"></label>
+    </div>
+    <button type="button" class="go" id="saveEconomySettings">💾 Ekonomi ayarlarını kaydet</button>
+    <p class="msg" id="economySettingsMsg" aria-live="polite"></p>
+  </div>
+
   <div class="card"><h2>🏷️ Unvan oluştur</h2><input id="adminTitleName" maxlength="32" placeholder="Unvan adı"><input id="adminTitlePrice" type="number" min="0" placeholder="Altın fiyatı"><button class="go" id="publishTitle">Unvanı yayınla</button><p id="titleMsg" class="msg"></p></div>
 </div>
 
