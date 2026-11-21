@@ -195,6 +195,30 @@ exports.requestEmailChange=onCall(async req=>{
  return{ok:true,email};
 });
 
+
+exports.createGroupCompetition=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const chatId=String(req.data?.chatId||''),topic=String(req.data?.topic||'Karışık').slice(0,40);
+ if(!chatId)throw new HttpsError('invalid-argument','Grup seçilmedi.');
+ const chat=await db.doc('chats/'+chatId).get();if(!chat.exists||chat.data().type!=='group'||!chat.data().memberIds?.includes(uid))throw new HttpsError('permission-denied','Bu grup için yarışma oluşturamazsın.');
+ const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+ await db.doc('groupCompetitions/'+code).create({code,groupA:chatId,membersA:chat.data().memberIds,groupB:null,membersB:[],topic,status:'waiting',scores:{},createdBy:uid,createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000});
+ return{ok:true,code,topic};
+});
+exports.joinGroupCompetition=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const code=String(req.data?.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6),chatId=String(req.data?.chatId||'');
+ if(!code||!chatId)throw new HttpsError('invalid-argument','Yarışma kodu ve grup gerekli.');
+ const chat=await db.doc('chats/'+chatId).get();if(!chat.exists||chat.data().type!=='group'||!chat.data().memberIds?.includes(uid))throw new HttpsError('permission-denied','Bu grup için katılım yetkin yok.');
+ await db.runTransaction(async tx=>{const ref=db.doc('groupCompetitions/'+code),s=await tx.get(ref);if(!s.exists||s.data().expiresAt<Date.now())throw new HttpsError('not-found','Grup yarışması bulunamadı.');const x=s.data();if(x.status!=='waiting'||x.groupA===chatId)throw new HttpsError('failed-precondition','Yarışma dolu veya aynı grup seçildi.');tx.update(ref,{groupB:chatId,membersB:chat.data().memberIds,status:'playing',joinedAt:Field.serverTimestamp()});});
+ return{ok:true,code};
+});
+exports.submitGroupCompetitionResult=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const code=String(req.data?.code||'').toUpperCase().slice(0,6),score=Number(req.data?.score),correct=Number(req.data?.correct);
+ if(!code||!Number.isInteger(score)||score<0||!Number.isInteger(correct)||correct<0||correct>500||score>correct*20)throw new HttpsError('invalid-argument','Grup sonucu geçersiz.');
+ let totals={a:0,b:0,complete:false};
+ await db.runTransaction(async tx=>{const ref=db.doc('groupCompetitions/'+code),s=await tx.get(ref);if(!s.exists||s.data().status!=='playing')throw new HttpsError('not-found','Aktif grup yarışması bulunamadı.');const x=s.data(),side=x.membersA?.includes(uid)?'a':x.membersB?.includes(uid)?'b':null;if(!side)throw new HttpsError('permission-denied','Bu yarışmada yer almıyorsun.');if(x.scores?.[uid])throw new HttpsError('already-exists','Sonucun zaten kaydedildi.');const scores={...(x.scores||{}),[uid]:{score,correct,side,at:Date.now()}};totals={a:0,b:0,complete:true};for(const v of Object.values(scores)){totals[v.side]+=v.score;}tx.update(ref,{scores,totals,updatedAt:Field.serverTimestamp()});});
+ return{ok:true,totals};
+});
+
 exports.protectAdminProfile=onDocumentCreated('users/{uid}',async e=>{const uid=e.params.uid,u=await admin.auth().getUser(uid).catch(()=>null);if(u&&u.email===ADMIN_EMAIL&&u.emailVerified)await admin.auth().setCustomUserClaims(uid,{...(u.customClaims||{}),admin:true});});
 
 // Skorlar yalnızca callable üzerinden yazılır; oyuncu kendi puanını değiştiremez.
