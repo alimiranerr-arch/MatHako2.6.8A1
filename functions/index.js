@@ -204,8 +204,8 @@ exports.getDailyTasks=onCall(async req=>{
  return{tasks:snap.docs.map(x=>({id:x.id,...x.data(),claimed:claimed.has(x.id)}))};
 });
 exports.joinRandomMatch=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'joinRandomMatch',5);const existing=await db.collection('matchmakingQueue').where('uid','==',uid).where('status','==','waiting').where('expiresAt','>',Date.now()).limit(1).get();if(!existing.empty)return{matched:false,queueId:existing.docs[0].id};const topic=String(req.data?.topic||'Karışık').slice(0,40);
- const waiting=await db.collection('matchmakingQueue').where('status','==','waiting').where('topic','==',topic).where('expiresAt','>',Date.now()).limit(10).get();
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'joinRandomMatch',5);const difficulty=String(req.data?.difficulty||'medium');if(!['easy','medium','hard','impossible'].includes(difficulty))throw new HttpsError('invalid-argument','Zorluk seviyesi geçersiz.');const existing=await db.collection('matchmakingQueue').where('uid','==',uid).where('status','==','waiting').where('expiresAt','>',Date.now()).limit(1).get();if(!existing.empty)return{matched:false,queueId:existing.docs[0].id};const topic=String(req.data?.topic||'Karışık').slice(0,40);
+ const waiting=await db.collection('matchmakingQueue').where('status','==','waiting').where('topic','==',topic).where('difficulty','==',difficulty).where('expiresAt','>',Date.now()).limit(10).get();
  for(const candidate of waiting.docs){
   if(candidate.data().uid===uid)continue;
   const code=randomJoinCode();
@@ -213,12 +213,12 @@ exports.joinRandomMatch=onCall(async req=>{
   const matched=await db.runTransaction(async tx=>{
    const q=await tx.get(candidate.ref);if(!q.exists||q.data().status!=='waiting'||q.data().uid===uid)return false;
    tx.update(candidate.ref,{status:'matched',matchedAt:Field.serverTimestamp(),duelCode:code});
-   tx.create(duelRef,{code,hostUid:q.data().uid,players:[q.data().uid,uid],topic,status:'playing',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000,matchType:'random'});
+   tx.create(duelRef,{code,hostUid:q.data().uid,players:[q.data().uid,uid],topic,difficulty,status:'playing',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000,matchType:'random'});
    return true;
   });
   if(matched)return{matched:true,code,topic};
  }
- const ref=await db.collection('matchmakingQueue').add({uid,topic,status:'waiting',createdAt:Field.serverTimestamp(),expiresAt:Date.now()+120000});
+ const ref=await db.collection('matchmakingQueue').add({uid,topic,difficulty,status:'waiting',createdAt:Field.serverTimestamp(),expiresAt:Date.now()+120000});
  return{matched:false,queueId:ref.id};
 });
 exports.cancelRandomMatch=onCall(async req=>{
@@ -328,7 +328,7 @@ const GAME_TOPICS=['Tam Sayılar','Rasyonel Sayılar','Cebirsel İfadeler','Eşi
 function gameRand(a,b){return crypto.randomInt(a,b+1);}
 function gamePick(a){return a[gameRand(0,a.length-1)];}
 function makeServerQuestion(topic,difficulty='normal'){
- const level=difficulty==='easy'?0:difficulty==='hard'?2:1;
+ const level=({easy:0,medium:1,hard:2,impossible:3})[difficulty]??1;
  let a,b,x,ans,q;
  if(topic==='Karışık')topic=gamePick(GAME_TOPICS);
  switch(topic){
@@ -366,8 +366,8 @@ exports.startGameSession=onCall(async req=>{
  if(!['classic','endless','retry','balance'].includes(mode))throw new HttpsError('invalid-argument','Oyun modu geçersiz.');
  if(mode==='balance')topic='Eşitlik ve Denklem';
  if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Matematik konusu geçersiz.');
- let difficulty='normal';const competitionType=String(d.competitionType||''),competitionCode=String(d.competitionCode||'').toUpperCase().slice(0,6);
- if(competitionType==='duel'){const duel=await db.doc('duels/'+competitionCode).get();if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif düello oturumu bulunamadı.');difficulty=duel.data().difficulty||'normal';}
+ let difficulty=String(d.difficulty||'medium');if(!['easy','medium','hard','impossible'].includes(difficulty))throw new HttpsError('invalid-argument','Zorluk seviyesi geçersiz.');const competitionType=String(d.competitionType||''),competitionCode=String(d.competitionCode||'').toUpperCase().slice(0,6);
+ if(competitionType==='duel'){const duel=await db.doc('duels/'+competitionCode).get();if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif düello oturumu bulunamadı.');difficulty=duel.data().difficulty||'medium';}
  else if(competitionType==='group'){const comp=await db.doc('groupCompetitions/'+competitionCode).get();if(!comp.exists||comp.data().status!=='playing'||(!(comp.data().membersA||[]).includes(uid)&&!(comp.data().membersB||[]).includes(uid))||comp.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif grup yarışması bulunamadı.');}
  else if(competitionType)throw new HttpsError('invalid-argument','Yarışma türü geçersiz.');
  const count=mode==='retry'?10:500,questions=Array.from({length:count},()=>makeServerQuestion(topic,difficulty)),id=crypto.randomBytes(16).toString('hex');
@@ -430,8 +430,8 @@ exports.submitGameScore=onCall(async()=>{throw new HttpsError('failed-preconditi
 
 // Asenkron, kodla katılınan düellolar: her iki oyuncu da skorunu ayrı gönderir.
 exports.createDuel=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'createDuel',5);const topic=String(req.data?.topic||'Karışık').slice(0,40),targetUid=String(req.data?.targetUid||''),difficulty=String(req.data?.difficulty||'normal');
- if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Düello konusu geçersiz.');if(!['easy','normal','hard'].includes(difficulty))throw new HttpsError('invalid-argument','Düello zorluğu geçersiz.');
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'createDuel',5);const topic=String(req.data?.topic||'Karışık').slice(0,40),targetUid=String(req.data?.targetUid||''),difficulty=String(req.data?.difficulty||'medium');
+ if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Düello konusu geçersiz.');if(!['easy','medium','hard','impossible'].includes(difficulty))throw new HttpsError('invalid-argument','Düello zorluğu geçersiz.');
  if(targetUid){if(targetUid===uid)throw new HttpsError('invalid-argument','Kendine düello gönderemezsin.');await userDoc(targetUid);const friend=await db.doc('users/'+uid+'/friends/'+targetUid).get();if(!friend.exists)throw new HttpsError('permission-denied','Yalnızca arkadaşlarına doğrudan düello gönderebilirsin.');}
  const code=randomJoinCode(),ref=db.collection('duels').doc(code);
  await ref.create({code,hostUid:uid,invitedUid:targetUid||null,players:[uid],topic,difficulty,status:'waiting',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000});
