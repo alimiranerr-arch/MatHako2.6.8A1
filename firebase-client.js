@@ -77,7 +77,7 @@ window.firebaseConfig = {
     catch(e){try{await call('logLoginFailure',{email:$('regGmail')?.value||''});}catch(_){}alert('Giriş yapılamadı: '+e.message);}
     finally{b.disabled=false;}
    }));
-   bindAdmin(); bindConsent();
+   bindAdmin(); bindConsent(); bindEmailChange(auth);
   }catch(e){
    console.error('Firebase başlatılamadı',e);status('Firebase başlatılamadı: '+e.message,true);ready(null,e);
   }
@@ -105,6 +105,20 @@ window.firebaseConfig = {
   state.stopPublic?.();state.stopPublic=state.db.doc('settings/site').onSnapshot(s=>{if(!s.exists)return;const d=s.data();const overlay=$('hakoPublicNotice');if(overlay){overlay.classList.toggle('hide',!d.maintenance||state.admin);}},e=>console.warn('Genel site ayarları okunamadı:',e));
  }
  function watchSeasonTheme(){state.stopTheme?.();state.stopTheme=state.db.doc('settings/theme').onSnapshot(s=>{if(!s.exists)return;const t=s.data().theme||'default';document.body.dataset.season=t;document.body.classList.remove('season-newyear','season-halloween','season-ramadan','season-sacrifice');if(t!=='default')document.body.classList.add('season-'+t);},e=>console.warn('Sezon teması okunamadı:',e));}
+ function bindEmailChange(auth){
+  const b=$('requestEmailChangeBtn');if(!b||b.dataset.bound)return;b.dataset.bound='1';
+  b.addEventListener('click',async()=>{
+   const out=$('emailChangeMsg'),email=String($('newAccountEmail')?.value||'').trim().toLowerCase();
+   try{
+    if(!auth.currentUser)throw Error('Önce Gmail ile giriş yapmalısın.');
+    if(!email)throw Error('Yeni e-posta adresini yaz.');
+    await call('requestEmailChange',{email});
+    if(typeof auth.currentUser.verifyBeforeUpdateEmail!=='function')throw Error('Bu Firebase Auth sürümü doğrulama bağlantısıyla e-posta değiştirmeyi desteklemiyor. SDK güncellemesi gerekiyor.');
+    await auth.currentUser.verifyBeforeUpdateEmail(email);
+    if(out)out.textContent='Doğrulama bağlantısı gönderildi. Bağlantıyı açarak değişikliği tamamla. Güvenlik nedeniyle yeni talep için 30 gün beklenir.';
+   }catch(e){if(out)out.textContent=e.message;}
+  });
+ }
  function bindConsent(){
   const b=$('reqLocationBtn'); if(!b)return;
   b.addEventListener('click',()=>{if(!state.user){alert('Konum paylaşmak için önce giriş yapmalısın.');return;}if(!confirm('Yaklaşık konumunu admin panelinde görünmesi için paylaşmak istiyor musun? İzin vermezsen siteyi kullanmaya devam edebilirsin.'))return;
