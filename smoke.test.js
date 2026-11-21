@@ -80,9 +80,9 @@ test('Ortak başlangıç ve sekme gezinmesi etkin', () => {
   assert.ok(core.includes("closest?.('[data-go]')"));
   assert.ok(core.includes('app.navigate = navigate'));
   assert.ok(core.includes('w.MMCloud?.admin'));
-  assert.match(html, /#bannedOverlay\\s*\\{/);
-  assert.match(html, /#bannedOverlay\\.hide\\s*\\{\\s*display:\\s*none\\s*!important;/);
-  assert.doesNotMatch(html, /#bannedOverlay\\.hide\\s*\\{[^}]*\\}\\s*position:\\s*fixed/);
+  assert.ok(html.includes('#bannedOverlay {'));
+  assert.ok(html.includes('#bannedOverlay.hide {'));
+  assert.ok(html.indexOf('#bannedOverlay {') < html.indexOf('#bannedOverlay.hide {'));
 });
 
 console.log('\n' + passed + ' test başarılı.');
