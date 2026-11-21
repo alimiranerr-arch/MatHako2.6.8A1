@@ -867,7 +867,7 @@ body.hako-notice-open{overflow:hidden}
       <label>Önemli işlem görseli<select id="hakoImportantImage"><option value="helpy-onemli-is.webp">Helpy (önemli iş)</option><option value="helpy-teknik-onarim.gif">Helpy teknik onarım GIF</option><option value="bakim-molasi.png">Bakım Molası GIF</option></select></label>
       <button type="button" class="go" id="hakoSaveGifSettings">💾 Duyuru ayarlarını kaydet</button>
       <p class="msg" id="hakoGifAdminMsg" aria-live="polite"></p>
-      <p class="note">Önemli: Bu ZIP'te ortak sunucu ayarı ve doğrulanabilir admin backend'i bulunmuyor. Bu nedenle kaydetme yalnızca aynı tarayıcıda çalışır; tüm ziyaretçilere eş zamanlı yayın için backend entegrasyonu gerekir.</p>
+      <p class="note">Bu ayarlar doğrulanmış yönetici hesabıyla sunucuya kaydedilir ve kullanıcılara eş zamanlı uygulanır.</p>
     </div>
 
   <!-- Admin: Kullanıcı Yönetimi, Banlama, Ad Değiştirme İzni & Konum Verileri -->
@@ -1219,7 +1219,7 @@ body.hako-notice-open{overflow:hidden}
 
       <label>Kime?<select id="trTo"></select></label>
 
-      <label>Miktar<input id="trAmt" type="number" inputmode="numeric" min="1" max="100" placeholder="ör. 20"></label>
+      <label>Miktar<input id="trAmt" type="number" inputmode="numeric" min="1" max="500" placeholder="ör. 20"></label>
 
       <label>Not (isteğe bağlı)<input id="trNote" maxlength="40" placeholder="Süper Can için 🙌"></label>
 
