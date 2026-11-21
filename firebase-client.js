@@ -40,6 +40,7 @@ window.firebaseConfig = {
      else console.warn('Firebase kimlik doğrulama yanıtı gecikti; yönetici özellikleri geçici olarak kapalı.');
     }catch(e){console.warn('Kimlik bilgileri alınamadı:',e);}
     showAdmin(state.admin);
+    try{const emailChange=await call('completeEmailChange');if(emailChange.data?.changed)status('E-posta değişikliğin doğrulandı ve profilin güncellendi.');}catch(e){if(e.code!=='functions/not-found')console.warn('E-posta değişikliği tamamlanamadı:',e.message);}
     if(user.email===ADMIN&&user.emailVerified&&!state.admin){
      call('claimHakoAdmin').then(()=>auth.currentUser?.getIdToken(true)).then(()=>{
       if(auth.currentUser?.uid!==user.uid)return;
