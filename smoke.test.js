@@ -77,7 +77,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(rules.includes('data.displayName.size()<=80'));
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
   assert.ok(game.includes('opts:[`${a+b}/${d}`,`${a+b}/${d*2}`,`${a*b}/${d}`,`${a+b+1}/${d}`].sort'));
-  assert.ok(game.includes('genel liderlik tablosuna eklenmedi'));
+  assert.ok(game.includes('Sonuç genel liderliğe eklenmedi'));
 });
 
 test('Emoji ve kart ekipman sistemi güvenli ve arayüze bağlı', () => {
