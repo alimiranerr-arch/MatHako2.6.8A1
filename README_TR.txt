@@ -3,6 +3,7 @@ MATEMATİK MACERASI – GÜNCEL ENTEGRASYON PAKETİ
 Bu depo düz (flat) dosya yapısı kullanır. index.html, app.css, oyun ve özellik JavaScript dosyaları, görseller, ikonlar, firebase.json, firestore.rules, storage.rules ve functions/ klasörü depo kökünde bulunur. Eski css/, js/, assets/, icons/ ve vendor/ klasörlerini oluşturman gerekmez.
 
 Firebase kurulum ve yayınlama adımları: FIREBASE_KURULUM_TR.txt
+App Check Console kurulumu: APP_CHECK_KURULUMU_TR.md
 Uygulanan özellikler, testler ve bilinen eksikler: GUNCEL_KONTROL_RAPORU.txt
 Güvenlik denetimi: GUVENLIK_DENETIMI_2026-11-21.md
 
