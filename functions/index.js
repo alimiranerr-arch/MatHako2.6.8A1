@@ -118,6 +118,31 @@ exports.transferCoins=onCall(async req=>{
  });
  return{ok:true,amount};
 });
+exports.createGiftCode=onCall(async req=>{
+ const uid=requireAdmin(req);
+ for(let attempt=0;attempt<12;attempt++){
+  const code=String(crypto.randomInt(0,10000)).padStart(4,'0'),ref=db.doc('giftCodes/'+code);
+  try{await ref.create({active:true,rewardCoins:25,rewardItem:{name:'Temel Oyun Kartı',type:'card'},createdBy:uid,createdAt:Field.serverTimestamp()});return{ok:true,code};}
+  catch(e){if(e.code==='already-exists'||e.code===6)continue;throw e;}
+ }
+ throw new HttpsError('resource-exhausted','Şu anda yeni hediye kodu oluşturulamadı.');
+});
+exports.redeemGiftCode=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'redeemGiftCode',5);
+ const code=String(req.data?.code||'').replace(/\D/g,'').slice(0,4);
+ if(!/^\d{4}$/.test(code))throw new HttpsError('invalid-argument','4 haneli kodu gir.');
+ const giftRef=db.doc('giftCodes/'+code),userRef=db.doc('users/'+uid);let reward;
+ await db.runTransaction(async tx=>{
+  const [gift,user]=await Promise.all([tx.get(giftRef),tx.get(userRef)]);
+  if(!gift.exists||gift.data().active!==true)throw new HttpsError('not-found','Hediye kodu geçersiz veya kullanılmış.');
+  const g=gift.data(),inventory=Array.isArray(user.data()?.inventory)?user.data().inventory:[];
+  if(inventory.some(x=>x.itemId==='gift-'+code))throw new HttpsError('already-exists','Bu kodu zaten kullandın.');
+  reward={coins:Number(g.rewardCoins)||0,item:g.rewardItem||{name:'Hediye Kartı',type:'card'}};
+  tx.update(giftRef,{active:false,claimedBy:uid,claimedAt:Field.serverTimestamp()});
+  tx.update(userRef,{coins:(Number(user.data()?.coins)||0)+reward.coins,inventory:[...inventory,{itemId:'gift-'+code,name:String(reward.item.name||'Hediye Kartı').slice(0,60),type:String(reward.item.type||'card'),ownedAt:Date.now(),paidPrice:0}]});
+ });
+ return{ok:true,...reward};
+});
 exports.publishDailyTask=onCall(async req=>{
  const uid=requireAdmin(req),d=req.data||{},title=String(d.title||'').trim(),mode=String(d.mode||'classic'),minScore=Number(d.minScore||0),minQuestions=Number(d.minQuestions||1),reward=Number(d.reward||0),gifUrl=String(d.gifUrl||'').slice(0,1000);
  if(!title||title.length>80||!['classic','endless','retry','balance','any'].includes(mode)||!Number.isInteger(minScore)||minScore<0||minScore>10000||!Number.isInteger(minQuestions)||minQuestions<1||minQuestions>500||!Number.isInteger(reward)||reward<0||reward>10000)throw new HttpsError('invalid-argument','Görev bilgileri geçersiz.');
