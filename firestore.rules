@@ -67,6 +67,14 @@ service cloud.firestore {
     allow delete:if admin()||(active()&&resource.data.senderId==request.auth.uid);
    }
   }
+  match /users/{uid}/friends/{friendUid}{allow read:if owner(uid)||admin();allow write:if false;}
+  match /users/{uid}/notifications/{notificationId}{allow read:if owner(uid)||admin();allow update:if owner(uid)&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);allow create,delete:if false;}
+  match /friendRequests/{id}{allow read:if signedIn()&&(resource.data.from==request.auth.uid||resource.data.to==request.auth.uid||admin());allow write:if false;}
+  match /dailyTasks/{id}{allow read:if active()&&resource.data.active==true||admin();allow write:if false;}
+  match /dailyTaskClaims/{id}{allow read:if admin()||(active()&&resource.data.uid==request.auth.uid);allow write:if false;}
+  match /coinTransfers/{id}{allow read:if admin()||(active()&&(resource.data.from==request.auth.uid||resource.data.to==request.auth.uid));allow write:if false;}
+  match /coinTransferLimits/{uid}{allow read:if owner(uid)||admin();allow write:if false;}
+  match /matchmakingQueue/{id}{allow read:if admin()||(active()&&resource.data.uid==request.auth.uid);allow write:if false;}
   match /market/{id}{allow read:if admin()||(active()&&resource.data.published==true);allow write:if false;}
   match /scores/{id}{allow read:if admin()||(active()&&resource.data.public==true);allow write:if false;}
   match /duels/{id}{allow read:if admin()||(active()&&request.auth.uid in resource.data.players);allow write:if false;}
