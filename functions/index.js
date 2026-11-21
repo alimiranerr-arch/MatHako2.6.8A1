@@ -188,7 +188,7 @@ exports.sellInventoryItem=onCall(async req=>{
 });
 exports.requestEmailChange=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const email=String(req.data?.email||'').trim().toLowerCase();
- if(!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)||email.length>254)throw new HttpsError('invalid-argument','Geçerli bir e-posta adresi gir.');
+ if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)throw new HttpsError('invalid-argument','Geçerli bir e-posta adresi gir.');
  if(email===String(req.auth.token.email||'').toLowerCase())throw new HttpsError('invalid-argument','Yeni e-posta mevcut adresinle aynı.');
  try{const existing=await admin.auth().getUserByEmail(email);if(existing.uid!==uid)throw new HttpsError('already-exists','Bu e-posta başka bir hesapta kullanılıyor.');}catch(e){if(e.code!=='auth/user-not-found'&&!(e instanceof HttpsError))throw e;}
  const ref=db.doc('emailChangeLimits/'+uid),now=Date.now(),period=30*86400000;
@@ -243,7 +243,7 @@ exports.submitTeacherRequest=onCall(async req=>{
  const d=req.data||{};if(String(d.honeypot||''))return{ok:true};
  await publicSubmissionLimit(req,'teacher');
  const name=String(d.name||'').trim(),contact=String(d.contact||'E-posta'),email=String(d.email||'').trim().slice(0,100),phone=String(d.phone||'').trim().slice(0,20),school=String(d.school||'').trim(),className=String(d.className||'').trim(),location=String(d.location||'').trim(),request=String(d.request||'Diğer'),message=String(d.message||'').trim();
- if(!name||name.length>60||!school||school.length>80||!['E-posta','Telefon'].includes(contact)||(contact==='E-posta'&&!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email))||(contact==='Telefon'&&!/^[+0-9 ()-]{7,20}$/.test(phone))||message.length>600)throw new HttpsError('invalid-argument','Öğretmen başvuru bilgileri geçersiz.');
+ if(!name||name.length>60||!school||school.length>80||!['E-posta','Telefon'].includes(contact)||(contact==='E-posta'&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))||(contact==='Telefon'&&!/^[+0-9 ()-]{7,20}$/.test(phone))||message.length>600)throw new HttpsError('invalid-argument','Öğretmen başvuru bilgileri geçersiz.');
  await db.collection('teacherRequests').add({name,contact,email:contact==='E-posta'?email:'',phone:contact==='Telefon'?phone:'',school,className,location,request,message,createdAt:Field.serverTimestamp(),status:'new'});
  return{ok:true};
 });
