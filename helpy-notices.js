@@ -60,7 +60,7 @@
     document.body.classList.add("hako-notice-open");
   }
   function fillAdminControls() {
-    const state = read();
+    const state = remoteState || read();
     const pairs = [
       ["hakoMaintenanceToggle", "maintenance"],
       ["hakoImportantToggle", "important"],
