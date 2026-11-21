@@ -44,12 +44,12 @@ window.firebaseConfig = {
    if(!firebase.apps.length)firebase.initializeApp(window.firebaseConfig);
    if(window.firebaseConfig.appCheckSiteKey&&firebase.appCheck){try{firebase.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(window.firebaseConfig.appCheckSiteKey),true);state.appCheckEnabled=true;}catch(e){state.appCheckEnabled=false;console.warn('App Check başlatılamadı:',e);}}
    else{state.appCheckEnabled=false;console.warn('App Check için Firebase Console site key ayarı bekleniyor.');}
-   state.db=firebase.firestore();state.fn=firebase.functions();
+   state.db=firebase.firestore();state.fn=firebase.functions();watchPublicSettings();watchSeasonTheme();watchFeatureFlags();
    const auth=firebase.auth();
    auth.onAuthStateChanged(async user=>{
     state.user=user;state.admin=false;showAdmin(false);
     if(!user){
-     state.stopPublic?.();state.stopTheme?.();state.stopFeatures?.();applyFeatureFlags(DEFAULT_FLAGS);status('Firebase bağlantısı hazır. Gmail ile giriş yapabilirsin.');
+     status('Firebase bağlantısı hazır. Gmail ile giriş yapabilirsin.');
      ready(null);return;
     }
     status('Hesap doğrulanıyor…');
@@ -86,7 +86,6 @@ window.firebaseConfig = {
     else status('Hesap hazır. İyi eğlenceler!');
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     ready(user);
-    watchPublicSettings();watchSeasonTheme();watchFeatureFlags();
     state.db.collection('users').doc(user.uid).onSnapshot(d=>{
      if(d.exists&&d.data().banned){$('bannedOverlay')?.classList.remove('hide');$('bannedOverlay')?.setAttribute('aria-hidden','false');auth.signOut().catch(()=>{});}
     },e=>console.warn('Ban durumu okunamadı:',e));
