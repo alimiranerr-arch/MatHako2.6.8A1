@@ -9,6 +9,7 @@
     importantImage: "helpy-onemli-is.webp"
   };
   const $ = (id) => document.getElementById(id);
+  let remoteState = null;
   const read = () => {
     try { return Object.assign({}, defaults, JSON.parse(localStorage.getItem(KEY) || "{}")); }
     catch (_) { return Object.assign({}, defaults); }
@@ -21,10 +22,10 @@
   }
   function asset(name) {
     const allowed = ["bakim-molasi.png", "helpy-onemli-is.webp", "helpy-teknik-onarim.gif"];
-    return "/" + (allowed.includes(name) ? name : "bakim-molasi.png");
+    return "./" + (allowed.includes(name) ? name : "bakim-molasi.png");
   }
   function render() {
-    const state = read();
+    const state = remoteState || read();
     const overlay = $("hakoPublicNotice");
     if (!overlay) return;
     if (isAdminSession()) {
@@ -99,6 +100,7 @@
       $("hakoPublicNotice").hidden = true;
       document.body.classList.remove("hako-notice-open");
     });
+    window.addEventListener("mm-public-settings", function (event) { remoteState = event.detail || null; render(); fillAdminControls(); });
     window.addEventListener("storage", function (event) {
       if (event.key === KEY) render();
     });
