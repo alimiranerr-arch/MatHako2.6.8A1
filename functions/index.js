@@ -350,11 +350,11 @@ function makeServerQuestion(topic,difficulty='normal'){
   case 'Rasyonel Sayılar':{const d=gamePick([2,3,4,5,6,8,10]);a=gameRand(1,d-1);b=gameRand(1,d-1);const num=a+b,gcd=(x,y)=>y?gcd(y,x%y):x,g=gcd(num,d);ans=num/g===d/g? '1':(d/g===1?String(num/g):(num/g)+'/'+(d/g));q=a+'/'+d+' + '+b+'/'+d+' işleminin sonucu kaçtır?';break;}
   case 'Cebirsel İfadeler':a=gameRand(2,9+3*level);b=gameRand(1,12+5*level);x=gameRand(1,8+4*level);q='x = '+x+' ise '+a+'x + '+b+' ifadesinin değeri kaçtır?';ans=a*x+b;break;
   case 'Eşitlik ve Denklem':a=gameRand(2,8+3*level);x=gameRand(1,12+5*level);b=gameRand(-10-5*level,15+5*level);q=a+'x '+(b<0?'− '+Math.abs(b):'+ '+b)+' = '+(a*x+b)+' denkleminde x kaçtır?';ans=x;break;
-  case 'Oran ve Orantı':a=gameRand(2,8+3*level);b=gameRand(2,9+3*level);x=gameRand(2,6+2*level);q=a+' kalem '+(b*a)+' TL ise '+(a*x)+' kalem kaç TL\\'dir?';ans=b*a*x;break;
-  case 'Yüzdeler':a=gamePick([10,20,25,30,40,50,60,75]);b=gamePick([40,60,80,100,120,160,200,240]);if(crypto.randomInt(0,2)===0){q=b+' TL\\'lik ürünün %'+a+' indirimli fiyatı kaç TL\\'dir?';ans=b-b*a/100;}else{q=b+' sayısının %'+a+'\\'i kaçtır?';ans=b*a/100;}break;
+  case 'Oran ve Orantı':a=gameRand(2,8+3*level);b=gameRand(2,9+3*level);x=gameRand(2,6+2*level);q=a+' kalem '+(b*a)+' TL ise '+(a*x)+' kalem kaç TL\'dir?';ans=b*a*x;break;
+  case 'Yüzdeler':a=gamePick([10,20,25,30,40,50,60,75]);b=gamePick([40,60,80,100,120,160,200,240]);if(crypto.randomInt(0,2)===0){q=b+' TL\'lik ürünün %'+a+' indirimli fiyatı kaç TL\'dir?';ans=b-b*a/100;}else{q=b+' sayısının %'+a+'\'i kaçtır?';ans=b*a/100;}break;
   case 'Doğrular ve Açılar':a=gameRand(25,155);if(crypto.randomInt(0,2)===0){q='Bir doğru açı üzerinde komşu açılardan biri '+a+'° ise diğeri kaç derecedir?';ans=180-a;}else{q='Tümler iki açıdan biri '+(a%90)+'° ise diğeri kaç derecedir?';ans=90-(a%90);}break;
   case 'Çokgenler':a=gameRand(3,8);q='Düzgün olmayan bir çokgenin '+a+' kenarı varsa iç açılar toplamı kaç derecedir?';ans=(a-2)*180;break;
-  case 'Çember ve Daire':a=gameRand(2,12+6*level);if(crypto.randomInt(0,2)===0){q='Yarıçapı '+a+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}else{q='Çapı '+(2*a)+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}break;
+  case 'Çember ve Daire':a=gameRand(2,12+6*level);if(crypto.randomInt(0,2)===0){q='Yarıçapı '+a+' cm olan çemberin çevresi kaç cm\'dir? (π = 3 alınız)';ans=6*a;}else{q='Çapı '+(2*a)+' cm olan çemberin çevresi kaç cm\'dir? (π = 3 alınız)';ans=6*a;}break;
   case 'Veri Analizi':{const v=[gameRand(2,9+5*level),gameRand(2,9+5*level),gameRand(2,9+5*level),gameRand(2,9+5*level),gameRand(2,9+5*level)].sort((m,n)=>m-n);if(crypto.randomInt(0,2)===0){q=v.join(', ')+' veri grubunun ortancası (medyanı) kaçtır?';ans=v[2];}else{q=v.join(', ')+' veri grubunun açıklığı kaçtır?';ans=v[4]-v[0];}break;}
   default:throw new HttpsError('invalid-argument','Geçersiz matematik konusu.');
  }
