@@ -15,7 +15,7 @@ window.firebaseConfig = {
  function ready(user,error){state.authReady=true;window.dispatchEvent(new CustomEvent('mm-auth-ready',{detail:{user:user||null,admin:!!state.admin,error:error||null}}));}
  function call(name,data){if(!state.fn)throw Error('Firebase henüz başlatılmadı.');return state.fn.httpsCallable(name)(data||{});}
  const DEFAULT_FLAGS={adminBox:true,wheel:true,tasks:true,market:true,online:true};
- function showAdmin(on){const t=$('tabAdmin');if(t)t.classList.toggle('hide',!on);$('adminLocked')?.classList.add('hide');$('adminOpen')?.classList.toggle('hide',!on);const box=$('adminLogin');if(box)box.classList.toggle('hide',!on||state.featureFlags?.adminBox===false);}
+ function showAdmin(on){const t=$('tabAdmin');if(t)t.classList.toggle('hide',!on);$('adminLocked')?.classList.add('hide');$('adminOpen')?.classList.toggle('hide',!on);$('unlockNameBtn')?.classList.toggle('hide',!on);const box=$('adminLogin');if(box)box.classList.toggle('hide',!on||state.featureFlags?.adminBox===false);}
  function applyFeatureFlags(flags){
   state.featureFlags={...DEFAULT_FLAGS,...(flags||{})};
   const f=state.featureFlags;
@@ -114,6 +114,7 @@ window.firebaseConfig = {
  }
  function bindAdmin(){
   ['admToggleAdminBox','admToggleWheel','admToggleTasks','admToggleMarket','admToggleOnline'].forEach(id=>$(id)?.addEventListener('change',saveFeatureFlags));
+  $('unlockNameBtn')?.addEventListener('click',async()=>{if(!state.admin||!state.user)return;const current=String(state.user.displayName||'Hako'),name=String(prompt('Yeni görünen adını yaz:',current)||'').trim().slice(0,80);if(!name||name===current)return;try{await state.user.updateProfile({displayName:name});await state.db.collection('users').doc(state.user.uid).set({displayName:name},{merge:true});msg('nmMsg','Yönetici profil adı güncellendi.');}catch(e){msg('nmMsg','Ad değiştirilemedi: '+e.message);}});
   $('openAdmin')?.addEventListener('click',()=>{if(state.admin)window.MatematikMacerasi?.navigate('s3');});
   $('ghostKey')?.addEventListener('click',()=>{if(state.admin)window.MatematikMacerasi?.navigate('s3');});
   $('arefresh')?.addEventListener('click',()=>{if(state.admin)window.location.reload();});
