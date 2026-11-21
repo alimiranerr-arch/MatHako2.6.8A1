@@ -80,6 +80,22 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(game.includes('genel liderlik tablosuna eklenmedi'));
 });
 
+test('Emoji ve kart ekipman sistemi güvenli ve arayüze bağlı', () => {
+  const backend=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
+  const features=fs.readFileSync(path.join(root,'features.js'),'utf8');
+  const social=fs.readFileSync(path.join(root,'social.js'),'utf8');
+  const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
+  const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
+  assert.ok(backend.includes('exports.setInventoryLoadout=onCall'));
+  assert.ok(backend.includes("owns(id,'emoji')") && backend.includes("owns(id,'card')"));
+  assert.ok(backend.includes('emojis.length!==5||cards.length!==5'));
+  assert.ok(features.includes("while(emojis.length<5)emojis.push('');while(cards.length<5)cards.push('')"));
+  assert.ok(features.includes("addEventListener('drop'") && features.includes("addEventListener('click'"));
+  assert.ok(social.includes("const emoji=w.MMEquipped?.emojis?.[0]?.emoji||''"));
+  assert.ok(game.includes('w.MMEquipped?.cards') && game.includes('w.MMEquipped?.emojis'));
+  assert.ok(rules.includes("'emoji'") && rules.includes('request.resource.data.emoji.size()<=8'));
+});
+
 test('Ortak başlangıç ve sekme gezinmesi etkin', () => {
   const core=fs.readFileSync(path.join(root,'core.js'),'utf8');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
