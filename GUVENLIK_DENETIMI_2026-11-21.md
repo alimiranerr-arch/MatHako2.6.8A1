@@ -47,7 +47,7 @@ Cloud Functions, Firestore rules/indexes ve Storage rules canlı projeye dağıt
 
 ## Test ve yayın disiplini
 
-- Bu turda yeni test çalıştırılmadı; kullanıcının açık talimatı bekleniyor.
-- GitHub Actions otomatik push/PR tetiklerinden çıkarıldı ve manuel çalıştırmaya alındı.
+- Bu turda tarafımdan manuel test çalıştırılmadı; kullanıcı talimatı bekleniyor.
+- Workflow artık yalnızca workflow_dispatch ile çalışır. Bu değişiklikten önceki push'lar otomatik Actions çalıştırmış olabilir; son kodun test edildiği varsayılmamalı.
 - Önceki commit SHA'larında başarılı olmuş CI çalışmaları bu son kodun test edildiği anlamına gelmez.
 - `main` dalı değişmedi. PR birleştirilmedi. Canlıya dağıtım yapılmadı.
