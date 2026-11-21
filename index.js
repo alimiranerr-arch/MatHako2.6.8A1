@@ -244,7 +244,76 @@ exports.submitTeacherRequest=onCall(async req=>{
 
 exports.protectAdminProfile=onDocumentCreated('users/{uid}',async e=>{const uid=e.params.uid,u=await admin.auth().getUser(uid).catch(()=>null);if(u&&u.email===ADMIN_EMAIL&&u.emailVerified)await admin.auth().setCustomUserClaims(uid,{...(u.customClaims||{}),admin:true});});
 
-// Skorlar yalnızca callable üzerinden yazılır; oyuncu kendi puanını değiştiremez.
+
+const GAME_TOPICS=['Tam Sayılar','Rasyonel Sayılar','Cebirsel İfadeler','Eşitlik ve Denklem','Oran ve Orantı','Yüzdeler','Doğrular ve Açılar','Çokgenler','Çember ve Daire','Veri Analizi'];
+function gameRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function gamePick(a){return a[gameRand(0,a.length-1)];}
+function makeServerQuestion(topic){
+ let a,b,x,ans,q;
+ if(topic==='Karışık')topic=gamePick(GAME_TOPICS);
+ switch(topic){
+  case 'Tam Sayılar':a=gameRand(-30,30);b=gameRand(-20,20);{const op=gamePick(['+','−','×']);ans=op==='+'?a+b:op==='−'?a-b:a*b;q=a+' '+op+' ('+b+') işleminin sonucu kaçtır?';}break;
+  case 'Rasyonel Sayılar':{const d=gamePick([2,3,4,5,6,8,10]);a=gameRand(1,d-1);b=gameRand(1,d-1);ans=(a+b)+'/'+d;q=a+'/'+d+' + '+b+'/'+d+' işleminin sonucu kaçtır?';break;}
+  case 'Cebirsel İfadeler':a=gameRand(2,9);b=gameRand(1,12);x=gameRand(1,8);q='x = '+x+' ise '+a+'x + '+b+' ifadesinin değeri kaçtır?';ans=a*x+b;break;
+  case 'Eşitlik ve Denklem':a=gameRand(2,8);x=gameRand(1,12);b=gameRand(-10,15);q=a+'x '+(b<0?'− '+Math.abs(b):'+ '+b)+' = '+(a*x+b)+' denkleminde x kaçtır?';ans=x;break;
+  case 'Oran ve Orantı':a=gameRand(2,8);b=gameRand(2,9);x=gameRand(2,6);q=a+' kalem '+(b*a)+' TL ise '+(a*x)+' kalem kaç TL\\'dir?';ans=b*a*x;break;
+  case 'Yüzdeler':a=gamePick([10,20,25,30,40,50,60,75]);b=gamePick([40,60,80,100,120,160,200,240]);if(Math.random()<.5){q=b+' TL\\'lik ürünün %'+a+' indirimli fiyatı kaç TL\\'dir?';ans=b-b*a/100;}else{q=b+' sayısının %'+a+'\\'i kaçtır?';ans=b*a/100;}break;
+  case 'Doğrular ve Açılar':a=gameRand(25,155);if(Math.random()<.5){q='Bir doğru açı üzerinde komşu açılardan biri '+a+'° ise diğeri kaç derecedir?';ans=180-a;}else{q='Tümler iki açıdan biri '+(a%90)+'° ise diğeri kaç derecedir?';ans=90-(a%90);}break;
+  case 'Çokgenler':a=gameRand(3,8);q='Düzgün olmayan bir çokgenin '+a+' kenarı varsa iç açılar toplamı kaç derecedir?';ans=(a-2)*180;break;
+  case 'Çember ve Daire':a=gameRand(2,12);if(Math.random()<.5){q='Yarıçapı '+a+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}else{q='Çapı '+(2*a)+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}break;
+  case 'Veri Analizi':{const v=[gameRand(2,9),gameRand(2,9),gameRand(2,9),gameRand(2,9),gameRand(2,9)].sort((m,n)=>m-n);if(Math.random()<.5){q=v.join(', ')+' veri grubunun ortancası (medyanı) kaçtır?';ans=v[2];}else{q=v.join(', ')+' veri grubunun açıklığı kaçtır?';ans=v[4]-v[0];}break;}
+  default:throw new HttpsError('invalid-argument','Geçersiz matematik konusu.');
+ }
+ const correct=String(ans),candidates=[correct,String(Number(ans)+gamePick([1,2,3,5,-1,-2])),String(Number(ans)-gamePick([1,2,3,4])),String(Number(ans)*2)],opts=[...new Set(candidates)];
+ while(opts.length<4)opts.push(String(Number(ans)+gameRand(2,12)));
+ for(let i=opts.length-1;i>0;i--){const j=gameRand(0,i);[opts[i],opts[j]]=[opts[j],opts[i]];}
+ return{q,options:opts.slice(0,4),answer:correct};
+}
+exports.startGameSession=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const d=req.data||{},mode=String(d.mode||'classic');
+ let topic=String(d.topic||'Karışık').slice(0,40);
+ if(!['classic','endless','retry','balance'].includes(mode))throw new HttpsError('invalid-argument','Oyun modu geçersiz.');
+ if(mode==='balance')topic='Eşitlik ve Denklem';
+ if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Matematik konusu geçersiz.');
+ const competitionType=String(d.competitionType||''),competitionCode=String(d.competitionCode||'').toUpperCase().slice(0,6);
+ if(competitionType==='duel'){const duel=await db.doc('duels/'+competitionCode).get();if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif düello oturumu bulunamadı.');}
+ else if(competitionType==='group'){const comp=await db.doc('groupCompetitions/'+competitionCode).get();if(!comp.exists||comp.data().status!=='playing'||(!(comp.data().membersA||[]).includes(uid)&&!(comp.data().membersB||[]).includes(uid))||comp.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif grup yarışması bulunamadı.');}
+ else if(competitionType)throw new HttpsError('invalid-argument','Yarışma türü geçersiz.');
+ const count=mode==='retry'?10:500,questions=Array.from({length:count},()=>makeServerQuestion(topic)),id=crypto.randomBytes(16).toString('hex');
+ await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',createdAt:Field.serverTimestamp(),expiresAt:Date.now()+2*60*60*1000});
+ return{sessionId:id,questions:questions.map(x=>({q:x.q,opts:x.options}))};
+});
+exports.submitGameSession=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.sessionId||''),answers=req.data?.answers;
+ if(!id||!Array.isArray(answers)||answers.length<1||answers.length>500)throw new HttpsError('invalid-argument','Oyun oturumu sonucu geçersiz.');
+ const sessionRef=db.doc('gameSessions/'+id);let result;
+ await db.runTransaction(async tx=>{
+  const s=await tx.get(sessionRef);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
+  const data=s.data();if(answers.length>data.questions.length)throw new HttpsError('invalid-argument','Soru sayısı geçersiz.');
+  let score=0,correct=0,streak=0,lives=5;
+  for(let i=0;i<answers.length;i++){const selected=answers[i]===null?null:String(answers[i]),q=data.questions[i];if(selected!==null&&!q.options.includes(selected))throw new HttpsError('invalid-argument','Gönderilen cevap seçenekler arasında değil.');if(selected===q.answer){correct++;streak++;score+=10+Math.min(streak-1,5)*2;}else{streak=0;lives--;}}
+  if(lives<0)throw new HttpsError('invalid-argument','Oyun cevap dizisi geçersiz.');
+  result={score,correct,questions:answers.length,mode:data.mode,topic:data.topic};
+  if(data.competitionType==='duel'){
+   const ref=db.doc('duels/'+data.competitionCode),duel=await tx.get(ref);if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('failed-precondition','Düello artık aktif değil.');
+   const scores={...(duel.data().scores||{}),[uid]:{score,correct,questions:answers.length,at:Date.now()}},complete=Object.keys(scores).length===2;
+   tx.update(ref,{scores,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='duel';result.completed=complete;
+  }else if(data.competitionType==='group'){
+   const ref=db.doc('groupCompetitions/'+data.competitionCode),comp=await tx.get(ref);if(!comp.exists||comp.data().status!=='playing'||comp.data().scores?.[uid])throw new HttpsError('failed-precondition','Grup yarışması artık aktif değil.');
+   const x=comp.data(),side=(x.membersA||[]).includes(uid)?'a':(x.membersB||[]).includes(uid)?'b':null;if(!side)throw new HttpsError('permission-denied','Bu grup yarışmasında değilsin.');
+   const scores={...(x.scores||{}),[uid]:{score,correct,side,at:Date.now()}},totals={a:0,b:0};for(const v of Object.values(scores))totals[v.side]+=v.score;
+   const complete=Object.keys(scores).length>=(x.membersA||[]).length+(x.membersB||[]).length;
+   tx.update(ref,{scores,totals,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='group';result.completed=complete;result.totals=totals;
+  }else{
+   const user=await tx.get(db.doc('users/'+uid)),name=String(user.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32);
+   tx.create(db.collection('scores').doc(),{uid,playerName:name,score,mode:data.mode,topic:data.topic,public:req.data?.public===true,questions:answers.length,createdAt:Field.serverTimestamp()});
+  }
+  tx.update(sessionRef,{status:'submitted',submittedAt:Field.serverTimestamp(),score,correct,questions:answers.length});
+ });
+ return{ok:true,...result};
+});
+
+// Eski istemci puan uç noktası kapalı; yalnızca sunucu oturumları kabul edilir.
 exports.submitGameScore=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const d=req.data||{},score=Number(d.score),questions=Number(d.questions),mode=String(d.mode||'classic'),topic=String(d.topic||'Karışık');
  if(!Number.isInteger(score)||score<0||!Number.isInteger(questions)||questions<1||questions>10000||score>questions*20||!['classic','endless','retry','balance'].includes(mode)||(mode==='retry'&&questions>10))throw new HttpsError('invalid-argument','Skor, soru sayısı veya oyun modu geçersiz.');
