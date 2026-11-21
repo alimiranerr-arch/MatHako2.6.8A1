@@ -41,12 +41,18 @@ test('Cloud Functions yapılandırması mevcut kaynak diziniyle eşleşiyor', ()
   assert.ok(fs.existsSync(path.join(root,'functions/package.json')));
 });
 
-test('Güvenlik kuralları sohbet üyeliğini ve mesaj sahipliğini doğruluyor', () => {
+test('Güvenlik kuralları sohbet üyeliğini ve profil gizliliğini doğruluyor', () => {
   const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
   const storage=fs.readFileSync(path.join(root,'storage.rules'),'utf8');
-  assert.match(rules,/request\.auth\.uid in get\(/);
-  assert.match(rules,/request\.resource\.data\.senderId==resource\.data\.senderId/);
-  assert.match(storage,/request\.auth\.token\.email_verified==true/);
+  const functions=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
+  assert.match(rules,/request\\.auth\\.uid in get\\(/);
+  assert.match(rules,/request\\.resource\\.data\\.senderId==request\\.auth\\.uid/);
+  assert.match(rules,/resource\\.data\\.published==true/);
+  assert.match(storage,/request\\.auth\\.token\\.email_verified==true/);
+  assert.match(storage,/fileName\\.matches/);
+  assert.match(functions,/exports\\.searchPlayers=onCall/);
+  assert.match(functions,/exports\\.findChatMembers=onCall/);
+  assert.match(functions,/resource-exhausted/);
 });
 
 console.log('\n' + passed + ' test başarılı.');
