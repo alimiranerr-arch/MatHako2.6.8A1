@@ -256,6 +256,13 @@ exports.reportChatMessage=onCall(async req=>{
  return{ok:true};
 });
 
+exports.resolveMessageReport=onCall(async req=>{
+ const uid=requireAdmin(req),id=String(req.data?.reportId||'').trim();
+ if(!id||id.length>140)throw new HttpsError('invalid-argument','Bildirim kimliği geçersiz.');
+ const ref=db.doc('messageReports/'+id);
+ await db.runTransaction(async tx=>{const s=await tx.get(ref);if(!s.exists)throw new HttpsError('not-found','Bildirim bulunamadı.');tx.update(ref,{status:'resolved',resolvedBy:uid,resolvedAt:Field.serverTimestamp()});});
+ return{ok:true};
+});
 exports.submitFeedback=onCall(async req=>{
  const d=req.data||{};if(String(d.honeypot||''))return{ok:true};
  await publicSubmissionLimit(req,'feedback');
