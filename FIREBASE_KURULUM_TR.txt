@@ -9,12 +9,12 @@ MATEMATİK MACERASI – ENTEGRASYON KURULUMU
    npm install -g firebase-tools
    firebase login
    firebase use hakomatonline261
-5) ZIP'teki mm_activate klasörünü proje köküne çıkar. firebase.json, firestore.rules, storage.rules ve functions klasörü kökte olmalı.
+5) Depo kökünde firebase.json, firestore.rules, storage.rules ve functions/ klasörünün bulunduğunu doğrula.
 6) functions klasöründe npm install çalıştır.
 7) Proje kökünde şu komutları çalıştır:
    firebase deploy --only firestore:rules,storage
    firebase deploy --only functions
-8) GitHub Pages için index.html ve diğer web dosyalarını repository köküne yükle; /Mat2.6.7/ altındaki göreli yollar korunmuştur.
+8) GitHub Pages için index.html ve diğer web dosyalarını repository köküne yükle. Bu depoda web dosyaları kök dizindedir.
 9) Admin olarak alimiranerr@gmail.com hesabıyla Google üzerinden giriş yap. E-postayı doğrula. İlk doğrulanmış giriş claimHakoAdmin fonksiyonunu çağırır; çıkış yapıp tekrar giriş yap.
 
 BİLİNEN SINIRLAR / GÜVENLİK
