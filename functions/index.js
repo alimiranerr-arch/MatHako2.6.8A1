@@ -213,6 +213,17 @@ exports.joinGroupCompetition=onCall(async req=>{
  return{ok:true,code};
 });
 exports.submitGroupCompetitionResult=onCall(async()=>{throw new HttpsError('failed-precondition','Grup skorları yalnızca doğrulanmış oyun oturumundan gönderilebilir.');});
+
+exports.reportChatMessage=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const chatId=String(req.data?.chatId||''),messageId=String(req.data?.messageId||''),reason=String(req.data?.reason||'Uygunsuz içerik').trim().slice(0,160);
+ if(!chatId||!messageId)throw new HttpsError('invalid-argument','Bildirilecek mesaj seçilmedi.');
+ const chat=await db.doc('chats/'+chatId).get();if(!chat.exists||!chat.data().memberIds?.includes(uid))throw new HttpsError('permission-denied','Bu sohbet için bildirim gönderemezsin.');
+ const message=await db.doc('chats/'+chatId+'/messages/'+messageId).get();if(!message.exists||message.data().senderId===uid)throw new HttpsError('failed-precondition','Bu mesaj bildirilemez.');
+ const duplicate=await db.collection('messageReports').where('messageId','==',messageId).where('reportedBy','==',uid).limit(1).get();if(!duplicate.empty)throw new HttpsError('already-exists','Bu mesajı zaten bildirdin.');
+ await db.collection('messageReports').add({chatId,messageId,reportedBy:uid,reason,senderId:message.data().senderId,senderName:String(message.data().senderName||'Kullanıcı').slice(0,80),messageText:String(message.data().text||'').slice(0,500),createdAt:Field.serverTimestamp(),status:'new'});
+ return{ok:true};
+});
+
 exports.submitFeedback=onCall(async req=>{
  const d=req.data||{};if(String(d.honeypot||''))return{ok:true};
  await publicSubmissionLimit(req,'feedback');
