@@ -1397,7 +1397,13 @@ body.hako-notice-open{overflow:hidden}
 <!-- ================= AYARLAR ================= -->
 <section id="s7" class="hide">
 
-  <div class="card" id="setAccount"></div>
+  <div class="card" id="setAccount">
+    <h2>📧 E-posta adresimi değiştir</h2>
+    <p class="note">Güvenlik için yeni adresine doğrulama bağlantısı gönderilir. E-posta değişikliği 30 günde bir yapılabilir.</p>
+    <label>Yeni e-posta <input id="newAccountEmail" type="email" maxlength="254" placeholder="yeni@ornek.com"></label>
+    <button class="btn" type="button" id="requestEmailChangeBtn">Doğrulama bağlantısı gönder</button>
+    <p class="msg" id="emailChangeMsg" aria-live="polite"></p>
+  </div>
 
   <div class="card">
 
