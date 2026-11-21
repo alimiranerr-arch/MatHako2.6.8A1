@@ -59,8 +59,14 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(functions.includes('function rateLimit'));
   assert.ok(functions.includes("timeZone:'Europe/Istanbul'"));
   assert.ok(functions.includes('resource-exhausted'));
-  assert.ok(functions.includes('score>questions*20'));
-  assert.ok(functions.includes('score>correct*20'));
+  assert.ok(functions.includes('exports.startGameSession=onCall'));
+  assert.ok(functions.includes('exports.submitGameAnswer=onCall'));
+  assert.ok(functions.includes('exports.finishGameSession=onCall'));
+  assert.ok(functions.includes('answers:Field.arrayUnion(entry)'));
+  assert.ok(functions.includes("await rateLimit(uid,'submitGameAnswer',600)"));
+  assert.ok(functions.includes('Doğrudan skor gönderimi kapalı'));
+  assert.ok(functions.includes('Grup skorları yalnızca doğrulanmış oyun oturumundan gönderilebilir'));
+  assert.ok(functions.includes('Düello skorları yalnızca doğrulanmış oyun oturumundan gönderilebilir'));
   assert.ok(social.includes('emails.length>9'));
   assert.ok(social.includes('currentSenderName'));
   assert.ok(social.includes('image\\/(png|jpeg|gif|webp)'));
