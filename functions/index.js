@@ -148,7 +148,7 @@ exports.getDailyTasks=onCall(async req=>{
  return{tasks:snap.docs.map(x=>({id:x.id,...x.data(),claimed:claimed.has(x.id)}))};
 });
 exports.joinRandomMatch=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const topic=String(req.data?.topic||'Karışık').slice(0,40);
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'joinRandomMatch',5);const existing=await db.collection('matchmakingQueue').where('uid','==',uid).where('status','==','waiting').limit(1).get();if(!existing.empty)return{matched:false,queueId:existing.docs[0].id};const topic=String(req.data?.topic||'Karışık').slice(0,40);
  const waiting=await db.collection('matchmakingQueue').where('status','==','waiting').where('topic','==',topic).limit(10).get();
  for(const candidate of waiting.docs){
   if(candidate.data().uid===uid)continue;
