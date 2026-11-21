@@ -21,7 +21,7 @@
   fx.textContent=state.effect==='sunny'?'☀️':state.effect==='rain'?'🌧️':state.effect==='snow'?'❄️':'';
  }
  function selected(container,attr,value){container?.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===value)));}
- function choices(id,items,onPick){const box=$(id);if(!box)return;box.replaceChildren();items.forEach((item,i)=>{const b=d.createElement('button');b.type='button';b.className='btn';b.textContent=item[0];b.style.background='linear-gradient(120deg,'+item[1]+','+item[2]+')';b.style.color='#172033';b.setAttribute('aria-pressed',String(i===state[id==='themeList'?'theme':'bg']));b.addEventListener('click',()=>onPick(i));box.appendChild(b)})}
+ function choices(id,items,onPick,active=0){const box=$(id);if(!box)return;box.replaceChildren();items.forEach((item,i)=>{const b=d.createElement('button');b.type='button';b.className='btn';b.textContent=item[0];b.style.background='linear-gradient(120deg,'+item[1]+','+item[2]+')';b.style.color='#172033';b.setAttribute('aria-pressed',String(i===active));b.addEventListener('click',()=>onPick(i));box.appendChild(b)})}
  function syncControls(){
   if($('bwOn'))$('bwOn').checked=!!state.bw;
   if($('bgOn'))$('bgOn').checked=!!state.bgOn;
@@ -46,12 +46,13 @@
  }
  function watchProfile(){
   const c=w.MMCloud;if(!c?.user||!c?.db)return;stopProfile?.();
-  stopProfile=c.db.collection('users').doc(c.user.uid).onSnapshot(s=>{if(!s.exists)return;const u=s.data();c.profile=u;avatarView(u.avatar||'🙂',u.avatarPath||'');const name=$('meName');if(name)name.textContent=u.nickname||u.displayName||'Oyuncu';},e=>console.warn('Profil görünümü:',e));
+  stopProfile=c.db.collection('users').doc(c.user.uid).onSnapshot(s=>{if(!s.exists)return;const u=s.data();c.profile=u;avatarView(u.avatar||'🙂',u.avatarPath||'');syncControls();const name=$('meName');if(name)name.textContent=u.nickname||u.displayName||'Oyuncu';},e=>console.warn('Profil görünümü:',e));
  }
  function bind(){
-  state=read();choices('themeList',themes,i=>{state.theme=i;state.bgOn=false;state.custom=false;choices('themeList',themes,()=>{});persist();apply()});
-  choices('bgPick',bgs,i=>{state.bg=i;state.bgOn=true;state.custom=false;persist();apply()});
-  choices('pairList',pairs,i=>{state.c1=pairs[i][1];state.c2=pairs[i][2];state.custom=true;state.bgOn=false;syncControls();persist();apply()});
+  state=read();const pickTheme=i=>{state.theme=i;state.bgOn=false;state.custom=false;choices('themeList',themes,pickTheme,state.theme);persist();apply()};
+  const pickBg=i=>{state.bg=i;state.bgOn=true;state.custom=false;choices('bgPick',bgs,pickBg,state.bg);persist();apply()};
+  const pickPair=i=>{state.c1=pairs[i][1];state.c2=pairs[i][2];state.custom=true;state.bgOn=false;choices('pairList',pairs,pickPair,i);syncControls();persist();apply()};
+  choices('themeList',themes,pickTheme,state.theme);choices('bgPick',bgs,pickBg,state.bg);choices('pairList',pairs,pickPair,0);
   syncControls();apply();
   $('bwOn')?.addEventListener('change',()=>{collect();persist();apply()});
   $('bgOn')?.addEventListener('change',()=>{collect();persist();apply()});
@@ -70,7 +71,6 @@
   $('fbMsg')?.addEventListener('input',()=>{if($('fbChars'))$('fbChars').textContent=($('fbMsg').value.length)+'/500'});
   $('teacherContactPref')?.addEventListener('change',()=>{const email=$('teacherContactPref').value==='E-posta';$('teacherEmailLabel')?.classList.toggle('hide',!email);$('teacherPhoneLabel')?.classList.toggle('hide',email);if($('teacherEmailInput'))$('teacherEmailInput').required=email;if($('teacherPhoneInput'))$('teacherPhoneInput').required=!email});
   $('testFx')?.addEventListener('click',()=>{if(state.sound){try{const Ctx=w.AudioContext||w.webkitAudioContext;if(Ctx){const ctx=new Ctx(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.frequency.value=660;gain.gain.value=.06;osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.16);osc.onended=()=>ctx.close()}}catch(e){console.warn(e)}}if(state.vibration&&navigator.vibrate)navigator.vibrate(120)});
-  $('bellBtn')?.addEventListener('click',()=>{const panel=$('notifPanel');if(panel){panel.classList.toggle('hide');panel.setAttribute('aria-hidden',String(panel.classList.contains('hide')))}});
   w.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn')?.classList.remove('hide')});
   $('installBtn')?.addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn')?.classList.add('hide')});
   w.addEventListener('appinstalled',()=>{$('installBtn')?.classList.add('hide')});
