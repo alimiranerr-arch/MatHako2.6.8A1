@@ -41,18 +41,27 @@ test('Cloud Functions yapılandırması mevcut kaynak diziniyle eşleşiyor', ()
   assert.ok(fs.existsSync(path.join(root,'functions/package.json')));
 });
 
-test('Güvenlik kuralları sohbet üyeliğini ve profil gizliliğini doğruluyor', () => {
+test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
   const storage=fs.readFileSync(path.join(root,'storage.rules'),'utf8');
   const functions=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
-  assert.match(rules,/request\.auth\.uid in get\(/);
-  assert.match(rules,/request\.resource\.data\.senderId==request\.auth\.uid/);
-  assert.match(rules,/resource\.data\.published==true/);
-  assert.match(storage,/request\.auth\.token\.email_verified==true/);
-  assert.match(storage,/fileName\.matches/);
-  assert.match(functions,/exports\.searchPlayers=onCall/);
-  assert.match(functions,/exports\.findChatMembers=onCall/);
-  assert.match(functions,/resource-exhausted/);\n  assert.match(functions,/function rateLimit/);\n  assert.match(functions,/timeZone:'Europe\\/Istanbul'/);\n  assert.match(rules,/senderName==get\\(/);\n  const social=fs.readFileSync(path.join(root,'social.js'),'utf8');\n  assert.match(social,/emails\\.length>9/);\n  assert.match(social,/currentSenderName/);\n  const features=fs.readFileSync(path.join(root,'features.js'),'utf8');\n  assert.match(features,/membershipActive/);
+  const social=fs.readFileSync(path.join(root,'social.js'),'utf8');
+  const features=fs.readFileSync(path.join(root,'features.js'),'utf8');
+  assert.ok(rules.includes('request.auth.uid in get('));
+  assert.ok(rules.includes('request.resource.data.senderId==request.auth.uid'));
+  assert.ok(rules.includes('senderName==get('));
+  assert.ok(rules.includes("resource.data.published==true"));
+  assert.ok(storage.includes('request.auth.token.email_verified==true'));
+  assert.ok(storage.includes('fileName.matches'));
+  assert.ok(functions.includes('exports.searchPlayers=onCall'));
+  assert.ok(functions.includes('exports.findChatMembers=onCall'));
+  assert.ok(functions.includes('function rateLimit'));
+  assert.ok(functions.includes("timeZone:'Europe/Istanbul'"));
+  assert.ok(functions.includes('resource-exhausted'));
+  assert.ok(social.includes('emails.length>9'));
+  assert.ok(social.includes('currentSenderName'));
+  assert.ok(social.includes('image\\/(png|jpeg|gif|webp)'));
+  assert.ok(features.includes('membershipActive'));
 });
 
 console.log('\n' + passed + ' test başarılı.');
