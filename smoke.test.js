@@ -116,4 +116,40 @@ test('PWA ikon yolları depodaki gerçek dosyalarla eşleşiyor', () => {
   }
 });
 
+test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı', () => {
+  const backend=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
+  const mirror=fs.readFileSync(path.join(root,'index.js'),'utf8');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const settings=fs.readFileSync(path.join(root,'settings.js'),'utf8');
+  const social=fs.readFileSync(path.join(root,'social.js'),'utf8');
+  const admin=fs.readFileSync(path.join(root,'admin-tools.js'),'utf8');
+  const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
+  const storage=fs.readFileSync(path.join(root,'storage.rules'),'utf8');
+  assert.equal(backend,mirror,'Root ve Functions backend kaynakları eşleşmeli.');
+  for(const name of ['completeEmailChange','startMistakeReview','publishAndGrantMarketItem','createGiftCode','redeemGiftCode','setFeatureFlags','resolveMessageReport','randomJoinCode']) {
+    assert.ok(backend.includes(name),'Eksik backend iş akışı: '+name);
+  }
+  assert.ok(backend.includes('questionDeadlineAt'));
+  assert.ok(backend.includes('crypto.randomInt'));
+  assert.ok(html.includes('./settings.js'));
+  assert.ok(html.includes('./admin-tools.js'));
+  assert.ok(settings.includes("navigator.serviceWorker.register('./sw.js')"));
+  assert.ok(settings.includes("httpsCallable('redeemGiftCode')"));
+  assert.ok(social.includes('ensureNotificationPanel'));
+  assert.ok(social.includes('displayName') && social.includes('friend.data()'));
+  assert.ok(admin.includes('resolveMessageReport'));
+  assert.ok(rules.includes('match /giftCodes/{code}'));
+  assert.ok(rules.includes('avatarPath'));
+  assert.ok(storage.includes('match /avatars/{uid}/{fileName}'));
+});
+
+test('Offline uygulama kabuğu yalnızca depoda bulunan statik dosyaları önbelleğe alıyor', () => {
+  const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
+  assert.ok(sw.includes("request.method!=='GET'"));
+  assert.ok(sw.includes("url.origin!==self.location.origin"));
+  assert.ok(sw.includes("request.mode==='navigate'"));
+  const assets=[...sw.matchAll(/'\.\/([^']+)'/g)].map(m=>m[1]).filter(x=>x!==''&&x!=='index.html');
+  for(const asset of assets) assert.ok(fs.existsSync(path.join(root,asset)),'Service worker var olmayan dosyayı önbelleğe alıyor: '+asset);
+});
+
 console.log('\n' + passed + ' test başarılı.');
