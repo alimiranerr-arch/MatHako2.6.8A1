@@ -49,6 +49,7 @@
  function watchProfile(){
   const c=w.MMCloud;if(!c?.user||!c?.db)return;stopProfile?.();stopAppearance?.();
   stopProfile=c.db.collection('users').doc(c.user.uid).onSnapshot(s=>{if(!s.exists)return;const u=s.data();c.profile=u;avatarView(u.avatar||'🙂',u.avatarPath||'');syncControls();syncAppearance();const name=$('meName');if(name)name.textContent=u.nickname||u.displayName||'Oyuncu';if($('fbName'))$('fbName').value=u.nickname||u.displayName||'Oyuncu';},e=>console.warn('Profil görünümü:',e));
+  stopAppearance=w.MMCloudSync?.watchAppearance?.(remote=>{if(!remote)return;state={...defaults,...remote};persist();state=read();syncControls();apply();})||null;
  }
  function bind(){
   state=read();const pickTheme=i=>{state.theme=i;state.bgOn=false;state.custom=false;choices('themeList',themes,pickTheme,state.theme);persist();apply()};
