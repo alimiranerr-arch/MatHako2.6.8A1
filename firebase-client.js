@@ -1,6 +1,6 @@
 // Firebase web istemci ayarları (API key web uygulaması tanımlayıcısıdır; özel anahtar değildir).
 window.firebaseConfig = {
- apiKey: "AIzaSyDCsLQwKIQkpETXyX0bVVLYOWxEy52rLbo",
+ apiKey: "", // Firebase Console > Project settings > Your apps > Web app config alanından gerçek apiKey eklenmeli
  authDomain: "hakomatonline261.firebaseapp.com",
  projectId: "hakomatonline261",
  storageBucket: "hakomatonline261.firebasestorage.app",
@@ -36,8 +36,8 @@ window.firebaseConfig = {
   try{await call('setFeatureFlags',flags);msg('adminFeatureFlagsMsg','Özellik ayarları sunucuya kaydedildi.');}catch(e){msg('adminFeatureFlagsMsg','Kaydedilemedi: '+e.message);}
  }
  function init(){
-  if(!window.firebase||!window.firebaseConfig){
-   const e=new Error('Firebase SDK yüklenemedi. İnternet bağlantısını ve Firebase CDN erişimini kontrol edin.');
+  if(!window.firebase||!window.firebaseConfig||!window.firebaseConfig.apiKey){
+   const e=new Error(!window.firebase?'Firebase SDK yüklenemedi. İnternet bağlantısını ve Firebase CDN erişimini kontrol edin.':'Firebase Web API anahtarı henüz yapılandırılmamış. Firebase Console > Project settings > Your apps bölümündeki gerçek apiKey değerini girin.');
    console.error('Firebase başlatılamadı:',e);status(e.message,true);ready(null,e);return;
   }
   try{
