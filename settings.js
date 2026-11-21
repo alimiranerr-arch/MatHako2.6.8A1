@@ -6,7 +6,7 @@
  const themes=[['Gün Işığı','#fff7e0','#dbeafe'],['Okyanus','#dff6ff','#c7d2fe'],['Lavanta','#f5e8ff','#fce7f3'],['Orman','#e7f8e9','#d1fae5'],['Gün Batımı','#ffedd5','#fbcfe8']];
  const bgs=[['Krem','#fff7e0','#ffffff'],['Buz','#e0f2fe','#eef2ff'],['Pembe','#fce7f3','#fff1f2'],['Mint','#d1fae5','#ecfccb']];
  const pairs=[['Mavi','#2563eb','#93c5fd'],['Mor','#7c3aed','#c4b5fd'],['Yeşil','#059669','#a7f3d0'],['Turuncu','#ea580c','#fed7aa']];
- let state={...defaults};let installPrompt=null,stopProfile=null,avatarLoadSeq=0,syncedUid='';
+ let state={...defaults};let installPrompt=null,stopProfile=null,stopAppearance=null,avatarLoadSeq=0,syncedUid='';
  function read(){let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(_){}const x={...defaults,...saved};if(!Number.isInteger(x.theme)||x.theme<0||x.theme>=themes.length)x.theme=0;if(!Number.isInteger(x.bg)||x.bg<0||x.bg>=bgs.length)x.bg=0;if(!['light','dark','auto'].includes(x.mode))x.mode='auto';if(!['none','sunny','rain','snow','auto'].includes(x.effect))x.effect='none';if(!/^#[0-9a-f]{6}$/i.test(x.c1))x.c1=defaults.c1;if(!/^#[0-9a-f]{6}$/i.test(x.c2))x.c2=defaults.c2;return x}
  function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){console.warn('Ayarlar kaydedilemedi:',e)}}
  function effectiveMode(){if(state.mode!=='auto')return state.mode;const h=new Date().getHours();return h>=7&&h<19?'light':'dark'}
@@ -47,7 +47,7 @@
  }
  async function syncAppearance(){const c=w.MMCloud;if(!c?.user||!w.MMCloudSync||syncedUid===c.user.uid)return;syncedUid=c.user.uid;try{const remote=await w.MMCloudSync.loadAppearance();if(remote){state={...defaults,...remote};persist();state=read();syncControls();apply();}else await w.MMCloudSync.saveAppearance(state);}catch(e){syncedUid='';console.warn('Görünüm ayarları buluta eşitlenemedi:',e);}}
  function watchProfile(){
-  const c=w.MMCloud;if(!c?.user||!c?.db)return;stopProfile?.();
+  const c=w.MMCloud;if(!c?.user||!c?.db)return;stopProfile?.();stopAppearance?.();
   stopProfile=c.db.collection('users').doc(c.user.uid).onSnapshot(s=>{if(!s.exists)return;const u=s.data();c.profile=u;avatarView(u.avatar||'🙂',u.avatarPath||'');syncControls();syncAppearance();const name=$('meName');if(name)name.textContent=u.nickname||u.displayName||'Oyuncu';if($('fbName'))$('fbName').value=u.nickname||u.displayName||'Oyuncu';},e=>console.warn('Profil görünümü:',e));
  }
  function bind(){
@@ -79,7 +79,7 @@
   w.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn')?.classList.remove('hide')});
   $('installBtn')?.addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn')?.classList.add('hide')});
   w.addEventListener('appinstalled',()=>{$('installBtn')?.classList.add('hide')});
-  w.addEventListener('mm-auth-ready',e=>{if(e.detail?.user){watchProfile()}else{stopProfile?.();stopProfile=null;avatarLoadSeq++;syncedUid='';w.MMCloud.profile=null;if($('meName'))$('meName').textContent='Misafir';if($('meAv'))$('meAv').textContent='🙂';if($('fbName'))$('fbName').value='';}});
+  w.addEventListener('mm-auth-ready',e=>{if(e.detail?.user){watchProfile()}else{stopProfile?.();stopProfile=null;stopAppearance?.();stopAppearance=null;avatarLoadSeq++;syncedUid='';w.MMCloud.profile=null;if($('meName'))$('meName').textContent='Misafir';if($('meAv'))$('meAv').textContent='🙂';if($('fbName'))$('fbName').value='';}});
   if(w.MMCloud?.user)watchProfile();
  }
  if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Çevrimdışı uygulama kabuğu kaydedilemedi:',e));}
