@@ -294,6 +294,15 @@ exports.submitFeedback=onCall(async req=>{
  await db.collection('feedback').add({kind,message,uid:req.auth?.uid||null,playerName:String(d.playerName||'').slice(0,40),createdAt:Field.serverTimestamp(),status:'new'});
  return{ok:true};
 });
+exports.replyFeedback=onCall(async req=>{
+ const adminUid=requireAdmin(req),id=String(req.data?.feedbackId||''),reply=String(req.data?.reply||'').trim().slice(0,1000);
+ if(!id||!reply)throw new HttpsError('invalid-argument','Geri bildirim ve yanıt gerekli.');
+ const ref=db.doc('feedback/'+id),snap=await ref.get();if(!snap.exists)throw new HttpsError('not-found','Geri bildirim bulunamadı.');
+ await ref.update({adminReply:reply,repliedBy:adminUid,repliedAt:Field.serverTimestamp(),status:'replied'});
+ const target=snap.data().uid;if(target)await db.doc('users/'+target+'/notifications/feedback_'+id).set({type:'feedback-reply',message:reply,fromName:'Hako Yönetimi',createdAt:Field.serverTimestamp(),read:false});
+ await db.collection('auditLogs').add({action:'reply-feedback',adminUid,feedbackId:id,createdAt:Field.serverTimestamp()});
+ return{ok:true};
+});
 exports.submitTeacherRequest=onCall(async req=>{
  const d=req.data||{};if(String(d.honeypot||''))return{ok:true};
  await publicSubmissionLimit(req,'teacher');
