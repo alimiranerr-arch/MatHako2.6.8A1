@@ -20,8 +20,8 @@ service cloud.firestore {
   match /settings/{doc}{allow read:if signedIn();allow write:if admin();}
   match /users/{uid}{
    allow read:if owner(uid)||admin();
-   allow create:if owner(uid)&&request.resource.data.email==request.auth.token.email&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className']);
-   allow update:if admin()||(owner(uid)&&request.resource.data.email==resource.data.email&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location']));
+   allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.email==request.auth.token.email&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className']);
+   allow update:if admin()||(owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.email==resource.data.email&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location']));
    allow delete:if admin();
   }
   match /chats/{chatId}{
