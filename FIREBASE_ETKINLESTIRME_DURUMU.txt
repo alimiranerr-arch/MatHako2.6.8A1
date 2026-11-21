@@ -1,39 +1,36 @@
-MATEMATİK MACERASI — ENTEGRASYON DURUMU
-========================================
+MATEMATİK MACERASI — FIREBASE ENTEGRASYON DURUMU
+==================================================
 
-Bu paket, web istemcisini Firebase projesi hakomatonline261'e bağlamak için Firebase compat SDK'sını ve istemci entegrasyonunu içerir.
-Admin e-postası: alimiranerr@gmail.com
+Proje: hakomatonline261
+Yönetici hesabı: alimiranerr@gmail.com
+Çalışma dalı: hako/fix-audit-2026-11-21
+Canlı deploy: YAPILMADI
 
-BU PAKETTE BAĞLANANLAR
-- Firebase Auth durum dinleyicisi ve Google ile giriş düğmelerinin bağlanması.
-- Doğrulanmış alimiranerr@gmail.com hesabı için claimHakoAdmin çağrısı; yönetici menüsü yalnızca sunucu custom claim'i geldikten sonra görünür.
-- Bakım modu anahtarının setMaintenance callable fonksiyonuna bağlanması ve ortak ayarın izlenmesi.
-- Market yayınlama düğmesinin publishMarketItem callable fonksiyonuna bağlanması.
-- Dönem seçim kontrolünün setTermMode callable fonksiyonuna bağlanması.
-- Konum paylaşımında açık onay sorulması; reddedilirse site kullanımının engellenmemesi. Cihaz adı yerine yaklaşık cihaz türü kaydedilir.
+KODDA HAZIRLANANLAR
+- Firebase Auth, Google giriş, doğrulanmış admin custom claim.
+- Firestore/Storage güvenlik kuralları ve gerekli indeksler.
+- Oyun oturumları, sunucu soru/cevap/puan doğrulaması ve zaman aşımı.
+- Arkadaşlık, özel/grup sohbeti, medya, bildirimler, düello, rastgele eşleşme ve grup yarışması.
+- Market, envanter, günlük çark, Mini Pass, günlük görev, transfer ve hediye kodu.
+- E-posta değişimi doğrulama bağlantısı ve başarılı değişiklikten sonra 30 günlük sunucu sınırı.
+- Yönetici moderasyonu, bakım/tema/dönem/özellik bayrakları.
+- Kullanıcı avatarı ve görünüm tercihleri senkronizasyonu.
+- PWA service worker ve statik uygulama kabuğu.
 
-HALA TAMAMLANMASI GEREKENLER
-- Bu paket Firebase'e otomatik deploy edilmedi. Proje sahibinin kendi hesabıyla Firebase CLI üzerinden yayınlaması gerekir.
-- Google giriş sağlayıcısı Firebase Authentication'da açık olmalı; admin hesabı oluşturulup e-postası doğrulanmalı.
-- Cloud Functions için Blaze planı/faturalandırma gerekebilir; ücret doğabilir.
-- Orijinal oyun, soru havuzu, puanlama ve senkronizasyon kaynakları kayıp olduğundan birebir oyun davranışı yeniden kurulmuş değildir.
-- DM/grup sohbeti, gerçek zamanlı mesajlar ve medya akışı arayüze bağlanmıştır. Admin moderasyon görünümü de mevcuttur; canlı Firebase üzerinde gerçek hesaplarla uçtan uca doğrulama hâlâ gereklidir.
-- Üyelik satın alma/ödül/entitlement, çark konfigürasyonu, unvan envanteri, mevsim temaları, profil düzenleme ve admin giriş başarısızlığı denetim paneli uçtan uca tamamlanmış değildir.
-- Ban callable ve yönetici kullanıcı listesindeki hedef UID düğmesi bağlanmıştır; gerçek Auth projesinde test edilmelidir.
-- E-posta değişimini 30 günde bir sınırlayan güvenli sunucu akışı henüz tamamlanmamıştır; mevcut istemciye böyle bir akış eklenmeden Auth e-posta değiştirme açılmamalıdır.
+DIŞ YAPILANDIRMA GEREKENLER
+1. firebase-client.js içindeki apiKey bilerek boş bırakıldı. Gerçek Web SDK config Firebase Console > Project settings > Your apps bölümünden eklenmeli.
+2. App Check için reCAPTCHA v3 site key girilmeli. Ayrıntı: APP_CHECK_KURULUMU_TR.md.
+3. Authentication'da Google sağlayıcısı ve GitHub Pages authorized domain etkin olmalı.
+4. Firestore ve Storage oluşturulmalı.
+5. Firebase CLI ile önce rules/indexes/Storage, sonra Functions deploy edilmeli. Cloud Functions Blaze planı/faturalandırma gerektirebilir.
 
-GİZLİLİK VE GÜVENLİK
-- Konum yalnızca kullanıcı açıkça onaylarsa alınır.
-- Tarayıcı gerçek donanım cihaz adını vermez; cihaz türü/işletim sistemi tahmin edilir.
-- Özel sohbetlerin admin tarafından incelenmesi ancak kullanıcıya görünür aydınlatma ve uygun veri saklama politikasıyla açılmalıdır.
-- Şifre, OTP veya service-account private key kaydedilmez.
+TEST DURUMU
+- Kullanıcının talimatı gereği yeni test çalıştırılmadı.
+- GitHub Actions otomatik push/PR tetikleri kapatıldı; workflow manuel tetikleme bekliyor.
+- Canlı Firebase üzerinde uçtan uca doğrulama yapılmadı.
 
-YAYINLAMA
-Node.js 20 kurun. Proje klasöründe:
-  npm install -g firebase-tools
-  firebase login
-  firebase use --add   (hakomatonline261 seçin)
-  cd functions && npm install && cd ..
-  firebase deploy --only functions,firestore:rules,storage
-
-GitHub Pages için index.html ve diğer statik dosyaları GitHub deposuna ayrıca yükleyin. Firebase Hosting kullanmanız gerekmez.
+YAYIN DİSİPLİNİ
+- main dalı değiştirilmedi.
+- PR açık/taslak ve birleştirilmedi.
+- Firebase'e deploy yapılmadı.
+- Kullanıcı “test et” demeden test; açık onay vermeden merge veya deploy yapılmayacak.
