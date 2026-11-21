@@ -65,7 +65,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(social.includes('image\\/(png|jpeg|gif|webp)'));
   assert.ok(features.includes('membershipActive'));
   const authClient=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
-  assert.ok(authClient.includes('await recordVisitor(user)'));
+  assert.ok(authClient.includes('recordVisitor(user).then(()=>true)'));
   assert.ok(rules.includes('function validProfile'));
   assert.ok(rules.includes('data.displayName.size()<=80'));
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
@@ -83,6 +83,30 @@ test('Ortak başlangıç ve sekme gezinmesi etkin', () => {
   assert.ok(html.includes('#bannedOverlay {'));
   assert.ok(html.includes('#bannedOverlay.hide {'));
   assert.ok(html.indexOf('#bannedOverlay {') < html.indexOf('#bannedOverlay.hide {'));
+});
+
+test('Firebase başlangıcı hata ve gecikme durumlarında uygulamayı kilitlemiyor', () => {
+  const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.ok(client.includes("if(!window.firebase||!window.firebaseConfig)"));
+  assert.ok(client.includes("state.authReady=true"));
+  assert.ok(client.includes("new Promise(resolve=>setTimeout(()=>resolve(false),7000))"));
+  assert.ok(client.includes("auth.onAuthStateChanged(async user=>"));
+  assert.ok(client.includes("Oturum kontrol edilemedi: "));
+  assert.ok(html.includes('id="firebaseStatus"'));
+});
+
+test('PWA ikon yolları depodaki gerçek dosyalarla eşleşiyor', () => {
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.webmanifest'),'utf8'));
+  assert.ok(html.includes('href="icon.svg"'));
+  assert.ok(html.includes('href="icon-192.png"'));
+  assert.equal(manifest.start_url,'./');
+  assert.equal(manifest.scope,'./');
+  for(const icon of manifest.icons) {
+    const asset=icon.src.replace(/^\\.\\//,'');
+    assert.ok(fs.existsSync(path.join(root,asset)),'Eksik PWA ikonu: '+asset);
+  }
 });
 
 console.log('\n' + passed + ' test başarılı.');
