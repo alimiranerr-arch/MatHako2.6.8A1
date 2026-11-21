@@ -7,7 +7,7 @@
 
 - Firestore profil oluşturma/güncelleme işlemlerinde doğrulanmış e-posta şartı eklendi. Kullanıcı kendi profilinde yalnızca izin verilen alanları değiştirebilir; profil e-postasını doğrudan değiştiremez.
 - Sohbet oluşturma kuralları kurucu kimliğini, üye listesini (2–10 kişi), sohbet türünü ve başlığı doğrular.
-- Mesaj oluşturma işlemleri aktif sohbet üyeliği ve oturum açmış gönderen UID'si ile sınırlandırıldı. Kullanıcılar mevcut mesajların gönderen kimliğini değiştirerek mesaj güncelleyemez.
+- Mesaj oluşturma işlemleri aktif sohbet üyeliği, oturum açmış gönderen UID'si ve kullanıcı profilindeki görünen ad ile sınırlandırıldı. Kullanıcılar başka bir ad taklit edemez veya mevcut mesajların gönderen kimliğini değiştirerek mesaj güncelleyemez.
 - Storage sohbet medyası yüklemelerinde üyelik, dosya yolu, boyut ve MIME türü kontrolleri sıkılaştırıldı; istemci dosya güncellemesi kapatıldı.
 - Market koleksiyonu normal kullanıcılara yalnızca yayımlanmış ürünleri gösterir. Skor, düello, ödül ve denetim kayıtlarının istemciden doğrudan yazılması kapalıdır.
 - Oyuncu arama ve sohbet alıcısı bulma, özel kullanıcı belgelerini istemciye açmak yerine sınırlı alan/UID döndüren callable fonksiyonlara taşındı.
