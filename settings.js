@@ -46,7 +46,7 @@
  }
  function watchProfile(){
   const c=w.MMCloud;if(!c?.user||!c?.db)return;stopProfile?.();
-  stopProfile=c.db.collection('users').doc(c.user.uid).onSnapshot(s=>{if(!s.exists)return;const u=s.data();c.profile=u;avatarView(u.avatar||'🙂',u.avatarPath||'');syncControls();const name=$('meName');if(name)name.textContent=u.nickname||u.displayName||'Oyuncu';},e=>console.warn('Profil görünümü:',e));
+  stopProfile=c.db.collection('users').doc(c.user.uid).onSnapshot(s=>{if(!s.exists)return;const u=s.data();c.profile=u;avatarView(u.avatar||'🙂',u.avatarPath||'');syncControls();const name=$('meName');if(name)name.textContent=u.nickname||u.displayName||'Oyuncu';if($('fbName'))$('fbName').value=u.nickname||u.displayName||'Oyuncu';},e=>console.warn('Profil görünümü:',e));
  }
  function bind(){
   state=read();const pickTheme=i=>{state.theme=i;state.bgOn=false;state.custom=false;choices('themeList',themes,pickTheme,state.theme);persist();apply()};
@@ -67,6 +67,7 @@
   $('presetAvatarSelect')?.addEventListener('change',()=>avatarView($('presetAvatarSelect').value,''));
   $('customAvatarFile')?.addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>2*1024*1024||!['image/png','image/jpeg','image/webp'].includes(f.type)){alert('PNG, JPEG veya WebP; en fazla 2 MB kullan.');e.target.value='';return}const url=URL.createObjectURL(f),img=d.createElement('img');img.src=url;img.alt='Avatar önizlemesi';img.style.cssText='max-width:90px;max-height:90px;border-radius:50%';$('avatarPreviewBox')?.replaceChildren(img)});
   $('codeBtn')?.addEventListener('click',async()=>{const b=$('codeBtn'),out=$('codeMsg'),code=String($('code')?.value||'').trim();b.disabled=true;try{if(!/^\d{4}$/.test(code))throw Error('4 haneli hediye kodunu gir.');const r=await w.MMCloud.fn.httpsCallable('redeemGiftCode')({code});if(out)out.textContent='🎉 Hediye kodu kullanıldı! +'+(r.data.coins||0)+' altın ve '+(r.data.item?.name||'hediye kartı')+' envanterine eklendi.';if($('code'))$('code').value='';}catch(e){if(out)out.textContent=e.message;}finally{b.disabled=false;}});
+  $('gok')?.addEventListener('click',()=>{$('modal')?.classList.add('hide')});$('mclose')?.addEventListener('click',()=>{$('modal')?.classList.add('hide')});
   $('pdfBtn')?.addEventListener('click',()=>{$('statPdfBtn')?.click()});
   $('fbKind')?.querySelectorAll('[data-k]').forEach(b=>b.addEventListener('click',()=>{ $('fbKind').querySelectorAll('[data-k]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));if($('fbTur'))$('fbTur').value=b.dataset.k}));
   $('fbMsg')?.addEventListener('input',()=>{if($('fbChars'))$('fbChars').textContent=($('fbMsg').value.length)+'/500'});
