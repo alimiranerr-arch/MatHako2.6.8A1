@@ -44,7 +44,7 @@ window.firebaseConfig = {
  }
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
-  await state.db.collection('users').doc(user.uid).set({email:(user.email||'').toLowerCase()||null,displayName:user.displayName||'Kullanıcı',device, lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  await state.db.collection('users').doc(user.uid).set({email:(user.email||'').toLowerCase()||null,displayName:String(user.displayName||'Kullanıcı').slice(0,80),device, lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
  }
  async function loadAdminSettings(){
   const d=await state.db.doc('settings/site').get();if(d.exists&&$('hakoMaintenanceToggle'))$('hakoMaintenanceToggle').checked=!!d.data().maintenance;
