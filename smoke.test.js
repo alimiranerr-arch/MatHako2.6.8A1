@@ -111,7 +111,7 @@ test('Ortak başlangıç ve sekme gezinmesi etkin', () => {
 test('Firebase başlangıcı hata ve gecikme durumlarında uygulamayı kilitlemiyor', () => {
   const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-  assert.ok(client.includes("if(!window.firebase||!window.firebaseConfig)"));
+  assert.ok(client.includes("if(!window.firebase||!window.firebaseConfig||!window.firebaseConfig.apiKey)"));
   assert.ok(client.includes("state.authReady=true"));
   assert.ok(client.includes("new Promise(resolve=>setTimeout(()=>resolve(false),7000))"));
   assert.ok(client.includes("auth.onAuthStateChanged(async user=>"));
