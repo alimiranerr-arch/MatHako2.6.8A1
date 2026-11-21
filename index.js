@@ -252,7 +252,7 @@ function makeServerQuestion(topic){
   case 'Veri Analizi':{const v=[gameRand(2,9),gameRand(2,9),gameRand(2,9),gameRand(2,9),gameRand(2,9)].sort((m,n)=>m-n);if(Math.random()<.5){q=v.join(', ')+' veri grubunun ortancası (medyanı) kaçtır?';ans=v[2];}else{q=v.join(', ')+' veri grubunun açıklığı kaçtır?';ans=v[4]-v[0];}break;}
   default:throw new HttpsError('invalid-argument','Geçersiz matematik konusu.');
  }
- const correct=String(ans),candidates=[correct,String(Number(ans)+gamePick([1,2,3,5,-1,-2])),String(Number(ans)-gamePick([1,2,3,4])),String(Number(ans)*2)],opts=[...new Set(candidates)];
+ const correct=String(ans);let candidates;if(correct.includes('/')){const p=correct.split('/').map(Number);candidates=[correct,p[0]+'/'+(p[1]*2),(p[0]+1)+'/'+p[1],(p[0]-1)+'/'+p[1]];}else candidates=[correct,String(Number(ans)+gamePick([1,2,3,5,-1,-2])),String(Number(ans)-gamePick([1,2,3,4])),String(Number(ans)*2)];const opts=[...new Set(candidates)];
  while(opts.length<4)opts.push(String(Number(ans)+gameRand(2,12)));
  for(let i=opts.length-1;i>0;i--){const j=gameRand(0,i);[opts[i],opts[j]]=[opts[j],opts[i]];}
  return{q,options:opts.slice(0,4),answer:correct};
