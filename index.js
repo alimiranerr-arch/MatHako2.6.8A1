@@ -286,20 +286,21 @@ exports.protectAdminProfile=onDocumentCreated('users/{uid}',async e=>{const uid=
 const GAME_TOPICS=['Tam Sayılar','Rasyonel Sayılar','Cebirsel İfadeler','Eşitlik ve Denklem','Oran ve Orantı','Yüzdeler','Doğrular ve Açılar','Çokgenler','Çember ve Daire','Veri Analizi'];
 function gameRand(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
 function gamePick(a){return a[gameRand(0,a.length-1)];}
-function makeServerQuestion(topic){
+function makeServerQuestion(topic,difficulty='normal'){
+ const level=difficulty==='easy'?0:difficulty==='hard'?2:1;
  let a,b,x,ans,q;
  if(topic==='Karışık')topic=gamePick(GAME_TOPICS);
  switch(topic){
-  case 'Tam Sayılar':a=gameRand(-30,30);b=gameRand(-20,20);{const op=gamePick(['+','−','×']);ans=op==='+'?a+b:op==='−'?a-b:a*b;q=a+' '+op+' ('+b+') işleminin sonucu kaçtır?';}break;
+  case 'Tam Sayılar':a=gameRand(-30-15*level,30+15*level);b=gameRand(-20-10*level,20+10*level);{const op=gamePick(['+','−','×']);ans=op==='+'?a+b:op==='−'?a-b:a*b;q=a+' '+op+' ('+b+') işleminin sonucu kaçtır?';}break;
   case 'Rasyonel Sayılar':{const d=gamePick([2,3,4,5,6,8,10]);a=gameRand(1,d-1);b=gameRand(1,d-1);ans=(a+b)+'/'+d;q=a+'/'+d+' + '+b+'/'+d+' işleminin sonucu kaçtır?';break;}
-  case 'Cebirsel İfadeler':a=gameRand(2,9);b=gameRand(1,12);x=gameRand(1,8);q='x = '+x+' ise '+a+'x + '+b+' ifadesinin değeri kaçtır?';ans=a*x+b;break;
-  case 'Eşitlik ve Denklem':a=gameRand(2,8);x=gameRand(1,12);b=gameRand(-10,15);q=a+'x '+(b<0?'− '+Math.abs(b):'+ '+b)+' = '+(a*x+b)+' denkleminde x kaçtır?';ans=x;break;
-  case 'Oran ve Orantı':a=gameRand(2,8);b=gameRand(2,9);x=gameRand(2,6);q=a+' kalem '+(b*a)+' TL ise '+(a*x)+' kalem kaç TL\\'dir?';ans=b*a*x;break;
+  case 'Cebirsel İfadeler':a=gameRand(2,9+3*level);b=gameRand(1,12+5*level);x=gameRand(1,8+4*level);q='x = '+x+' ise '+a+'x + '+b+' ifadesinin değeri kaçtır?';ans=a*x+b;break;
+  case 'Eşitlik ve Denklem':a=gameRand(2,8+3*level);x=gameRand(1,12+5*level);b=gameRand(-10-5*level,15+5*level);q=a+'x '+(b<0?'− '+Math.abs(b):'+ '+b)+' = '+(a*x+b)+' denkleminde x kaçtır?';ans=x;break;
+  case 'Oran ve Orantı':a=gameRand(2,8+3*level);b=gameRand(2,9+3*level);x=gameRand(2,6+2*level);q=a+' kalem '+(b*a)+' TL ise '+(a*x)+' kalem kaç TL\\'dir?';ans=b*a*x;break;
   case 'Yüzdeler':a=gamePick([10,20,25,30,40,50,60,75]);b=gamePick([40,60,80,100,120,160,200,240]);if(Math.random()<.5){q=b+' TL\\'lik ürünün %'+a+' indirimli fiyatı kaç TL\\'dir?';ans=b-b*a/100;}else{q=b+' sayısının %'+a+'\\'i kaçtır?';ans=b*a/100;}break;
   case 'Doğrular ve Açılar':a=gameRand(25,155);if(Math.random()<.5){q='Bir doğru açı üzerinde komşu açılardan biri '+a+'° ise diğeri kaç derecedir?';ans=180-a;}else{q='Tümler iki açıdan biri '+(a%90)+'° ise diğeri kaç derecedir?';ans=90-(a%90);}break;
   case 'Çokgenler':a=gameRand(3,8);q='Düzgün olmayan bir çokgenin '+a+' kenarı varsa iç açılar toplamı kaç derecedir?';ans=(a-2)*180;break;
-  case 'Çember ve Daire':a=gameRand(2,12);if(Math.random()<.5){q='Yarıçapı '+a+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}else{q='Çapı '+(2*a)+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}break;
-  case 'Veri Analizi':{const v=[gameRand(2,9),gameRand(2,9),gameRand(2,9),gameRand(2,9),gameRand(2,9)].sort((m,n)=>m-n);if(Math.random()<.5){q=v.join(', ')+' veri grubunun ortancası (medyanı) kaçtır?';ans=v[2];}else{q=v.join(', ')+' veri grubunun açıklığı kaçtır?';ans=v[4]-v[0];}break;}
+  case 'Çember ve Daire':a=gameRand(2,12+6*level);if(Math.random()<.5){q='Yarıçapı '+a+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}else{q='Çapı '+(2*a)+' cm olan çemberin çevresi kaç cm\\'dir? (π = 3 alınız)';ans=6*a;}break;
+  case 'Veri Analizi':{const v=[gameRand(2,9+5*level),gameRand(2,9+5*level),gameRand(2,9+5*level),gameRand(2,9+5*level),gameRand(2,9+5*level)].sort((m,n)=>m-n);if(Math.random()<.5){q=v.join(', ')+' veri grubunun ortancası (medyanı) kaçtır?';ans=v[2];}else{q=v.join(', ')+' veri grubunun açıklığı kaçtır?';ans=v[4]-v[0];}break;}
   default:throw new HttpsError('invalid-argument','Geçersiz matematik konusu.');
  }
  const correct=String(ans);let candidates,fractionParts=null;if(correct.includes('/')){const p=correct.split('/').map(Number);fractionParts=p;candidates=[correct,p[0]+'/'+(p[1]*2),(p[0]+1)+'/'+p[1],(p[0]-1)+'/'+p[1]];}else candidates=[correct,String(Number(ans)+gamePick([1,2,3,5,-1,-2])),String(Number(ans)-gamePick([1,2,3,4])),String(Number(ans)*2)];const opts=[...new Set(candidates)];
@@ -313,12 +314,12 @@ exports.startGameSession=onCall(async req=>{
  if(!['classic','endless','retry','balance'].includes(mode))throw new HttpsError('invalid-argument','Oyun modu geçersiz.');
  if(mode==='balance')topic='Eşitlik ve Denklem';
  if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Matematik konusu geçersiz.');
- const competitionType=String(d.competitionType||''),competitionCode=String(d.competitionCode||'').toUpperCase().slice(0,6);
- if(competitionType==='duel'){const duel=await db.doc('duels/'+competitionCode).get();if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif düello oturumu bulunamadı.');}
+ let difficulty='normal';const competitionType=String(d.competitionType||''),competitionCode=String(d.competitionCode||'').toUpperCase().slice(0,6);
+ if(competitionType==='duel'){const duel=await db.doc('duels/'+competitionCode).get();if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif düello oturumu bulunamadı.');difficulty=duel.data().difficulty||'normal';}
  else if(competitionType==='group'){const comp=await db.doc('groupCompetitions/'+competitionCode).get();if(!comp.exists||comp.data().status!=='playing'||(!(comp.data().membersA||[]).includes(uid)&&!(comp.data().membersB||[]).includes(uid))||comp.data().scores?.[uid])throw new HttpsError('permission-denied','Aktif grup yarışması bulunamadı.');}
  else if(competitionType)throw new HttpsError('invalid-argument','Yarışma türü geçersiz.');
- const count=mode==='retry'?10:500,questions=Array.from({length:count},()=>makeServerQuestion(topic)),id=crypto.randomBytes(16).toString('hex');
- const startedAt=Date.now();await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',answers:[],nextIndex:0,score:0,correct:0,streak:0,lives:5,questionStartedAt:startedAt,questionDeadlineAt:mode==='endless'?startedAt+10000:null,createdAt:Field.serverTimestamp(),expiresAt:startedAt+2*60*60*1000});
+ const count=mode==='retry'?10:500,questions=Array.from({length:count},()=>makeServerQuestion(topic,difficulty)),id=crypto.randomBytes(16).toString('hex');
+ const startedAt=Date.now();await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,difficulty,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',answers:[],nextIndex:0,score:0,correct:0,streak:0,lives:5,questionStartedAt:startedAt,questionDeadlineAt:mode==='endless'?startedAt+10000:null,createdAt:Field.serverTimestamp(),expiresAt:startedAt+2*60*60*1000});
  return{sessionId:id,questions:questions.map(x=>({q:x.q,opts:x.options}))};
 });
 exports.submitGameSession=onCall(async()=>{throw new HttpsError('failed-precondition','Bu eski puan uç noktası kapalı.');});
@@ -370,11 +371,11 @@ exports.submitGameScore=onCall(async()=>{throw new HttpsError('failed-preconditi
 
 // Asenkron, kodla katılınan düellolar: her iki oyuncu da skorunu ayrı gönderir.
 exports.createDuel=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const topic=String(req.data?.topic||'Karışık').slice(0,40),targetUid=String(req.data?.targetUid||'');
- if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Düello konusu geçersiz.');
+ const uid=requireUser(req);await userDoc(uid);const topic=String(req.data?.topic||'Karışık').slice(0,40),targetUid=String(req.data?.targetUid||''),difficulty=String(req.data?.difficulty||'normal');
+ if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Düello konusu geçersiz.');if(!['easy','normal','hard'].includes(difficulty))throw new HttpsError('invalid-argument','Düello zorluğu geçersiz.');
  if(targetUid){if(targetUid===uid)throw new HttpsError('invalid-argument','Kendine düello gönderemezsin.');await userDoc(targetUid);const friend=await db.doc('users/'+uid+'/friends/'+targetUid).get();if(!friend.exists)throw new HttpsError('permission-denied','Yalnızca arkadaşlarına doğrudan düello gönderebilirsin.');}
  const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join(''),ref=db.collection('duels').doc(code);
- await ref.create({code,hostUid:uid,invitedUid:targetUid||null,players:[uid],topic,status:'waiting',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000});
+ await ref.create({code,hostUid:uid,invitedUid:targetUid||null,players:[uid],topic,difficulty,status:'waiting',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000});
  if(targetUid){const sender=await db.doc('users/'+uid).get();await db.doc('users/'+targetUid+'/notifications/'+('duel_'+code)).set({type:'duel-invite',from:uid,fromName:String(sender.data()?.displayName||'Oyuncu').slice(0,80),code,topic,createdAt:Field.serverTimestamp(),read:false});}
  return{code,topic};
 });
