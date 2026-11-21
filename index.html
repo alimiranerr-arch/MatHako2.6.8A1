@@ -424,11 +424,8 @@ body.hako-notice-open{overflow:hidden}
           <label>Gmail Adresi<input id="regGmail" type="email" placeholder="ornek@gmail.com" required></label>
 
           <div class="inline generated-style-07">
-
-            <input id="regVerifyCode" maxlength="6" placeholder="Doğrulama Kodu (İsteğe bağlı)">
-
-            <button type="button" class="btn" id="sendGmailVerifyBtn">Kod Gönder</button>
-
+            <button type="button" class="btn" id="sendGmailVerifyBtn">📧 Doğrulama e-postası gönder</button>
+            <span class="note" id="regVerifyMsg" aria-live="polite"></span>
           </div>
 
           <label>Ad (Benzersiz)<input id="regFirstName" maxlength="20" placeholder="Adın" required></label>
