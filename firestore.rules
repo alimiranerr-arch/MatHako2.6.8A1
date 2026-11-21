@@ -5,6 +5,18 @@ service cloud.firestore {
   function admin(){return signedIn() && request.auth.token.admin==true && request.auth.token.email=='alimiranerr@gmail.com' && request.auth.token.email_verified==true;}
   function owner(uid){return signedIn() && request.auth.uid==uid;}
   function active(){return signedIn() && request.auth.token.email_verified==true && exists(/databases/$(database)/documents/users/$(request.auth.uid)) && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.banned!=true;}
+  function validProfile(data){
+   return data.email is string
+    && data.email==request.auth.token.email
+    && data.displayName is string
+    && data.displayName.size()<=80
+    && (!data.keys().hasAny(['device']) || (data.device is string && data.device.size()<=40))
+    && (!data.keys().hasAny(['surname']) || (data.surname is string && data.surname.size()<=80))
+    && (!data.keys().hasAny(['school']) || (data.school is string && data.school.size()<=120))
+    && (!data.keys().hasAny(['nickname']) || (data.nickname is string && data.nickname.size()<=40))
+    && (!data.keys().hasAny(['className']) || (data.className is string && data.className.size()<=30))
+    && (!data.keys().hasAny(['location']) || data.location is map);
+  }
   function safeMessage(){
    return request.resource.data.keys().hasOnly(['senderId','senderName','text','mediaUrl','mediaPath','mediaType','createdAt','type'])
     && request.resource.data.senderId==request.auth.uid
@@ -21,8 +33,8 @@ service cloud.firestore {
   match /settings/{doc}{allow read:if signedIn();allow write:if admin();}
   match /users/{uid}{
    allow read:if owner(uid)||admin();
-   allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.email==request.auth.token.email&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className']);
-   allow update:if admin()||(owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.email==resource.data.email&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location']));
+   allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className'])&&validProfile(request.resource.data);
+   allow update:if admin()||(owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.email==resource.data.email&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location'])&&validProfile(request.resource.data));
    allow delete:if admin();
   }
   match /chats/{chatId}{
