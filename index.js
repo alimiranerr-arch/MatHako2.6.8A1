@@ -403,22 +403,22 @@ exports.finishGameSession=onCall(async req=>{
   if(!userSnap.exists)throw new HttpsError('failed-precondition','Kullanıcı profili bulunamadı.');
   const economy=economySnap.exists?economySnap.data():{},coinsPerScore=Number.isSafeInteger(economy.coinsPerScore)?economy.coinsPerScore:5,maxGameReward=Number.isSafeInteger(economy.maxGameReward)?economy.maxGameReward:50000;
   const coinsEarned=Math.min(Math.max(0,Math.floor(Number(d.score)||0)*coinsPerScore),maxGameReward);
-  tx.update(userRef,{coins:(Number(userSnap.data().coins)||0)+coinsEarned});
   result={score:d.score,correct:d.correct,questions:d.nextIndex,mode:d.mode,topic:d.topic,difficulty:d.difficulty||'medium',coinsEarned};
   if(d.competitionType==='duel'){
    const ref=db.doc('duels/'+d.competitionCode),duel=await tx.get(ref);if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('failed-precondition','Düello artık aktif değil.');
-   const scores={...(duel.data().scores||{}),[uid]:{score:d.score,correct:d.correct,questions:d.nextIndex,at:Date.now()}},complete=Object.keys(scores).length===2;
+   const scores={...(duel.data().scores||{}),[uid]:{score:d.score,correct:d.correct,questions:d.nextIndex,difficulty:d.difficulty||'medium',at:Date.now()}},complete=Object.keys(scores).length===2;
    tx.update(ref,{scores,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='duel';result.completed=complete;
   }else if(d.competitionType==='group'){
    const ref=db.doc('groupCompetitions/'+d.competitionCode),comp=await tx.get(ref);if(!comp.exists||comp.data().status!=='playing'||comp.data().scores?.[uid])throw new HttpsError('failed-precondition','Grup yarışması artık aktif değil.');
    const x=comp.data(),side=(x.membersA||[]).includes(uid)?'a':(x.membersB||[]).includes(uid)?'b':null;if(!side)throw new HttpsError('permission-denied','Bu grup yarışmasında değilsin.');
-   const scores={...(x.scores||{}),[uid]:{score:d.score,correct:d.correct,side,at:Date.now()}},totals={a:0,b:0};for(const v of Object.values(scores))totals[v.side]+=v.score;
+   const scores={...(x.scores||{}),[uid]:{score:d.score,correct:d.correct,side,difficulty:d.difficulty||'medium',at:Date.now()}},totals={a:0,b:0};for(const v of Object.values(scores))totals[v.side]+=v.score;
    const complete=Object.keys(scores).length>=(x.membersA||[]).length+(x.membersB||[]).length;
    tx.update(ref,{scores,totals,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='group';result.completed=complete;result.totals=totals;
   }else{
    const name=String(userSnap.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32);
    tx.create(db.collection('scores').doc(),{uid,playerName:name,score:d.score,mode:d.mode,topic:d.topic,difficulty:d.difficulty||'medium',public:req.data?.public===true,questions:d.nextIndex,coinsEarned,createdAt:Field.serverTimestamp()});
   }
+  tx.update(userRef,{coins:(Number(userSnap.data().coins)||0)+coinsEarned});
   tx.update(sessionRef,{status:'submitted',submittedAt:Field.serverTimestamp()});
  });
  return{ok:true,...result};
