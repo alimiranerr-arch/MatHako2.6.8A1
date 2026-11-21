@@ -55,6 +55,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(storage.includes('fileName.matches'));
   assert.ok(functions.includes('exports.searchPlayers=onCall'));
   assert.ok(functions.includes('exports.findChatMembers=onCall'));
+  assert.ok(functions.includes("if(!d.exists)throw new HttpsError('failed-precondition','Kullanıcı profili henüz hazır değil."));
   assert.ok(functions.includes('function rateLimit'));
   assert.ok(functions.includes("timeZone:'Europe/Istanbul'"));
   assert.ok(functions.includes('resource-exhausted'));
