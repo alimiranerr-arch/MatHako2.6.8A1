@@ -6,7 +6,7 @@
  const themes=[['Gün Işığı','#fff7e0','#dbeafe'],['Okyanus','#dff6ff','#c7d2fe'],['Lavanta','#f5e8ff','#fce7f3'],['Orman','#e7f8e9','#d1fae5'],['Gün Batımı','#ffedd5','#fbcfe8']];
  const bgs=[['Krem','#fff7e0','#ffffff'],['Buz','#e0f2fe','#eef2ff'],['Pembe','#fce7f3','#fff1f2'],['Mint','#d1fae5','#ecfccb']];
  const pairs=[['Mavi','#2563eb','#93c5fd'],['Mor','#7c3aed','#c4b5fd'],['Yeşil','#059669','#a7f3d0'],['Turuncu','#ea580c','#fed7aa']];
- let state={...defaults};let installPrompt=null,stopProfile=null;
+ let state={...defaults};let installPrompt=null,stopProfile=null,avatarLoadSeq=0;
  function read(){let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(_){}const x={...defaults,...saved};if(!Number.isInteger(x.theme)||x.theme<0||x.theme>=themes.length)x.theme=0;if(!Number.isInteger(x.bg)||x.bg<0||x.bg>=bgs.length)x.bg=0;if(!['light','dark','auto'].includes(x.mode))x.mode='auto';if(!['none','sunny','rain','snow','auto'].includes(x.effect))x.effect='none';if(!/^#[0-9a-f]{6}$/i.test(x.c1))x.c1=defaults.c1;if(!/^#[0-9a-f]{6}$/i.test(x.c2))x.c2=defaults.c2;return x}
  function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){console.warn('Ayarlar kaydedilemedi:',e)}}
  function effectiveMode(){if(state.mode!=='auto')return state.mode;const h=new Date().getHours();return h>=7&&h<19?'light':'dark'}
@@ -35,7 +35,7 @@
  }
  function collect(){state.bw=!!$('bwOn')?.checked;state.bgOn=!!$('bgOn')?.checked;state.custom=!!$('customOn')?.checked;state.c1=$('c1')?.value||state.c1;state.c2=$('c2')?.value||state.c2;state.effect=$('fxSel')?.value||'none';state.sound=!!$('sndOn')?.checked;state.vibration=!!$('vibOn')?.checked}
  function status(value){const c=w.MMCloud;if(!c?.user||!c?.db){alert('Durumunu değiştirmek için giriş yapmalısın.');return}c.db.collection('users').doc(c.user.uid).set({status:value,statusUpdatedAt:w.firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(e=>alert('Durum kaydedilemedi: '+e.message))}
- function avatarView(emoji,path){const el=$('meAv');if(el){el.replaceChildren();if(path&&w.firebase?.storage){w.firebase.storage().ref(path).getDownloadURL().then(url=>{const img=d.createElement('img');img.src=url;img.alt='Profil resmi';img.style.cssText='width:30px;height:30px;object-fit:cover;border-radius:50%';el.replaceChildren(img)}).catch(()=>{el.textContent=emoji||'🙂'})}else el.textContent=emoji||'🙂'}const preview=$('avatarPreviewBox');if(preview)preview.textContent=emoji||'🙂'}
+ function avatarView(emoji,path){const seq=++avatarLoadSeq,el=$('meAv');if(el){el.replaceChildren();if(path&&w.firebase?.storage){w.firebase.storage().ref(path).getDownloadURL().then(url=>{if(seq!==avatarLoadSeq)return;const img=d.createElement('img');img.src=url;img.alt='Profil resmi';img.style.cssText='width:30px;height:30px;object-fit:cover;border-radius:50%';el.replaceChildren(img)}).catch(()=>{if(seq===avatarLoadSeq)el.textContent=emoji||'🙂'})}else el.textContent=emoji||'🙂'}const preview=$('avatarPreviewBox');if(preview)preview.textContent=emoji||'🙂'}
  async function saveAvatar(user){
   const emoji=$('presetAvatarSelect')?.value||'🦊',file=$('customAvatarFile')?.files?.[0];
   if(!file)return{avatar:emoji,avatarPath:''};
@@ -77,7 +77,7 @@
   w.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn')?.classList.remove('hide')});
   $('installBtn')?.addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn')?.classList.add('hide')});
   w.addEventListener('appinstalled',()=>{$('installBtn')?.classList.add('hide')});
-  w.addEventListener('mm-auth-ready',e=>{if(e.detail?.user){watchProfile()}else{stopProfile?.();stopProfile=null;w.MMCloud.profile=null;if($('meName'))$('meName').textContent='Misafir';if($('meAv'))$('meAv').textContent='🙂';if($('fbName'))$('fbName').value='';}});
+  w.addEventListener('mm-auth-ready',e=>{if(e.detail?.user){watchProfile()}else{stopProfile?.();stopProfile=null;avatarLoadSeq++;w.MMCloud.profile=null;if($('meName'))$('meName').textContent='Misafir';if($('meAv'))$('meAv').textContent='🙂';if($('fbName'))$('fbName').value='';}});
   if(w.MMCloud?.user)watchProfile();
  }
  w.MMSettings={saveAvatar,apply};
