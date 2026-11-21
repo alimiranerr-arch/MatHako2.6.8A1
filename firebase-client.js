@@ -118,7 +118,8 @@ window.firebaseConfig = {
     const displayName=String($('regFirstName')?.value||'').trim().slice(0,20),surname=String($('regLastName')?.value||'').trim().slice(0,80),nickname=String($('regNick')?.value||'').trim().slice(0,40),school=String($('regSchool')?.value||'').trim().slice(0,120);
     if(!displayName||!surname||!nickname||!school)throw Error('Ad, soyad, lakap ve okul alanlarını doldur.');
     await auth.currentUser.updateProfile({displayName});
-    await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email.toLowerCase(),displayName,surname,nickname,school,className:'7. sınıf'},{merge:true});
+    const avatarData=await window.MMSettings?.saveAvatar(auth.currentUser)||{avatar:$('presetAvatarSelect')?.value||'🦊',avatarPath:''};
+    await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email.toLowerCase(),displayName,surname,nickname,school,className:'7. sınıf',...avatarData},{merge:true});
     const form=$('accountRegisterForm');form?.classList.add('hide');if(out)out.textContent='Profilin kaydedildi. Maceraya hoş geldin!';
    }catch(e){if(out)out.textContent=e.message;}
   });}
