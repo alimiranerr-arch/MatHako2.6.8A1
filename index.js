@@ -212,19 +212,7 @@ exports.joinGroupCompetition=onCall(async req=>{
  await db.runTransaction(async tx=>{const ref=db.doc('groupCompetitions/'+code),s=await tx.get(ref);if(!s.exists||s.data().expiresAt<Date.now())throw new HttpsError('not-found','Grup yarışması bulunamadı.');const x=s.data();if(x.status!=='waiting'||x.groupA===chatId)throw new HttpsError('failed-precondition','Yarışma dolu veya aynı grup seçildi.');tx.update(ref,{groupB:chatId,membersB:chat.data().memberIds,status:'playing',joinedAt:Field.serverTimestamp()});});
  return{ok:true,code};
 });
-exports.submitGroupCompetitionResult=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const code=String(req.data?.code||'').toUpperCase().slice(0,6),score=Number(req.data?.score),correct=Number(req.data?.correct);
- if(!code||!Number.isInteger(score)||score<0||!Number.isInteger(correct)||correct<0||correct>500||score>correct*20)throw new HttpsError('invalid-argument','Grup sonucu geçersiz.');
- let totals={a:0,b:0,complete:false};
- await db.runTransaction(async tx=>{const ref=db.doc('groupCompetitions/'+code),s=await tx.get(ref);if(!s.exists||s.data().status!=='playing')throw new HttpsError('not-found','Aktif grup yarışması bulunamadı.');const x=s.data(),side=x.membersA?.includes(uid)?'a':x.membersB?.includes(uid)?'b':null;if(!side)throw new HttpsError('permission-denied','Bu yarışmada yer almıyorsun.');if(x.scores?.[uid])throw new HttpsError('already-exists','Sonucun zaten kaydedildi.');const scores={...(x.scores||{}),[uid]:{score,correct,side,at:Date.now()}};totals={a:0,b:0,complete:true};for(const v of Object.values(scores)){totals[v.side]+=v.score;}const complete=Object.keys(scores).length>=((x.membersA||[]).length+(x.membersB||[]).length);tx.update(ref,{scores,totals,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null,updatedAt:Field.serverTimestamp()});});
- return{ok:true,totals};
-});
-
-
-async function publicSubmissionLimit(req,action){
- const ip=String(req.rawRequest?.ip||'unknown'),key=crypto.createHash('sha256').update(action+':'+ip).digest('hex').slice(0,40),ref=db.doc('publicRateLimits/'+key),now=Date.now();
- await db.runTransaction(async tx=>{const s=await tx.get(ref),old=s.exists?s.data():{},active=old.windowStart&&now-old.windowStart<10*60*1000,count=active?Number(old.count)||0:0;if(count>=5)throw new HttpsError('resource-exhausted','Çok fazla form gönderildi. Daha sonra tekrar dene.');tx.set(ref,{windowStart:active?old.windowStart:now,count:count+1,updatedAt:Field.serverTimestamp()});});
-}
+exports.submitGroupCompetitionResult=onCall(async()=>{throw new HttpsError('failed-precondition','Grup skorları yalnızca doğrulanmış oyun oturumundan gönderilebilir.');});
 exports.submitFeedback=onCall(async req=>{
  const d=req.data||{};if(String(d.honeypot||''))return{ok:true};
  await publicSubmissionLimit(req,'feedback');
@@ -283,37 +271,7 @@ exports.startGameSession=onCall(async req=>{
  await db.doc('gameSessions/'+id).create({uid,mode,topic,questions,competitionType:competitionType||null,competitionCode:competitionCode||null,status:'active',answers:[],nextIndex:0,score:0,correct:0,streak:0,lives:5,createdAt:Field.serverTimestamp(),expiresAt:Date.now()+2*60*60*1000});
  return{sessionId:id,questions:questions.map(x=>({q:x.q,opts:x.options}))};
 });
-exports.submitGameSession=onCall(async req=>{
- const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.sessionId||''),answers=req.data?.answers;
- if(!id||!Array.isArray(answers)||answers.length<1||answers.length>500)throw new HttpsError('invalid-argument','Oyun oturumu sonucu geçersiz.');
- const sessionRef=db.doc('gameSessions/'+id);let result;
- await db.runTransaction(async tx=>{
-  const s=await tx.get(sessionRef);if(!s.exists||s.data().uid!==uid||s.data().status!=='active'||s.data().expiresAt<Date.now())throw new HttpsError('failed-precondition','Oyun oturumu geçersiz veya süresi dolmuş.');
-  const data=s.data();if(answers.length>data.questions.length)throw new HttpsError('invalid-argument','Soru sayısı geçersiz.');
-  let score=0,correct=0,streak=0,lives=5;
-  for(let i=0;i<answers.length;i++){const selected=answers[i]===null?null:String(answers[i]),q=data.questions[i];if(selected!==null&&!q.options.includes(selected))throw new HttpsError('invalid-argument','Gönderilen cevap seçenekler arasında değil.');if(selected===q.answer){correct++;streak++;score+=10+Math.min(streak-1,5)*2;}else{streak=0;lives--;}}
-  if(lives<0)throw new HttpsError('invalid-argument','Oyun cevap dizisi geçersiz.');
-  result={score,correct,questions:answers.length,mode:data.mode,topic:data.topic};
-  if(data.competitionType==='duel'){
-   const ref=db.doc('duels/'+data.competitionCode),duel=await tx.get(ref);if(!duel.exists||duel.data().status!=='playing'||!duel.data().players?.includes(uid)||duel.data().scores?.[uid])throw new HttpsError('failed-precondition','Düello artık aktif değil.');
-   const scores={...(duel.data().scores||{}),[uid]:{score,correct,questions:answers.length,at:Date.now()}},complete=Object.keys(scores).length===2;
-   tx.update(ref,{scores,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='duel';result.completed=complete;
-  }else if(data.competitionType==='group'){
-   const ref=db.doc('groupCompetitions/'+data.competitionCode),comp=await tx.get(ref);if(!comp.exists||comp.data().status!=='playing'||comp.data().scores?.[uid])throw new HttpsError('failed-precondition','Grup yarışması artık aktif değil.');
-   const x=comp.data(),side=(x.membersA||[]).includes(uid)?'a':(x.membersB||[]).includes(uid)?'b':null;if(!side)throw new HttpsError('permission-denied','Bu grup yarışmasında değilsin.');
-   const scores={...(x.scores||{}),[uid]:{score,correct,side,at:Date.now()}},totals={a:0,b:0};for(const v of Object.values(scores))totals[v.side]+=v.score;
-   const complete=Object.keys(scores).length>=(x.membersA||[]).length+(x.membersB||[]).length;
-   tx.update(ref,{scores,totals,status:complete?'completed':'playing',completedAt:complete?Field.serverTimestamp():null});result.competition='group';result.completed=complete;result.totals=totals;
-  }else{
-   const user=await tx.get(db.doc('users/'+uid)),name=String(user.data()?.displayName||req.auth.token.name||'Oyuncu').slice(0,32);
-   tx.create(db.collection('scores').doc(),{uid,playerName:name,score,mode:data.mode,topic:data.topic,public:req.data?.public===true,questions:answers.length,createdAt:Field.serverTimestamp()});
-  }
-  tx.update(sessionRef,{status:'submitted',submittedAt:Field.serverTimestamp(),score,correct,questions:answers.length});
- });
- return{ok:true,...result};
-});
-
-
+exports.submitGameSession=onCall(async()=>{throw new HttpsError('failed-precondition','Bu eski puan uç noktası kapalı.');});
 exports.submitGameAnswer=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.sessionId||''),index=Number(req.data?.index),selected=req.data?.answer===null?null:String(req.data?.answer);
  if(!id||!Number.isInteger(index)||index<0)throw new HttpsError('invalid-argument','Cevap bilgisi geçersiz.');
@@ -363,4 +321,4 @@ exports.submitGameScore=onCall(async()=>{throw new HttpsError('failed-preconditi
 // Asenkron, kodla katılınan düellolar: her iki oyuncu da skorunu ayrı gönderir.
 exports.createDuel=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');const topic=String(req.data?.topic||'Karışık').slice(0,40);const ref=db.collection('duels').doc(code);await ref.create({code,hostUid:uid,players:[uid],topic,status:'waiting',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000});return{code,topic};});
 exports.joinDuel=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const code=String(req.data?.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);if(!code)throw new HttpsError('invalid-argument','Düello kodu gerekli.');let topic='Karışık';await db.runTransaction(async tx=>{const r=db.doc(`duels/${code}`),d=await tx.get(r);if(!d.exists||d.data().expiresAt<Date.now())throw new HttpsError('not-found','Düello bulunamadı veya süresi doldu.');const x=d.data();if(x.hostUid===uid)throw new HttpsError('failed-precondition','Kendi düellona katılamazsın.');if(x.status!=='waiting')throw new HttpsError('failed-precondition','Bu düello dolu veya tamamlanmış.');topic=x.topic||'Karışık';tx.update(r,{players:[x.hostUid,uid],status:'playing',joinedAt:Field.serverTimestamp()});});return{ok:true,code,topic};});
-exports.submitDuelResult=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const code=String(req.data?.code||'').toUpperCase().slice(0,6),score=Number(req.data?.score),correct=Number(req.data?.correct);if(!code||!Number.isInteger(score)||score<0||!Number.isInteger(correct)||correct<0||correct>10||score>correct*20)throw new HttpsError('invalid-argument','Düello sonucu geçersiz.');let completed=false;await db.runTransaction(async tx=>{const r=db.doc(`duels/${code}`),d=await tx.get(r);if(!d.exists||!d.data().players?.includes(uid)||d.data().status!=='playing')throw new HttpsError('permission-denied','Bu düelloya katılma yetkin yok.');if(d.data().scores?.[uid])throw new HttpsError('already-exists','Sonucun zaten kaydedildi.');const scores={...(d.data().scores||{}),[uid]:{score,correct,at:Date.now()}};completed=Object.keys(scores).length===2;tx.update(r,{scores,status:completed?'completed':'playing',completedAt:completed?Field.serverTimestamp():null});});return{ok:true,completed};});
+exports.submitDuelResult=onCall(async()=>{throw new HttpsError('failed-precondition','Düello skorları yalnızca doğrulanmış oyun oturumundan gönderilebilir.');});
