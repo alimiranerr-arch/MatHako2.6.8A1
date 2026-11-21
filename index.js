@@ -2,6 +2,7 @@ const {onCall, HttpsError} = require('firebase-functions/v2/https');
 const {onDocumentCreated} = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
+function randomJoinCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from({length:6},()=>chars[crypto.randomInt(0,chars.length)]).join('');}
 admin.initializeApp();
 const db=admin.firestore(), Field=admin.firestore.FieldValue;
 const ADMIN_EMAIL='alimiranerr@gmail.com';
@@ -34,9 +35,9 @@ exports.setMaintenance=onCall(async req=>{const uid=requireAdmin(req),d=req.data
 exports.setTermMode=onCall(async req=>{const uid=requireAdmin(req),mode=req.data.mode;if(!['first','second'].includes(mode))throw new HttpsError('invalid-argument','Dönem first veya second olmalı.');await db.doc('settings/curriculum').set({mode,updatedAt:Field.serverTimestamp(),updatedBy:uid},{merge:true});return{ok:true,mode};});
 exports.setSeasonTheme=onCall(async req=>{const uid=requireAdmin(req),theme=req.data.theme;if(!['default','newyear','halloween','ramadan','sacrifice'].includes(theme))throw new HttpsError('invalid-argument','Geçersiz tema.');await db.doc('settings/theme').set({theme,updatedAt:Field.serverTimestamp(),updatedBy:uid},{merge:true});return{ok:true,theme};});
 exports.banUser=onCall(async req=>{const uid=requireAdmin(req),targetUid=String(req.data.uid||'');if(!targetUid||targetUid===uid)throw new HttpsError('invalid-argument','Geçersiz kullanıcı.');const target=await admin.auth().getUser(targetUid);if(target.email===ADMIN_EMAIL)throw new HttpsError('permission-denied','Hako admin banlanamaz.');await admin.auth().updateUser(targetUid,{disabled:true});await admin.auth().revokeRefreshTokens(targetUid);await db.doc(`users/${targetUid}`).set({banned:true,bannedAt:Field.serverTimestamp(),bannedBy:uid},{merge:true});return{ok:true};});
-exports.publishMarketItem=onCall(async req=>{const uid=requireAdmin(req),d=req.data||{},name=String(d.name||'').trim(),type=String(d.type||'item'),price=Number(d.price);if(!name||name.length>80||!Number.isFinite(price)||price<0||price>1000000)throw new HttpsError('invalid-argument','Ürün adı veya fiyat geçersiz.');const ref=await db.collection('market').add({name,type,price,emoji:String(d.emoji||'🎁').slice(0,8),gifUrl:String(d.gifUrl||'').slice(0,1000),description:String(d.description||'').slice(0,300),published:true,createdBy:uid,createdAt:Field.serverTimestamp()});return{ok:true,id:ref.id};});
+exports.publishMarketItem=onCall(async req=>{const uid=requireAdmin(req),d=req.data||{},name=String(d.name||'').trim(),type=String(d.type||'item'),price=Number(d.price),gifUrl=String(d.gifUrl||'').trim().slice(0,1000);if(!name||name.length>80||!['badge','emoji','card','membership','miniPass','theme','avatar','title','item'].includes(type)||!Number.isSafeInteger(price)||price<0||price>1000000||(gifUrl&&!/^https:\/\//i.test(gifUrl)))throw new HttpsError('invalid-argument','Ürün adı, türü veya fiyatı geçersiz.');const ref=await db.collection('market').add({name,type,price,emoji:String(d.emoji||'🎁').slice(0,8),gifUrl,description:String(d.description||'').slice(0,300),published:true,createdBy:uid,createdAt:Field.serverTimestamp()});return{ok:true,id:ref.id};});
 exports.setWheelRewards=onCall(async req=>{const uid=requireAdmin(req),items=req.data.items;if(!Array.isArray(items)||items.length<2||items.length>12)throw new HttpsError('invalid-argument','Çark için 2-12 ödül gerekli.');const clean=items.map(x=>({label:String(x.label||'').slice(0,32),coins:Number(x.coins)}));if(clean.some(x=>!x.label||!Number.isInteger(x.coins)||x.coins<0||x.coins>10000))throw new HttpsError('invalid-argument','Ödül değerleri geçersiz.');await db.doc('settings/wheel').set({items:clean,updatedBy:uid,updatedAt:Field.serverTimestamp()});return{ok:true};});
-exports.publishTitle=onCall(async req=>{const uid=requireAdmin(req),name=String(req.data.name||'').trim(),price=Number(req.data.price);if(!name||name.length>32||!Number.isFinite(price)||price<0)throw new HttpsError('invalid-argument','Unvan veya fiyat geçersiz.');const r=await db.collection('market').add({name,type:'title',price,published:true,createdBy:uid,createdAt:Field.serverTimestamp()});return{id:r.id};});
+exports.publishTitle=onCall(async req=>{const uid=requireAdmin(req),name=String(req.data.name||'').trim(),price=Number(req.data.price);if(!name||name.length>32||!Number.isSafeInteger(price)||price<0||price>1000000)throw new HttpsError('invalid-argument','Unvan veya fiyat geçersiz.');const r=await db.collection('market').add({name,type:'title',price,published:true,createdBy:uid,createdAt:Field.serverTimestamp()});return{id:r.id};});
 exports.publishAndGrantMarketItem=onCall(async req=>{
  const adminUid=requireAdmin(req),d=req.data||{},name=String(d.name||'').trim(),type=String(d.type||'item'),price=Number(d.price),target=String(d.targetUid||adminUid),gifUrl=String(d.gifUrl||'').trim().slice(0,1000),description=String(d.description||'').slice(0,300);
  if(!name||name.length>80||!['badge','emoji','card','membership','miniPass','theme','avatar','title','item'].includes(type)||!Number.isSafeInteger(price)||price<0||price>1000000||!target||target.length>128|| (gifUrl&&!/^https:\/\//i.test(gifUrl)))throw new HttpsError('invalid-argument','Ürün veya hedef kullanıcı bilgisi geçersiz.');
@@ -199,7 +200,7 @@ exports.joinRandomMatch=onCall(async req=>{
  const waiting=await db.collection('matchmakingQueue').where('status','==','waiting').where('topic','==',topic).where('expiresAt','>',Date.now()).limit(10).get();
  for(const candidate of waiting.docs){
   if(candidate.data().uid===uid)continue;
-  const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+  const code=randomJoinCode();
   const duelRef=db.doc('duels/'+code);
   const matched=await db.runTransaction(async tx=>{
    const q=await tx.get(candidate.ref);if(!q.exists||q.data().status!=='waiting'||q.data().uid===uid)return false;
@@ -255,7 +256,7 @@ exports.createGroupCompetition=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const chatId=String(req.data?.chatId||''),topic=String(req.data?.topic||'Karışık').slice(0,40);
  if(!chatId)throw new HttpsError('invalid-argument','Grup seçilmedi.');
  const chat=await db.doc('chats/'+chatId).get();if(!chat.exists||chat.data().type!=='group'||!chat.data().memberIds?.includes(uid))throw new HttpsError('permission-denied','Bu grup için yarışma oluşturamazsın.');
- const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join('');
+ const code=randomJoinCode();
  await db.doc('groupCompetitions/'+code).create({code,groupA:chatId,membersA:chat.data().memberIds,groupB:null,membersB:[],topic,status:'waiting',scores:{},createdBy:uid,createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000});
  return{ok:true,code,topic};
 });
@@ -407,7 +408,7 @@ exports.createDuel=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);const topic=String(req.data?.topic||'Karışık').slice(0,40),targetUid=String(req.data?.targetUid||''),difficulty=String(req.data?.difficulty||'normal');
  if(topic!=='Karışık'&&!GAME_TOPICS.includes(topic))throw new HttpsError('invalid-argument','Düello konusu geçersiz.');if(!['easy','normal','hard'].includes(difficulty))throw new HttpsError('invalid-argument','Düello zorluğu geçersiz.');
  if(targetUid){if(targetUid===uid)throw new HttpsError('invalid-argument','Kendine düello gönderemezsin.');await userDoc(targetUid);const friend=await db.doc('users/'+uid+'/friends/'+targetUid).get();if(!friend.exists)throw new HttpsError('permission-denied','Yalnızca arkadaşlarına doğrudan düello gönderebilirsin.');}
- const code=Array.from({length:6},()=> 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random()*32)]).join(''),ref=db.collection('duels').doc(code);
+ const code=randomJoinCode(),ref=db.collection('duels').doc(code);
  await ref.create({code,hostUid:uid,invitedUid:targetUid||null,players:[uid],topic,difficulty,status:'waiting',scores:{},createdAt:Field.serverTimestamp(),expiresAt:Date.now()+86400000});
  if(targetUid){const sender=await db.doc('users/'+uid).get();await db.doc('users/'+targetUid+'/notifications/'+('duel_'+code)).set({type:'duel-invite',from:uid,fromName:String(sender.data()?.displayName||'Oyuncu').slice(0,80),code,topic,createdAt:Field.serverTimestamp(),read:false});}
  return{code,topic};
