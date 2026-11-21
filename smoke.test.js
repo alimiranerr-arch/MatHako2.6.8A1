@@ -52,7 +52,7 @@ test('Güvenlik kuralları sohbet üyeliğini ve profil gizliliğini doğruluyor
   assert.match(storage,/fileName\.matches/);
   assert.match(functions,/exports\.searchPlayers=onCall/);
   assert.match(functions,/exports\.findChatMembers=onCall/);
-  assert.match(functions,/resource-exhausted/);
+  assert.match(functions,/resource-exhausted/);\n  assert.match(functions,/function rateLimit/);\n  assert.match(functions,/timeZone:'Europe\\/Istanbul'/);\n  assert.match(rules,/senderName==get\\(/);\n  const social=fs.readFileSync(path.join(root,'social.js'),'utf8');\n  assert.match(social,/emails\\.length>9/);\n  assert.match(social,/currentSenderName/);\n  const features=fs.readFileSync(path.join(root,'features.js'),'utf8');\n  assert.match(features,/membershipActive/);
 });
 
 console.log('\n' + passed + ' test başarılı.');
