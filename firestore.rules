@@ -8,8 +8,8 @@ service cloud.firestore {
   match /settings/{doc}{allow read:if signedIn();allow write:if admin();}
   match /users/{uid}{
    allow read:if owner(uid)||admin();
-   allow create:if owner(uid)&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className'])&&request.resource.data.keys().hasNone(['role','admin','banned','coins','inventory','membership','membershipUntil','title','emailChangeAt']);
-   allow update:if admin()||(owner(uid)&&!request.resource.data.diff(resource.data).affectedKeys().hasAny(['role','admin','banned','emailChangeAt','coins','inventory','membership','membershipType','membershipUntil','title','location']));
+   allow create:if owner(uid)&&request.resource.data.email==request.auth.token.email&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className']);
+   allow update:if admin()||(owner(uid)&&request.resource.data.email==request.auth.token.email&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location']));
    allow delete:if admin();
   }
   match /chats/{chatId}{
@@ -19,7 +19,7 @@ service cloud.firestore {
    match /messages/{messageId}{
     allow read:if active()&&(request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds||admin());
     allow create:if active()&&request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.memberIds&&request.resource.data.senderId==request.auth.uid&&request.resource.data.keys().hasOnly(['senderId','senderName','text','mediaUrl','mediaPath','mediaType','createdAt','type']);
-    allow update,delete:if admin()||(active()&&resource.data.senderId==request.auth.uid&&request.resource.data.senderId==resource.data.senderId);
+    allow update:if admin()||(active()&&resource.data.senderId==request.auth.uid&&request.resource.data.senderId==resource.data.senderId);\n    allow delete:if admin()||(active()&&resource.data.senderId==request.auth.uid);
    }
   }
   match /groups/{groupId}{
