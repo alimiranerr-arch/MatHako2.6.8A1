@@ -42,14 +42,14 @@ exports.searchPlayers=onCall(async req=>{
  const exact=await db.doc('users/'+q).get();
  if(exact.exists&&!exact.data().banned)docs=[exact];
  else {
-  const snap=await db.collection('users').orderBy('displayName').startAt(q).endAt(q+'\\uf8ff').limit(10).get();
+  const snap=await db.collection('users').orderBy('displayName').startAt(q).endAt(q+'\uf8ff').limit(10).get();
   docs=snap.docs.filter(d=>!d.data().banned);
  }
  return {players:docs.map(d=>({uid:d.id,displayName:String(d.data().displayName||d.data().nickname||'Oyuncu').slice(0,40),playerId:String(d.data().playerId||d.id).slice(0,64)}))};
 });
 exports.findChatMembers=onCall(async req=>{
  const uid=requireUser(req);await userDoc(uid);
- const emails=Array.isArray(req.data?.emails)?[...new Set(req.data.emails.map(x=>String(x||'').trim().toLowerCase()).filter(x=>/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(x)))].slice(0,10):[];
+ const emails=Array.isArray(req.data?.emails)?[...new Set(req.data.emails.map(x=>String(x||'').trim().toLowerCase()).filter(x=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(x)))].slice(0,10):[];
  if(!emails.length)throw new HttpsError('invalid-argument','Geçerli e-posta adresi gir.');
  const snap=await db.collection('users').where('email','in',emails).limit(10).get();
  return {uids:snap.docs.filter(d=>!d.data().banned).map(d=>d.id)};
