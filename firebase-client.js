@@ -5,7 +5,8 @@ window.firebaseConfig = {
  projectId: "hakomatonline261",
  storageBucket: "hakomatonline261.firebasestorage.app",
  messagingSenderId: "213698338676",
- appId: "1:213698338676:web:b876b839b0ccbc99429621"
+ appId: "1:213698338676:web:b876b839b0ccbc99429621",
+ appCheckSiteKey: "" // Firebase Console > App Check > Web uygulaması site key
 };
 (function(){
  const $=id=>document.getElementById(id), ADMIN='alimiranerr@gmail.com';
@@ -41,6 +42,8 @@ window.firebaseConfig = {
   }
   try{
    if(!firebase.apps.length)firebase.initializeApp(window.firebaseConfig);
+   if(window.firebaseConfig.appCheckSiteKey&&firebase.appCheck){try{firebase.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(window.firebaseConfig.appCheckSiteKey),true);state.appCheckEnabled=true;}catch(e){state.appCheckEnabled=false;console.warn('App Check başlatılamadı:',e);}}
+   else{state.appCheckEnabled=false;console.warn('App Check için Firebase Console site key ayarı bekleniyor.');}
    state.db=firebase.firestore();state.fn=firebase.functions();
    const auth=firebase.auth();
    auth.onAuthStateChanged(async user=>{
