@@ -282,8 +282,9 @@ exports.reportChatMessage=onCall(async req=>{
 exports.resolveMessageReport=onCall(async req=>{
  const uid=requireAdmin(req),id=String(req.data?.reportId||'').trim();
  if(!id||id.length>140)throw new HttpsError('invalid-argument','Bildirim kimliği geçersiz.');
- const ref=db.doc('messageReports/'+id);
- await db.runTransaction(async tx=>{const s=await tx.get(ref);if(!s.exists)throw new HttpsError('not-found','Bildirim bulunamadı.');tx.update(ref,{status:'resolved',resolvedBy:uid,resolvedAt:Field.serverTimestamp()});});
+ const ref=db.doc('messageReports/'+id),snap=await ref.get();if(!snap.exists)throw new HttpsError('not-found','Bildirim bulunamadı.');
+ await ref.update({status:'resolved',resolvedBy:uid,resolvedAt:Field.serverTimestamp()});
+ const reporter=snap.data().reportedBy;if(reporter)await db.doc('users/'+reporter+'/notifications/report_'+id).set({type:'report-resolved',message:'Mesaj bildirimin yönetici tarafından incelendi.',createdAt:Field.serverTimestamp(),read:false});
  return{ok:true};
 });
 exports.submitFeedback=onCall(async req=>{
