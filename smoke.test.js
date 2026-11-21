@@ -64,6 +64,8 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(social.includes('currentSenderName'));
   assert.ok(social.includes('image\\/(png|jpeg|gif|webp)'));
   assert.ok(features.includes('membershipActive'));
+  const authClient=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
+  assert.ok(authClient.includes('await recordVisitor(user)'));
   assert.ok(rules.includes('function validProfile'));
   assert.ok(rules.includes('data.displayName.size()<=80'));
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
