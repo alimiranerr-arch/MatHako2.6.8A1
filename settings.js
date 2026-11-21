@@ -12,7 +12,8 @@
  function effectiveMode(){if(state.mode!=='auto')return state.mode;const h=new Date().getHours();return h>=7&&h<19?'light':'dark'}
  function apply(){
   const mode=effectiveMode(),pair=state.custom?[state.c1,state.c2]:state.bgOn?bgs[state.bg]:themes[state.theme].slice(1);
-  d.body.classList.toggle('mm-bw',!!state.bw);d.body.dataset.mmMode=mode;d.body.dataset.mmEffect=state.effect;
+  d.body.classList.toggle('mm-bw',!!state.bw);d.documentElement.style.filter=state.bw?'grayscale(1)':'';d.body.dataset.mmMode=mode;d.body.dataset.mmEffect=state.effect;
+  let css=$('mmSettingsStyle');if(!css){css=d.createElement('style');css.id='mmSettingsStyle';d.head.appendChild(css)}css.textContent='body[data-mm-mode="dark"]{color:#f8fafc}body[data-mm-mode="dark"] .card,body[data-mm-mode="dark"] .modal .mbox{background:#1e293b!important;color:#f8fafc!important;border-color:#475569!important}body[data-mm-mode="dark"] input,body[data-mm-mode="dark"] select,body[data-mm-mode="dark"] textarea{background:#0f172a;color:#f8fafc;border-color:#64748b}body[data-mm-mode="dark"] .note{color:#cbd5e1}';
   d.body.style.setProperty('--mm-bg-a',pair[0]);d.body.style.setProperty('--mm-bg-b',pair[1]);
   d.body.style.backgroundImage='linear-gradient(135deg,var(--mm-bg-a),var(--mm-bg-b))';
   d.body.style.backgroundAttachment='fixed';
