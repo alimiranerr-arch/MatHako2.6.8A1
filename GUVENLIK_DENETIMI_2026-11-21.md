@@ -1,37 +1,53 @@
-# Matematik Macerası — Güvenlik Denetimi
+# Matematik Macerası — Güvenlik ve Özellik Denetimi
+
 **Tarih:** 21 Kasım 2026  
 **Dal:** `hako/fix-audit-2026-11-21`  
-**Durum:** Kod değişiklikleri hazır; canlı Firebase'e dağıtılmadı.
+**PR:** #1 — açık/taslak  
+**Canlı dağıtım:** Yapılmadı  
+**Test durumu:** Kullanıcı “test et” diyene kadar yeni test çalıştırılmıyor.
 
-## Yapılan düzeltmeler
+## Güvenlik düzeltmeleri
 
-- Firestore profil oluşturma/güncelleme işlemlerinde doğrulanmış e-posta şartı ve alan türü/uzunluğu kontrolleri eklendi. Kullanıcı kendi profilinde yalnızca izin verilen alanları değiştirebilir; profil e-postasını doğrudan değiştiremez.
-- Sohbet oluşturma kuralları kurucu kimliğini, üye listesini (2–10 kişi), sohbet türünü ve başlığı doğrular. İstemci DM için tek davetliyi, grup için en fazla 9 davetliyi kabul eder; profil kaydı tamamlanmadan sohbet dinleyicileri başlatılmaz.
-- Mesaj oluşturma işlemleri aktif sohbet üyeliği, oturum açmış gönderen UID'si ve kullanıcı profilindeki görünen ad ile sınırlandırıldı. Medya türleri istemci ve Storage kuralları arasında eşleştirildi. Kullanıcılar başka bir ad taklit edemez veya mevcut mesajların gönderen kimliğini değiştirerek mesaj güncelleyemez.
-- Storage sohbet medyası yüklemelerinde üyelik, dosya yolu, boyut ve MIME türü kontrolleri sıkılaştırıldı; istemci dosya güncellemesi kapatıldı.
-- Market koleksiyonu normal kullanıcılara yalnızca yayımlanmış ürünleri gösterir. Rasyonel sayılar sorularının seçenek sırası karıştırıldı; düello skorları artık genel liderlik tablosuna gönderilmiyor. Skor, düello, ödül ve denetim kayıtlarının istemciden doğrudan yazılması kapalıdır.
-- Oyuncu arama ve sohbet alıcısı bulma, özel kullanıcı belgelerini istemciye açmak yerine sınırlı alan/UID döndüren callable fonksiyonlara taşındı.
-- Başarısız giriş kaydı endpoint'ine IP bazlı 10 dakikada 8 istek sınırı eklendi; endpoint artık e-posta üzerinden profil arayıp kullanıcı adı ifşa etmez.
-- Callable kullanıcı işlemlerine doğrulanmış e-posta kontrolü eklendi. Oyuncu arama ve sohbet alıcısı bulma için kullanıcı başına hız sınırı, günlük ödüller için Türkiye yerel günü, skor kayıtları için soru sayısına bağlı makul üst sınır eklendi.
+- Firestore profil oluşturma/güncelleme doğrulanmış e-posta, alan izin listesi, tür ve uzunluk kontrolleriyle sınırlandırıldı.
+- Kullanıcılar kendi coin, inventory, membership, ban, role, score ve admin alanlarını değiştiremez.
+- Profildeki avatar yolu yalnızca kullanıcının kendi `avatars/{uid}/...` klasörünü işaret edebilir.
+- Görünüm tercihleri `users/{uid}/preferences/appearance` altında yalnızca sahibi tarafından okunur/yazılır ve alanları doğrulanır.
+- Sohbet oluşturma 2–10 üyeyle, DM/grup türüyle ve kurucu UID ile sınırlıdır.
+- Mesaj gönderen kimliği ve görünen adı kimlik doğrulanmış kullanıcı profiliyle eşleştirilir. Medya türü, dosya yolu ve boyutu Storage kurallarıyla sınırlandırılır.
+- Arkadaşlık, bildirim, transfer, hediye kodu, skor, düello, görev ve denetim kayıtları istemciden doğrudan yazılamaz.
+- Kullanıcı profili bulunmayan veya banlı kullanıcılar callable oyun/ödül işlemlerini kullanamaz.
+- Oyuncu arama ve sohbet alıcısı bulma özel profil belgelerini açmadan sınırlı alan döndürür.
+- Kullanıcı başına callable hız sınırları eklendi.
+- E-posta değişikliği talebi yalnızca doğrulanmış oturumdan açılır; yeni adres Firebase doğrulama bağlantısıyla doğrulanır. 30 günlük süre yalnızca değişiklik başarıyla tamamlanınca başlar ve sunucuda denetlenir.
+- Düello ve hediye kodlarında kriptografik rastgele üretim kullanılır.
+- Hediye kodu tek kullanımlıdır; transaction içinde aynı kodun iki kullanıcı tarafından tüketilmesi engellenir.
+- Başarısız giriş kayıtları parola/OTP saklamaz.
+- Public settings yalnızca site/theme/curriculum/features belgeleri için anonim okunabilir; çark ayarları admin ile sınırlıdır.
 
-## Açık kalan güvenlik işleri
+## Oyun güvenliği
 
-### Yüksek — skor ve düello sonuçlarının doğrulanması
-`submitGameScore` ve `submitDuelResult` hâlâ istemcinin gönderdiği puan/doğru cevap sayılarına güveniyor. Sınır kontrolleri mevcut olsa da sunucu gerçek soruları ve cevapları doğrulamıyor. Bu nedenle hileli skor üretimi tamamen engellenmiş değil. Kalıcı çözüm; sunucunun soru seti üretmesi, cevap anahtarını sunucuda tutması ve cevapları sunucu tarafında puanlamasıdır. Bu iş, oyun motoru/düello aşamasında tamamlanmalıdır.
+- Soru setleri Cloud Functions tarafında üretilir ve cevap anahtarı istemciye gönderilmez.
+- Her cevap tek bir oturum indeksine bağlanır; seçenek dışı cevap reddedilir.
+- Puan, doğru sayısı, seri ve can sunucu tarafından hesaplanır.
+- Sonsuz modda soru son tarihi sunucu oturumunda tutulur; geç cevap doğru sayılmaz.
+- Yanlış cevap tekrarı, önceki sunucu oturumundan seçilen yanlış sorularla yeni bir oturum oluşturur.
+- Düello puanları genel liderlik tablosuna yazılmaz; katılımcı sonuçları ayrı tutulur.
+- Bu kontroller hileyi önemli ölçüde zorlaştırır; yine de canlı ortamda yarışma/istismar testleri yapılmadan mutlak hile koruması iddia edilmez.
 
-### Orta — Firebase App Check
-Callable endpoint'lerde App Check zorunlu hale getirilmedi. Özellikle herkese açık başarısız giriş kaydı endpoint'inde IP hız sınırı var; App Check etkinleştirilmesi ek koruma sağlar.
+## Kalan dış bağımlılıklar
 
-### Orta — canlı proje doğrulaması
-Emülatör kuralları ve kod kontrolleri başarılıdır; gerçek Firebase projesinde kullanıcı rolleri, mevcut kayıtlar, sohbetler ve Storage dosyalarıyla uçtan uca test yapılmadı.
+### Firebase Web API yapılandırması
+`firebase-client.js` içindeki `apiKey` bilerek boştur. Önceki doğrulanmamış anahtar kullanılmıyor. Firebase Console > Project settings > Your apps içinden doğru web uygulaması yapılandırması girilmelidir.
 
-## Otomatik testler
+### Firebase App Check
+App Check uyumlu SDK ve isteğe bağlı reCAPTCHA v3 başlatma kodu eklendi. Site key boş olduğu için App Check etkin/enforced değildir. Kurulum için `APP_CHECK_KURULUMU_TR.md` dosyasını izleyin. Metrikler doğrulanmadan enforcement açılmamalıdır.
 
-GitHub Actions üzerinde aşağıdakiler başarılı:
-- `npm test` — smoke testleri
-- `node --check functions/index.js` — Cloud Functions JavaScript sözdizimi
-- Firebase Emulator — Firestore ve Storage kurallarının derlenmesi
+### Canlı Firebase
+Cloud Functions, Firestore rules/indexes ve Storage rules canlı projeye dağıtılmadı. Deploy maliyet/faturalandırma doğurabilir; kullanıcı onayı olmadan yapılmayacak.
 
-## Dağıtım durumu
+## Test ve yayın disiplini
 
-Bu denetim dalındaki değişiklikler henüz `main` dalına birleştirilmedi ve canlı Firebase'e deploy edilmedi. Deploy öncesi PR gözden geçirilmeli; ardından önce test Firebase projesinde, sonra onayla canlı projede uygulanmalıdır.
+- Bu turda yeni test çalıştırılmadı; kullanıcının açık talimatı bekleniyor.
+- GitHub Actions otomatik push/PR tetiklerinden çıkarıldı ve manuel çalıştırmaya alındı.
+- Önceki commit SHA'larında başarılı olmuş CI çalışmaları bu son kodun test edildiği anlamına gelmez.
+- `main` dalı değişmedi. PR birleştirilmedi. Canlıya dağıtım yapılmadı.
