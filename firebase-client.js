@@ -114,6 +114,9 @@ window.firebaseConfig = {
  }
  function bindAdmin(){
   ['admToggleAdminBox','admToggleWheel','admToggleTasks','admToggleMarket','admToggleOnline'].forEach(id=>$(id)?.addEventListener('change',saveFeatureFlags));
+  $('openAdmin')?.addEventListener('click',()=>{if(state.admin)window.MatematikMacerasi?.navigate('s3');});
+  $('ghostKey')?.addEventListener('click',()=>{if(state.admin)window.MatematikMacerasi?.navigate('s3');});
+  $('arefresh')?.addEventListener('click',()=>{if(state.admin)window.location.reload();});
   $('adminCreateGiftCodeBtn')?.addEventListener('click',async()=>{const b=$('adminCreateGiftCodeBtn'),out=$('adminGiftCodeMsg');b.disabled=true;try{const r=await call('createGiftCode');if(out)out.textContent='Yeni kod: '+r.data.code+' · 25 altın + Temel Oyun Kartı';}catch(e){if(out)out.textContent='Kod oluşturulamadı: '+e.message;}finally{b.disabled=false;}});
   $('saveSeasonTheme')?.addEventListener('click',async()=>{try{await call('setSeasonTheme',{theme:$('adminSeasonTheme')?.value||'default'});msg('seasonMsg','Tema tüm kullanıcılara yayınlandı.');}catch(e){msg('seasonMsg',e.message);}});
   $('saveWheelRewards')?.addEventListener('click',async()=>{try{const items=($('adminWheelRewards')?.value||'').split('\n').map(x=>{const a=x.split('|');return {label:(a[0]||'').trim(),coins:Number(a[1])}});await call('setWheelRewards',{items});msg('wheelAdminMsg','Çark ödülleri kaydedildi.');}catch(e){msg('wheelAdminMsg',e.message);}});
