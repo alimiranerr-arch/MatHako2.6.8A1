@@ -43,7 +43,7 @@
     btn.disabled=!!t.claimed;
     btn.onclick=()=>call('claimDailyTask',{taskId:t.id}).then(()=>{
      btn.textContent='Ödül alındı';btn.disabled=true;
-    }).catch(e=>alert(e.message));
+    }).catch(e=>{w.MMError?.show?.(e.message||'Ödül alınamadı.',124);});
     li.append(title,meta,btn);box.appendChild(li);
    });
   }).catch(e=>{box.textContent='Görevler yüklenemedi: '+e.message;});
