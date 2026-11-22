@@ -232,3 +232,19 @@ test('Offline uygulama kabuğu yalnızca depoda bulunan statik dosyaları önbel
 });
 
 console.log('\n' + passed + ' test başarılı.');
+
+test('2.6.9 sürümü, Mini Pass Gmail kilidi, ödül hata kodu ve profil açılır menüsü', () => {
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const core=fs.readFileSync(path.join(root,'core.js'),'utf8');
+  const features=fs.readFileSync(path.join(root,'features.js'),'utf8');
+  const social=fs.readFileSync(path.join(root,'social.js'),'utf8');
+  const pkg=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
+  assert.equal(pkg.version,'2.6.9');
+  assert.ok(html.includes('Sürüm 2.6.9') && html.includes('sürüm: 2.6.9'));
+  assert.ok(core.includes("app.version = '2.6.9'"));
+  assert.ok(html.includes('id="miniPassLock"') && html.includes('class="mini-pass mini-pass-locked"'));
+  assert.ok(features.includes('user.emailVerified') && features.includes("Günlük ödül alınamadı.',124"));
+  assert.ok(features.includes("Ödül alınamadı.',124"));
+  assert.ok(core.includes("profileQuickMenu") && core.includes("aria-hidden"));
+  assert.ok(!social.includes("(Hata kodu: 0114)'+' (Hata kodu: 0114)"));
+});
