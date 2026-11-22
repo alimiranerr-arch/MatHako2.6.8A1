@@ -36,6 +36,17 @@ window.firebaseConfig = {
   try{await call('setFeatureFlags',flags);msg('adminFeatureFlagsMsg','Özellik ayarları sunucuya kaydedildi.');}catch(e){msg('adminFeatureFlagsMsg','Kaydedilemedi: '+e.message);}
  }
  function init(){
+  if(!window.firebase&&window.MMFBReady){
+   if(state.firebaseInitPending)return;
+   state.firebaseInitPending=true;
+   status('Firebase bağlantısı hazırlanıyor…');
+   window.MMFBReady.then(result=>{
+    state.firebaseInitPending=false;
+    if(result?.error){const e=new Error('Firebase SDK yüklenemedi: '+result.error);console.error('Firebase SDK yüklenemedi:',e);status(e.message,true);ready(null,e);return;}
+    init();
+   });
+   return;
+  }
   if(!window.firebase||!window.firebaseConfig||!window.firebaseConfig.apiKey){
    const e=new Error(!window.firebase?'Firebase SDK yüklenemedi. İnternet bağlantısını ve Firebase CDN erişimini kontrol edin.':'Firebase Web API anahtarı henüz yapılandırılmamış. Firebase Console > Project settings > Your apps bölümündeki gerçek apiKey değerini girin.');
    console.error('Firebase başlatılamadı:',e);status(e.message,true);ready(null,e);return;
