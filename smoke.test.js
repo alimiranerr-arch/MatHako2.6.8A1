@@ -213,7 +213,7 @@ test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı
   assert.ok(social.includes('Hata kodu: 0114'));
   assert.ok(social.includes('Hata kodu: 0116'));
   assert.ok(social.includes('Hata kodu: 0117'));
-  assert.ok(duels.includes('Hata kodu: 0118'));
+  assert.ok(duels.includes('Hata kodu: 0136'));
   assert.ok(duels.includes('Hata kodu: 0120'));
   assert.ok(social.includes('displayName') && social.includes('friend.data()'));
   assert.ok(admin.includes('resolveMessageReport'));
