@@ -37,3 +37,13 @@
 5. Testler kullanıcı açıkça "test et" dediğinde yapılmalı.
 
 **Durum:** PR dalında hazırlandı; test, deploy, merge veya main değişikliği yapılmadı.
+
+
+## Son PR entegrasyonu
+- `media-config.js` üzerinden ortak Worker adresi yapılandırılır.
+- Profil avatarı yükleme artık `POST /v1/upload` kullanır; Firestore profilinde Worker yolunu tutar, görüntülemede kısa ömürlü URL yeniler.
+- Sohbet ekleri `POST /v1/chat-upload` kullanır. Worker her yükleme ve URL yenilemede Firestore chat belgesinden üyeliği doğrular.
+- Sohbet dosyası başına 15 MiB; kullanıcı/sohbet başına ağ genelinde 100 dosya ve 100 MiB kota.
+- Mevcut Firebase Storage ekleri geçiş süresince eski URL üzerinden görüntülenebilir.
+- Worker URL boşken yeni avatar/sohbet yüklemesi hata mesajı verir; Firebase Storage'a sessiz fallback yapılmaz.
+- Sohbet dosyalarını silme/moderasyon henüz yoktur; bu nedenle silme arayüzü eklenmeden kota dolan dosyalar otomatik temizlenmez.
