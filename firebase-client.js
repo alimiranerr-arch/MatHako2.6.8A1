@@ -10,7 +10,7 @@ window.firebaseConfig = {
 };
 (function(){
  const $=id=>document.getElementById(id), ADMIN='alimiranerr@gmail.com';
- const state={user:null,admin:false,db:null,fn:null,firebaseLoaderSettled:false}; window.MMCloud=state;
+ const state={user:null,admin:false,db:null,fn:null,firebaseLoaderSettled:false,profileReady:Promise.resolve(false)}; window.MMCloud=state;
  function msg(id,s){const e=$(id);if(e)e.textContent=s;}
  function status(text,isError=false){const el=$('firebaseStatus');if(el){el.textContent=text;el.classList.toggle('err',!!isError);el.classList.toggle('ok',!isError);}}
  function ready(user,error){state.authReady=true;window.dispatchEvent(new CustomEvent('mm-auth-ready',{detail:{user:user||null,admin:!!state.admin,error:error||null}}));}
@@ -94,12 +94,13 @@ window.firebaseConfig = {
      status('Profil eşitlemesi tamamlandı. Hesap hazır.');
      return true;
     }).catch(e=>{
-     console.warn('[Profil eşitleme 0108] Firestore kullanıcı profili yazılamadı:',{code:e.code,message:e.message});
-     status('Oturum açıldı ancak profil kaydedilemedi: '+(e.message||'Bilinmeyen hata')+' (Hata kodu: 0108)',true);
+     console.error('[Profil eşitleme 0108] Sunucu profil eşitlemesi başarısız:',{code:e.code,message:e.message});
+     status('Oturum açıldı ancak profil kaydedilemedi: '+(e.message||'Bilinmeyen hata')+' (Hata kodu: 0108; Firebase: '+(e.code||'unknown')+')',true);
      return false;
     });
-    profileSaved=await Promise.race([profileWrite,new Promise(resolve=>setTimeout(()=>resolve(false),15000))]);
-    if(!profileSaved)status('Oturum açıldı; profil eşitlemesi 15 saniyede tamamlanmadı. (Hata kodu: 0108)',true);
+    state.profileReady=profileWrite;
+    profileSaved=await Promise.race([profileWrite,new Promise(resolve=>setTimeout(()=>resolve(false),20000))]);
+    if(!profileSaved)status('Oturum açıldı; profil eşitlemesi 20 saniyede tamamlanmadı. (Hata kodu: 0108)',true);
     try{const p=await state.db.collection('users').doc(user.uid).get();if(!p.data()?.surname||!p.data()?.school){const form=$('accountRegisterForm');form?.classList.remove('hide');if($('regGmail'))$('regGmail').value=user.email||'';if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';}else status('Hesap hazır. İyi eğlenceler!');}catch(e){console.warn('Profil formu hazırlanamadı:',e);}
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     ready(user);
@@ -125,7 +126,7 @@ window.firebaseConfig = {
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
   if(!user.email)throw Error('Google hesabından e-posta bilgisi alınamadı.');
-  await state.db.collection('users').doc(user.uid).set({email:user.email,displayName:String(user.displayName||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  await call('syncUserProfile',{device});
  }
  async function loadAdminSettings(){
   const d=await state.db.doc('settings/site').get();if(d.exists){const x=d.data();if($('hakoMaintenanceToggle'))$('hakoMaintenanceToggle').checked=!!x.maintenance;if($('hakoImportantToggle'))$('hakoImportantToggle').checked=!!x.important;if($('hakoSevereToggle'))$('hakoSevereToggle').checked=!!x.severe;if($('hakoMaintenanceImage'))$('hakoMaintenanceImage').value=x.maintenanceImage||'bakim-molasi.png';if($('hakoImportantImage'))$('hakoImportantImage').value=x.importantImage||'helpy-onemli-is.webp';}
