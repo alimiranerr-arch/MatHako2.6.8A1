@@ -1175,22 +1175,20 @@ body.hako-notice-open{overflow:hidden}
 
     <p class="note generated-style-06">Her yeni hesapta <b>Mini Pass</b> otomatik başlar: her gün küçük bir miktar altın ve temel oyun kartları kazandırır. Daha fazlası için marketten özel üyelik alabilirsin.</p>
 
-    <div id="miniPassBox" class="generated-style-44">
-
-      <div class="row generated-style-34">
-
-        <div class="generated-style-35">
-
-          <b>🎟️ Mini Pass (Başlangıç Üyeliği)</b>
-
-          <div class="note">Günlük hediye: +15 🪙 ve ara sıra Temel Kart</div>
-
-        </div>
-
-        <button class="btn" id="claimMiniPassBtn">🎁 Günlük Ödülü Al</button>
-
+    <div id="miniPassBox" class="mini-pass">
+      <div class="mini-pass-head">
+        <div><b>🎟️ GÜNLÜK MINI PASS</b><div class="note">Her gün giriş yap, ödül yolunda ilerle!</div></div>
+        <span class="mini-pass-level" id="miniPassLevel">1 / 30</span>
       </div>
-
+      <div class="mini-pass-track premium" id="miniPassPremiumTrack" aria-label="Üyelik ödülleri">
+        <div class="mini-pass-track-label">👑 ÜYELİK YOLU <span id="miniPassPremiumState">Market üyeliğiyle açılır</span></div>
+        <div class="mini-pass-tiles" id="miniPassPremiumTiles"></div>
+      </div>
+      <div class="mini-pass-track free">
+        <div class="mini-pass-track-label">🎁 ÜCRETSİZ ÖDÜLLER <span>Herkese açık</span></div>
+        <div class="mini-pass-tiles" id="miniPassFreeTiles"></div>
+      </div>
+      <div class="mini-pass-footer"><span class="note" id="miniPassRewardText">Günlük ödül: +15 altın, ara sıra temel kart</span><button class="btn" id="claimMiniPassBtn">🎁 Günlük Ödülü Al</button></div>
     </div>
 
     <div id="ownedMemberships"></div>
