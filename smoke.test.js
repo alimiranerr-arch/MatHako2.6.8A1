@@ -113,7 +113,7 @@ test('Firebase SDK dosyaları arayüzü bloke etmeden sırayla yükleniyor', () 
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
   const sw=fs.readFileSync(path.join(root,'sw.js'),'utf8');
-  assert.ok(loader.includes('window.MMFBReady'));
+  assert.ok(loader.includes('w.MMFBReady'));
   assert.ok(loader.includes('script.async=true'));
   assert.ok(loader.includes('script.onerror'));
   assert.ok(loader.includes('setTimeout'));
