@@ -64,9 +64,12 @@ window.firebaseConfig = {
    auth.onAuthStateChanged(async user=>{
     state.user=user;state.admin=false;showAdmin(false);
     if(!user){
+     $('profileCard')?.classList.add('hide');
+     const menu=$('profileQuickMenu');menu?.classList.remove('show');menu?.setAttribute('aria-hidden','true');
      status('Firebase bağlantısı hazır. Gmail ile giriş yapabilirsin.');
      ready(null);return;
     }
+    $('profileCard')?.classList.remove('hide');
     status('Hesap doğrulanıyor…');
     try{
      const token=await Promise.race([
@@ -125,8 +128,16 @@ window.firebaseConfig = {
  }
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
-  if(!user.email)throw Error('Google hesabından e-posta bilgisi alınamadı.');
-  await call('syncUserProfile',{device});
+  if(!user?.uid||!user.email)throw Error('Google hesabından doğrulanmış e-posta bilgisi alınamadı.');
+  try{await call('syncUserProfile',{device});return;}
+  catch(syncError){
+   console.warn('syncUserProfile çağrısı başarısız; güvenlik kurallarıyla sınırlı Firestore eşitlemesi deneniyor:',syncError.code,syncError.message);
+   const ref=state.db.collection('users').doc(user.uid),snap=await ref.get();
+   if(snap.exists&&snap.data()?.banned)throw Error('Hesabın yönetici tarafından kalıcı olarak yasaklandı.');
+   const profile={displayName:String(user.displayName||user.email.split('@')[0]||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()};
+   if(!snap.exists)profile.email=user.email;
+   await ref.set(profile,{merge:true});
+  }
  }
  async function loadAdminSettings(){
   const d=await state.db.doc('settings/site').get();if(d.exists){const x=d.data();if($('hakoMaintenanceToggle'))$('hakoMaintenanceToggle').checked=!!x.maintenance;if($('hakoImportantToggle'))$('hakoImportantToggle').checked=!!x.important;if($('hakoSevereToggle'))$('hakoSevereToggle').checked=!!x.severe;if($('hakoMaintenanceImage'))$('hakoMaintenanceImage').value=x.maintenanceImage||'bakim-molasi.png';if($('hakoImportantImage'))$('hakoImportantImage').value=x.importantImage||'helpy-onemli-is.webp';}
