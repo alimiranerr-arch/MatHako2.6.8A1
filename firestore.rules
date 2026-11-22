@@ -21,6 +21,7 @@ service cloud.firestore {
     && (!data.keys().hasAny(['status']) || data.status in ['online','sleep','offline'])
     && (!data.keys().hasAny(['statusUpdatedAt']) || data.statusUpdatedAt is timestamp);
   }
+  function validPrivacy(data){return data.keys().hasOnly(['hideFromPublicLb','updatedAt'])&&data.hideFromPublicLb is bool&&data.updatedAt is timestamp;}
   function validAppearance(data){return data.keys().hasOnly(['bw','mode','theme','bgOn','bg','custom','c1','c2','effect','sound','vibration','updatedAt'])&&data.bw is bool&&data.mode in ['light','dark','auto']&&data.theme is int&&data.theme>=0&&data.theme<=4&&data.bgOn is bool&&data.bg is int&&data.bg>=0&&data.bg<=3&&data.custom is bool&&data.c1.matches('#[0-9a-fA-F]{6}')&&data.c2.matches('#[0-9a-fA-F]{6}')&&data.effect in ['none','sunny','rain','snow','auto']&&data.sound is bool&&data.vibration is bool&&data.updatedAt is timestamp;}
   function safeMessage(){
    return request.resource.data.keys().hasOnly(['senderId','senderName','text','emoji','mediaUrl','mediaPath','mediaType','createdAt','type'])
@@ -42,7 +43,7 @@ service cloud.firestore {
    allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location','avatar','avatarPath','status','statusUpdatedAt'])&&validProfile(request.resource.data);
    allow update:if admin()||(owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.email==resource.data.email&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location','avatar','avatarPath','status','statusUpdatedAt'])&&validProfile(request.resource.data));
    allow delete:if admin();
-   match /preferences/{doc}{allow read:if owner(uid);allow create,update:if owner(uid)&&doc=='appearance'&&validAppearance(request.resource.data);allow delete:if owner(uid);}
+   match /preferences/{doc}{allow read:if owner(uid);allow create,update:if owner(uid)&&((doc=='appearance'&&validAppearance(request.resource.data))||(doc=='privacy'&&validPrivacy(request.resource.data)));allow delete:if owner(uid);}
   }
   match /chats/{chatId}{
    allow read:if active()&&(request.auth.uid in resource.data.memberIds||admin());

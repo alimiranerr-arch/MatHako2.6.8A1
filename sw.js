@@ -1,7 +1,7 @@
 /* Offline app shell for GitHub Pages. Firebase data and authenticated requests are never cached. */
-const CACHE_NAME='mathako-shell-2026-11-21-v1';
+const CACHE_NAME='mathako-shell-2026-11-22-v2';
 const APP_ASSETS=[
- './','./index.html','./app.css','./manifest.webmanifest',
+ './','./index.html','./app.css','./media-config.js','./support-bridge.js','./manifest.webmanifest',
  './admin-scores.js','./admin-tools.js','./admin.js','./core.js','./duels.js',
  './features.js','./firebase-client.js','./fixtures.js','./game.js',
  './hako_extensions.js','./helpy-notices.js','./player-search.js','./qrcode.js',
@@ -26,5 +26,5 @@ self.addEventListener('fetch',event=>{
  const path=url.pathname;
  const isShell=APP_ASSETS.some(asset=>new URL(asset,self.location.href).pathname===path);
  if(!isShell)return;
- event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));}return response;})));
+ event.respondWith(fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));}return response;}).catch(()=>caches.match(request)));
 });

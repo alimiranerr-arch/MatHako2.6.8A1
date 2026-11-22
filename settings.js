@@ -7,6 +7,33 @@
  const bgs=[['Krem','#fff7e0','#ffffff'],['Buz','#e0f2fe','#eef2ff'],['Pembe','#fce7f3','#fff1f2'],['Mint','#d1fae5','#ecfccb']];
  const pairs=[['Mavi','#2563eb','#93c5fd'],['Mor','#7c3aed','#c4b5fd'],['Yeşil','#059669','#a7f3d0'],['Turuncu','#ea580c','#fed7aa']];
  let state={...defaults};let installPrompt=null,stopProfile=null,stopAppearance=null,avatarLoadSeq=0,syncedUid='';
+ const PRIVACY_KEY='mm_hide_public_lb_v1';
+ let stopPrivacy=null,privacyUid='';
+ function privacyLocalKey(uid){return PRIVACY_KEY+':'+(uid||'guest')}
+ function readPrivacy(uid){try{return localStorage.getItem(privacyLocalKey(uid))==='1'}catch(_){return false}}
+ function writePrivacy(uid,value){try{localStorage.setItem(privacyLocalKey(uid),value?'1':'0')}catch(e){console.warn('Skor gizliliği yerel kaydedilemedi:',e)}}
+ function watchPrivacy(){
+  const box=$('hideFromPublicLb');if(!box)return;
+  stopPrivacy?.();stopPrivacy=null;
+  const c=w.MMCloud,uid=c?.user?.uid||'guest';privacyUid=uid;
+  box.checked=readPrivacy(uid);
+  if(!c?.user||!c?.db)return;
+  stopPrivacy=c.db.collection('users').doc(uid).collection('preferences').doc('privacy').onSnapshot(s=>{
+   if(privacyUid!==uid)return;
+   if(s.exists&&typeof s.data().hideFromPublicLb==='boolean'){
+    const value=s.data().hideFromPublicLb;box.checked=value;writePrivacy(uid,value);
+   }
+  },e=>console.warn('Skor gizliliği ayarı eşitlenemedi:',e));
+ }
+ function savePrivacy(){
+  const box=$('hideFromPublicLb');if(!box)return;
+  const c=w.MMCloud,uid=c?.user?.uid||'guest',value=!!box.checked;
+  writePrivacy(uid,value);
+  if(!c?.user||!c?.db||!w.firebase?.firestore?.FieldValue)return;
+  c.db.collection('users').doc(uid).collection('preferences').doc('privacy').set({
+   hideFromPublicLb:value,updatedAt:w.firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true}).catch(e=>console.warn('Skor gizliliği buluta kaydedilemedi:',e));
+ }
  function read(){let saved={};try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(_){}const x={...defaults,...saved};if(!Number.isInteger(x.theme)||x.theme<0||x.theme>=themes.length)x.theme=0;if(!Number.isInteger(x.bg)||x.bg<0||x.bg>=bgs.length)x.bg=0;if(!['light','dark','auto'].includes(x.mode))x.mode='auto';if(!['none','sunny','rain','snow','auto'].includes(x.effect))x.effect='none';if(!/^#[0-9a-f]{6}$/i.test(x.c1))x.c1=defaults.c1;if(!/^#[0-9a-f]{6}$/i.test(x.c2))x.c2=defaults.c2;return x}
  function persist(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){console.warn('Ayarlar kaydedilemedi:',e)}}
  function effectiveMode(){if(state.mode!=='auto')return state.mode;const h=new Date().getHours();return h>=7&&h<19?'light':'dark'}
@@ -76,6 +103,8 @@
   const pickPair=i=>{state.c1=pairs[i][1];state.c2=pairs[i][2];state.custom=true;state.bgOn=false;choices('pairList',pairs,pickPair,i);syncControls();persist();apply()};
   choices('themeList',themes,pickTheme,state.theme);choices('bgPick',bgs,pickBg,state.bg);choices('pairList',pairs,pickPair,0);
   syncControls();apply();
+  watchPrivacy();
+  $('hideFromPublicLb')?.addEventListener('change',savePrivacy);
   $('bwOn')?.addEventListener('change',()=>{collect();persist();apply()});
   $('bgOn')?.addEventListener('change',()=>{collect();persist();apply()});
   $('customOn')?.addEventListener('change',()=>{collect();persist();apply()});
@@ -99,7 +128,7 @@
   w.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installPrompt=e;$('installBtn')?.classList.remove('hide')});
   $('installBtn')?.addEventListener('click',async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$('installBtn')?.classList.add('hide')});
   w.addEventListener('appinstalled',()=>{$('installBtn')?.classList.add('hide')});
-  w.addEventListener('mm-auth-ready',e=>{if(e.detail?.user){watchProfile()}else{stopProfile?.();stopProfile=null;stopAppearance?.();stopAppearance=null;avatarLoadSeq++;syncedUid='';w.MMCloud.profile=null;if($('meName'))$('meName').textContent='Misafir';if($('meAv'))$('meAv').textContent='🙂';if($('fbName'))$('fbName').value='';}});
+  w.addEventListener('mm-auth-ready',e=>{watchPrivacy();if(e.detail?.user){watchProfile()}else{stopProfile?.();stopProfile=null;stopAppearance?.();stopAppearance=null;avatarLoadSeq++;syncedUid='';w.MMCloud.profile=null;if($('meName'))$('meName').textContent='Misafir';if($('meAv'))$('meAv').textContent='🙂';if($('fbName'))$('fbName').value='';}});
   if(w.MMCloud?.user)watchProfile();
  }
  if('serviceWorker' in navigator&&location.protocol==='https:'){navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('Çevrimdışı uygulama kabuğu kaydedilemedi:',e));}
