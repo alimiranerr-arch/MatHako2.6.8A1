@@ -16,7 +16,7 @@ window.firebaseConfig = {
  function ready(user,error){state.authReady=true;window.dispatchEvent(new CustomEvent('mm-auth-ready',{detail:{user:user||null,admin:!!state.admin,error:error||null}}));}
  function call(name,data){if(!state.fn)throw Error('Firebase henüz başlatılmadı.');return state.fn.httpsCallable(name)(data||{});}
  const DEFAULT_FLAGS={adminBox:true,wheel:true,tasks:true,market:true,online:true};
- function showAdmin(on){const t=$('tabAdmin');if(t)t.classList.toggle('hide',!on);$('adminLocked')?.classList.add('hide');$('adminOpen')?.classList.toggle('hide',!on);$('unlockNameBtn')?.classList.toggle('hide',!on);const box=$('adminLogin');if(box)box.classList.toggle('hide',!on||state.featureFlags?.adminBox===false);}
+ function showAdmin(on){const t=$('tabAdmin');if(t)t.classList.toggle('hide',!on);const section=$('s3');if(section)section.classList.toggle('hide',!on);$('adminLocked')?.classList.add('hide');$('adminOpen')?.classList.toggle('hide',!on);$('unlockNameBtn')?.classList.toggle('hide',!on);const box=$('adminLogin');if(box)box.classList.toggle('hide',!on||state.featureFlags?.adminBox===false);if(!on&&window.MatematikMacerasi?.activeSection==='s3')window.MatematikMacerasi.navigate('s0');}
  function applyFeatureFlags(flags){
   state.featureFlags={...DEFAULT_FLAGS,...(flags||{})};
   const f=state.featureFlags;
@@ -90,13 +90,16 @@ window.firebaseConfig = {
     }
     status('Profil bilgileri eşitleniyor…');
     let profileSaved=false;
-    try{
-     profileSaved=await Promise.race([
-      recordVisitor(user).then(()=>true),
-      new Promise(resolve=>setTimeout(()=>resolve(false),7000))
-     ]);
-    }catch(e){console.warn('Profil kaydı tamamlanamadı:',e);status('Oturum açıldı ancak profil kaydedilemedi: '+e.message,true);}
-    if(!profileSaved)status('Oturum açıldı; profil eşitlemesi gecikiyor. İnternet bağlantısını kontrol et.',true);
+    const profileWrite=recordVisitor(user).then(()=>{
+     status('Profil eşitlemesi tamamlandı. Hesap hazır.');
+     return true;
+    }).catch(e=>{
+     console.warn('[Profil eşitleme 0108] Firestore kullanıcı profili yazılamadı:',{code:e.code,message:e.message});
+     status('Oturum açıldı ancak profil kaydedilemedi: '+(e.message||'Bilinmeyen hata')+' (Hata kodu: 0108)',true);
+     return false;
+    });
+    profileSaved=await Promise.race([profileWrite,new Promise(resolve=>setTimeout(()=>resolve(false),15000))]);
+    if(!profileSaved)status('Oturum açıldı; profil eşitlemesi 15 saniyede tamamlanmadı. (Hata kodu: 0108)',true);
     try{const p=await state.db.collection('users').doc(user.uid).get();if(!p.data()?.surname||!p.data()?.school){const form=$('accountRegisterForm');form?.classList.remove('hide');if($('regGmail'))$('regGmail').value=user.email||'';if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';}else status('Hesap hazır. İyi eğlenceler!');}catch(e){console.warn('Profil formu hazırlanamadı:',e);}
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     ready(user);
@@ -122,7 +125,7 @@ window.firebaseConfig = {
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
   if(!user.email)throw Error('Google hesabından e-posta bilgisi alınamadı.');
-  await state.db.collection('users').doc(user.uid).set({email:user.email.toLowerCase(),displayName:String(user.displayName||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  await state.db.collection('users').doc(user.uid).set({email:user.email,displayName:String(user.displayName||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
  }
  async function loadAdminSettings(){
   const d=await state.db.doc('settings/site').get();if(d.exists){const x=d.data();if($('hakoMaintenanceToggle'))$('hakoMaintenanceToggle').checked=!!x.maintenance;if($('hakoImportantToggle'))$('hakoImportantToggle').checked=!!x.important;if($('hakoSevereToggle'))$('hakoSevereToggle').checked=!!x.severe;if($('hakoMaintenanceImage'))$('hakoMaintenanceImage').value=x.maintenanceImage||'bakim-molasi.png';if($('hakoImportantImage'))$('hakoImportantImage').value=x.importantImage||'helpy-onemli-is.webp';}
@@ -161,11 +164,11 @@ window.firebaseConfig = {
   if(complete&&!complete.dataset.bound){complete.dataset.bound='1';complete.addEventListener('click',async()=>{
    const out=$('regErrorMsg');try{
     if(!auth.currentUser)throw Error('Önce Gmail ile giriş yap.');
-    const displayName=String($('regFirstName')?.value||'').trim().slice(0,20),surname=String($('regLastName')?.value||'').trim().slice(0,80),nickname=String($('regNick')?.value||'').trim().slice(0,40),school=String($('regSchool')?.value||'').trim().slice(0,120);
-    if(!displayName||!surname||!nickname||!school)throw Error('Ad, soyad, lakap ve okul alanlarını doldur.');
+    const displayName=String($('regFirstName')?.value||'').trim().slice(0,20),surname=String($('regLastName')?.value||'').trim().slice(0,80),nickname=String($('regNick')?.value||'').trim().slice(0,40),school=String($('regSchool')?.value||'').trim().slice(0,120),className=String($('regClassName')?.value||'').trim().slice(0,30);
+    if(!displayName||!surname||!nickname||!school||!className)throw Error('Ad, soyad, takma ad, okul adı ve sınıf alanlarını doldur.');
     await auth.currentUser.updateProfile({displayName});
     const avatarData=await window.MMSettings?.saveAvatar(auth.currentUser)||{avatar:$('presetAvatarSelect')?.value||'🦊',avatarPath:''};
-    await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email.toLowerCase(),displayName,surname,nickname,school,className:'7. sınıf',...avatarData},{merge:true});
+    await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email,displayName,surname,nickname,school,className,...avatarData},{merge:true});
     const form=$('accountRegisterForm');form?.classList.add('hide');if(out)out.textContent='Profilin kaydedildi. Maceraya hoş geldin!';
    }catch(e){if(out)out.textContent=e.message;}
   });}

@@ -15,7 +15,7 @@
         const ticket=result.data&&result.data.ticket;
         if(!ticket)throw new Error("Güvenli destek bağlantısı oluşturulamadı.");
         location.href=SUPPORT_URL+"#handoff="+encodeURIComponent(ticket);
-      }catch(e){alert("Destek bağlantısı açılamadı: "+(e.message||"Bilinmeyen hata"));}
+      }catch(e){console.error("[HakoSupport:0110] Güvenli destek devri başarısız:",{code:e.code,message:e.message,details:e.details});alert("Destek bağlantısı açılamadı: "+(e.message||"Bilinmeyen hata")+" (Hata kodu: 0110)");}
       finally{b.disabled=false;b.textContent="💬 Hako Destek";}
     });
     document.body.append(b);

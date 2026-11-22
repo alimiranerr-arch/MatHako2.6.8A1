@@ -30,3 +30,17 @@ body.season-sacrifice main::before{content:'🌙 🐑 ✨';display:block;text-al
 .scanbox video{width:100%;max-width:420px;max-height:320px;margin:auto;border-radius:10px;background:#111;object-fit:cover}
 
 @media print{body *{visibility:hidden!important}#report,#report *{visibility:visible!important}#report{display:block!important;position:absolute;left:0;top:0;width:100%;padding:24px;color:#111;background:#fff}#report table{width:100%;border-collapse:collapse}#report th,#report td{border:1px solid #777;padding:6px;text-align:left}#report h1{font-size:22px}}
+
+/* Mini Pass: iki katmanlı sezon ödül yolu */
+.mini-pass{padding:14px;border-radius:18px;background:linear-gradient(135deg,#25105f,#4d1b91 55%,#21104d);color:#fff;overflow:hidden}
+.mini-pass-head,.mini-pass-footer,.mini-pass-track-label{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.mini-pass-head{margin-bottom:14px}.mini-pass-head .note,.mini-pass-track-label span{color:#ddd4ff}
+.mini-pass-level{background:#ffca42;color:#27134f;padding:6px 10px;border-radius:999px;font-weight:900;white-space:nowrap}
+.mini-pass-track{padding:10px 0}.mini-pass-track-label{font-size:.78rem;font-weight:900;letter-spacing:.04em;margin-bottom:8px}
+.mini-pass-tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.mini-pass-tile{min-width:0;min-height:76px;border:1px solid #ffffff45;border-radius:10px;background:#ffffff16;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 3px;text-align:center}
+.mini-pass-tile strong{font-size:1.3rem}.mini-pass-tile small{font-size:.68rem;line-height:1.15}
+.mini-pass-tile.done{border-color:#48e36c;background:#1d9c4a55}.mini-pass-track.premium .mini-pass-tile{background:#ffffff0a;border-style:dashed;opacity:.58}
+.mini-pass-track.premium.unlocked .mini-pass-tile{opacity:1;background:#f8c94b20;border-style:solid;border-color:#f8c94b88}
+.mini-pass-footer{margin-top:10px;flex-wrap:wrap}.mini-pass-footer .note{color:#eee6ff}
+@media(max-width:430px){.mini-pass{padding:10px}.mini-pass-tiles{gap:4px}.mini-pass-tile{min-height:66px}.mini-pass-tile strong{font-size:1.1rem}.mini-pass-tile small{font-size:.62rem}}
