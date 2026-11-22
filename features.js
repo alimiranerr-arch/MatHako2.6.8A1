@@ -99,6 +99,16 @@
  function bindProfile(){const b=$('profileEditBtn');if(!b||b.dataset.bound)return;b.dataset.bound='1';b.addEventListener('click',async()=>{const displayName=prompt('Adın:',c().user.displayName||'');if(displayName===null)return;const surname=prompt('Soyadın:');if(surname===null)return;const school=prompt('Okulun:');if(school===null)return;const nickname=prompt('Takma ad (isteğe bağlı):');if(nickname===null)return;const className=prompt('Sınıfın:','7. sınıf');if(className===null)return;try{const clean=String(displayName).trim().slice(0,80);if(!clean)throw Error('Ad boş olamaz.');await c().user.updateProfile({displayName:clean});await c().db.collection('users').doc(c().user.uid).set({displayName:clean,surname:surname.trim().slice(0,80),school:school.trim().slice(0,120),nickname:nickname.trim().slice(0,40),className:className.trim().slice(0,30)},{merge:true});}catch(e){alert('Profil güncellenemedi: '+e.message);}});}
  function watchCurriculum(){stopCurriculum?.();stopCurriculum=c().db.doc('settings/curriculum').onSnapshot(s=>{const mode=s.exists?s.data().mode:'first',topics=[...(w.MatematikMacerasi.fixtures?.topics.firstTerm||[]),...(mode==='second'?(w.MatematikMacerasi.fixtures?.topics.secondTerm||[]):[])],box=$('tp'),badge=$('curriculumBadge');if(badge)badge.textContent=mode==='second'?'1. + 2. Dönem Konuları':'1. Dönem Konuları';if(box){box.innerHTML='';topics.forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',()=>{box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')});box.appendChild(b)})}const toggle=$('toggleSemesterBtn');if(toggle)toggle.textContent=mode==='second'?'📅 1. Dönem Konularına Dön':'📅 2. Dönem Konularına Geç (1. + 2. Dönem Birlikte)';},e=>{const box=$('tp');if(box)box.textContent='Konular yüklenemedi: '+e.message;console.warn('Müfredat akışı:',e)});}
 
+ function applyMiniPassAccess(user){
+  const box=$('miniPassBox'),claim=$('claimMiniPassBtn'),title=$('miniPassLockTitle'),copy=$('miniPassLockText');
+  if(!box)return;
+  const verified=!!(user&&user.emailVerified);
+  box.classList.toggle('mini-pass-locked',!verified);
+  $('miniPassLock')?.setAttribute('aria-hidden',String(verified));
+  if(claim)claim.disabled=!verified;
+  if(title)title.textContent=verified?'':'Günlük Mini Pass kilitli';
+  if(copy)copy.textContent=user&&!user.emailVerified?'Gmail adresini doğrulamalısın. Gelen doğrulama e-postasındaki bağlantıya tıkla, sonra sayfayı yenile.':'Günlük ödül yolunu açmak için Gmail ile giriş yap.';
+ }
  function renderMiniPass(u){
   const level=Math.max(1,Math.min(30,Number(u.miniPassDay)||1)),active=Number(u.membershipUntil)>Date.now();
   const levelEl=$('miniPassLevel'),free=$('miniPassFreeTiles'),premium=$('miniPassPremiumTiles'),premiumTrack=$('miniPassPremiumTrack'),premiumState=$('miniPassPremiumState'),claim=$('claimMiniPassBtn');
@@ -128,14 +138,14 @@
   });
   const claim=$('claimMiniPassBtn');
   if(claim&&!claim.dataset.bound){claim.dataset.bound='1';claim.addEventListener('click',async()=>{
-   if(!c()?.user){alert('Mini Pass ödülü için giriş yapmalısın.');return;}
+   if(!c()?.user?.emailVerified){w.MMError?.show?.('Günlük Mini Pass için doğrulanmış Gmail hesabıyla giriş yapmalısın.',124);return;}
    claim.disabled=true;
    try{const result=await call('claimMiniPass',{});const reward=result.data||{};alert('Günlük ödülün alındı! +'+(Number(reward.coins)||15)+' altın'+(reward.card?' ve temel kart kazandın.':'.'));claim.textContent='✓ Bugünkü ödül alındı';}
-   catch(e){alert(e.message||'Günlük ödül alınamadı.');claim.disabled=false;}
+   catch(e){w.MMError?.show?.(e.message||'Günlük ödül alınamadı.',124);claim.disabled=false;}
   });}
  }
  function admin(){}
  function watchAdminSubmissions(){}
- function init(){bind();bindPdf();bindPublicForms();let started=false;window.addEventListener('mm-auth-ready',e=>{if(!e.detail.user){started=false;stopShop?.();stopUser?.();stopCurriculum?.();stopTransfers.forEach(fn=>fn());stopTransfers=[];if($('trTo'))$('trTo').replaceChildren();if($('trList')){$('trList').replaceChildren();$('trList').dataset.live='';}if($('inventory'))$('inventory').replaceChildren();if($('dailyTasks'))$('dailyTasks').textContent='Görevleri görmek için giriş yap.';if($('profileView'))$('profileView').textContent='Profil bilgileri için giriş yap.';if($('ownedMemberships'))$('ownedMemberships').textContent='';if($('activePassBadge'))$('activePassBadge').textContent='';document.querySelectorAll('[data-coins]').forEach(x=>x.textContent='0');return}if(started)return;started=true;watchCurriculum();renderShop();loadUser();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()});if(c()?.user){started=true;watchCurriculum();renderShop();loadUser();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()}}
+ function init(){bind();bindPdf();bindPublicForms();let started=false;window.addEventListener('mm-auth-ready',e=>{if(!e.detail.user){applyMiniPassAccess(null);started=false;stopShop?.();stopUser?.();stopCurriculum?.();stopTransfers.forEach(fn=>fn());stopTransfers=[];if($('trTo'))$('trTo').replaceChildren();if($('trList')){$('trList').replaceChildren();$('trList').dataset.live='';}if($('inventory'))$('inventory').replaceChildren();if($('dailyTasks'))$('dailyTasks').textContent='Görevleri görmek için giriş yap.';if($('profileView'))$('profileView').textContent='Profil bilgileri için giriş yap.';if($('ownedMemberships'))$('ownedMemberships').textContent='';if($('activePassBadge'))$('activePassBadge').textContent='';document.querySelectorAll('[data-coins]').forEach(x=>x.textContent='0');return}applyMiniPassAccess(e.detail.user);if(started)return;started=true;watchCurriculum();renderShop();loadUser();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()});if(c()?.user){applyMiniPassAccess(c().user);started=true;watchCurriculum();}else{applyMiniPassAccess(null);renderShop();loadUser();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()}}
  document.addEventListener('DOMContentLoaded',init);w.MatematikMacerasi=w.MatematikMacerasi||{};w.MatematikMacerasi.register?.('features',{renderShop});
 })(window);
