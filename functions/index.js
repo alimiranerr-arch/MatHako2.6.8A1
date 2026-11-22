@@ -499,6 +499,10 @@ exports.grantSupportBugReward = onRequest({secrets:[SUPPORT_HANDOFF_SECRET],maxI
       const current=Math.max(0,Number(userSnap.data().coins)||0);
       tx.update(userRef,{coins:current+coins});
       tx.create(rewardRef,{reportId,uid,coins,level,source:'HakoSupport',createdAt:Field.serverTimestamp()});
+      if(coins>0) tx.set(db.doc('users/'+uid+'/notifications/supportBugReward_'+reportId),{
+        type:'support-bug-reward',coins,level,message:'Hata bildirimin onaylandı! '+coins+' altın kazandın.',
+        createdAt:Field.serverTimestamp(),read:false
+      });
     });
     return res.status(200).json({ok:true,alreadyRewarded:already});
   } catch (err) {
