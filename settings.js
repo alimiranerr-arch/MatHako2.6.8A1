@@ -120,7 +120,7 @@
   d.querySelectorAll('[data-st]').forEach(b=>b.addEventListener('click',()=>{d.querySelectorAll('[data-st]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));status(b.dataset.st)}));
   $('saveSettings')?.addEventListener('click',()=>{collect();persist();apply();w.MMCloudSync?.saveAppearance(state).then(()=>{const b=$('saveSettings');if(b)b.textContent='✓ Buluta kaydedildi';}).catch(e=>console.warn('Ayarlar buluta kaydedilemedi:',e));const b=$('saveSettings');if(b){const old=b.textContent;b.textContent='✓ Kaydedildi';setTimeout(()=>b.textContent=old,1200)}});
   $('resetBtn')?.addEventListener('click',()=>{if(!confirm('Bu cihazdaki görünüm ve ses ayarları sıfırlansın mı?'))return;state={...defaults};persist();syncControls();apply();w.MMCloudSync?.saveAppearance(state).catch(e=>console.warn('Sıfırlanan ayarlar buluta kaydedilemedi:',e))});
-  $('meChip')?.addEventListener('click',()=>w.MatematikMacerasi?.navigate('s6'));
+  
   $('coinBox')?.addEventListener('click',()=>w.MatematikMacerasi?.navigate('s5'));
   try{if($('activeEmojiSelect'))$('activeEmojiSelect').value=localStorage.getItem('mm_active_emoji')||$('activeEmojiSelect').value;}catch(_){}$('activeEmojiSelect')?.addEventListener('change',()=>{try{localStorage.setItem('mm_active_emoji',$('activeEmojiSelect').value)}catch(_){}});
   $('presetAvatarSelect')?.addEventListener('change',()=>avatarView($('presetAvatarSelect').value,''));
