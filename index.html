@@ -297,6 +297,13 @@ body.theme-day {
 .hako-notice-card h2{margin:8px 0;color:#facc15}
 .hako-notice-card p{line-height:1.55}
 body.hako-notice-open{overflow:hidden}
+
+/* Ana menü: uzun içeriği dört anlaşılır kategoriye ayırır. */
+.home-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:14px 0 18px;padding:6px;border:1px solid var(--line,#d8ddeb);border-radius:16px;background:var(--card,#fff)}
+.home-tabs button{min-width:0;padding:11px 5px;border:0;border-radius:11px;background:transparent;color:inherit;font:inherit;font-size:.88rem;font-weight:700;cursor:pointer}
+.home-tabs button[aria-selected="true"]{background:var(--accent,#ff5d73);color:#fff;box-shadow:0 3px 10px #0002}
+.home-panel[hidden]{display:none!important}
+@media(max-width:420px){.home-tabs{gap:4px;padding:4px}.home-tabs button{font-size:.78rem;padding:10px 2px}}
 </style>
 
 </head>
@@ -476,9 +483,17 @@ body.hako-notice-open{overflow:hidden}
 
   <!-- Art arda 3 doğruya hediye kart yazısı kaldırıldı -->
   <p class="mut">7. sınıf · Sonsuz modda 5 kalp & 10sn süre. Hızlı ve doğru cevap, daha çok puan! · 5 doğruda 🔥 Ateş Modu</p>
+  <nav class="home-tabs" id="homeTabs" role="tablist" aria-label="Ana menü kategorileri">
+    <button type="button" role="tab" data-home-tab="play" aria-selected="true">🎮 Oyna</button>
+    <button type="button" role="tab" data-home-tab="inventory" aria-selected="false">🎒 Envanter</button>
+    <button type="button" role="tab" data-home-tab="rewards" aria-selected="false">🎁 Ödüller</button>
+    <button type="button" role="tab" data-home-tab="stats" aria-selected="false">🏆 İstatistikler</button>
+  </nav>
 
 
 
+
+  <div class="home-panel" data-home-panel="play">
   <div class="card">
 
     <div class="row generated-style-12">
@@ -554,6 +569,9 @@ body.hako-notice-open{overflow:hidden}
 
 
 
+</div>
+
+  <div class="home-panel hide" data-home-panel="inventory">
   <!-- Envanter & Kart/Emoji Değiştirme Alanı -->
   <div class="card">
 
@@ -569,6 +587,9 @@ body.hako-notice-open{overflow:hidden}
 
 
 
+</div>
+
+  <div class="home-panel hide" data-home-panel="rewards">
   <div class="card">
 
     <h2>🎁 Özel şifre</h2>
@@ -589,6 +610,9 @@ body.hako-notice-open{overflow:hidden}
 
 
 
+</div>
+
+  <div class="home-panel hide" data-home-panel="stats">
   <div class="card lbcard">
 
     <div class="lbhead">
@@ -640,6 +664,8 @@ body.hako-notice-open{overflow:hidden}
   </div>
 
 
+
+</div>
 
   <!-- Admin Giriş Kutusu (Göze çarpmayan minimal tasarım + Admin panelden kapatılabilir) -->
   <div class="card stealth-admin-box" id="adminLogin">
