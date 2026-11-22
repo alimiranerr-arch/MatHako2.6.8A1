@@ -8,7 +8,7 @@
  async function resolveChatMediaUrl(data,chatId){
   if(data.mediaPath&&String(data.mediaPath).startsWith('chatMedia/')){
    const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');if(!worker)throw Error('Sohbet medya sunucusu henüz yapılandırılmadı.');
-   const token=await cloud().user.getIdToken(),response=await fetch(worker+'/v1/chat-media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({chatId,path:data.mediaPath})});
+   const token=await cloud().user.getIdToken(),response=await fetch(worker+'/v1/chat-media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({chatId,path:data.mediaPath,mediaType:data.mediaType})});
    const result=await response.json().catch(()=>({}));if(!response.ok||!result.url)throw Error(result.error||'Sohbet eki açılamadı.');return result.url;
   }
   return data.mediaUrl||'';
