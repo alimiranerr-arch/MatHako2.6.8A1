@@ -119,7 +119,8 @@ test('Firebase SDK dosyaları arayüzü bloke etmeden sırayla yükleniyor', () 
   assert.ok(loader.includes('setTimeout'));
   assert.ok(html.includes('./firebase-loader.js'));
   assert.ok(!html.includes('https://www.gstatic.com/firebasejs/10.14.1/'));
-  assert.ok(client.includes('window.MMFBReady.then'));
+  assert.ok(client.includes('Promise.race([window.MMFBReady,timeout])'));
+  assert.ok(client.includes('Firebase SDK eksik modülle yüklendi:'));
   assert.ok(sw.includes("'./firebase-loader.js'"));
 });
 
