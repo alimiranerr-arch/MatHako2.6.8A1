@@ -542,7 +542,7 @@ body.hako-notice-open{overflow:hidden}
 
     </div>
 
-    <div class="form"><label>🎚️ Oyun zorluğu<select id="gameDifficulty"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option><option value="impossible">İmkânsız</option></select></label></div>
+    <div class="form"><label>🎚️ Oyun zorluğu</label><div class="diffs difficulty-cards" id="gameDifficultyCards" role="radiogroup" aria-label="Oyun zorluğu"><button type="button" data-difficulty="easy" aria-pressed="false">🟢 Kolay</button><button type="button" data-difficulty="medium" aria-pressed="true">🟡 Orta</button><button type="button" data-difficulty="hard" aria-pressed="false">🟠 Zor</button><button type="button" data-difficulty="impossible" aria-pressed="false">🔴 İmkânsız</button></div><select id="gameDifficulty" class="visually-hidden" aria-hidden="true" tabindex="-1"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option><option value="impossible">İmkânsız</option></select></div>
     <div id="topicBlock">
 
       <div class="row generated-style-12">
@@ -1185,11 +1185,11 @@ body.hako-notice-open{overflow:hidden}
     <div id="miniPassBox" class="mini-pass mini-pass-locked">
       <div id="miniPassLock" class="mini-pass-lock" role="status" aria-live="polite"><div><span class="lk">🔒</span><b id="miniPassLockTitle">Günlük Mini Pass kilitli</b><p id="miniPassLockText">Günlük ödül yolunu açmak için Gmail ile giriş yap.</p><button type="button" class="btn gLogin">G Gmail ile giriş yap</button></div></div>
       <div class="mini-pass-head"><div class="mini-pass-season">SEZON 01 · 30 GÜNLÜK ÖDÜL YOLU</div>
-        <div><b>🎟️ GÜNLÜK MINI PASS</b><div class="note">Her gün giriş yap, ödül yolunda ilerle!</div></div>
+        <div><b><img id="miniPassAdminGif" class="mini-pass-admin-gif hide" alt="Yönetici Mini Pass GIF'i"> GÜNLÜK MINI PASS</b><div class="note">Her gün giriş yap, ödül yolunda ilerle!</div></div>
         <span class="mini-pass-level" id="miniPassLevel">1 / 30</span>
       </div>
       <div class="mini-pass-track premium premium-empty" id="miniPassPremiumTrack" aria-label="Üyelik satın alındığında açılacak boş ödül yolu">
-        <div class="mini-pass-track-label">👑 ÜYELİK YOLU <span id="miniPassPremiumState">Market üyeliğiyle açılır</span></div>
+        <div class="mini-pass-track-label"><span>ÜYELİK YOLU</span> <span id="miniPassPremiumState">Market üyeliğiyle açılır</span></div>
         <div class="mini-pass-tiles" id="miniPassPremiumTiles"></div>
       </div>
       <div class="mini-pass-track free">
@@ -1231,7 +1231,7 @@ body.hako-notice-open{overflow:hidden}
 
     </div>
 
-    <div class="shop" id="shop"></div>
+    <div class="shop special-shop" id="shop"></div>
 
   </div>
 
