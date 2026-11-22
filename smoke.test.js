@@ -72,7 +72,9 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(social.includes("'image/png'") && social.includes("'image/webp'"));
   assert.ok(features.includes('membershipActive'));
   const authClient=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
-  assert.ok(authClient.includes('recordVisitor(user).then(()=>true)'));
+  assert.ok(authClient.includes("call('syncUserProfile',{device})"));
+  assert.ok(authClient.includes('state.profileReady=profileWrite'));
+  assert.ok(fs.readFileSync(path.join(root,'functions/index.js'),'utf8').includes('exports.syncUserProfile=onCall'));
   assert.ok(rules.includes('function validProfile'));
   assert.ok(rules.includes('data.displayName.size()<=80'));
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
@@ -99,7 +101,7 @@ test('Emoji ve kart ekipman sistemi güvenli ve arayüze bağlı', () => {
 test('Ortak başlangıç ve sekme gezinmesi etkin', () => {
   const core=fs.readFileSync(path.join(root,'core.js'),'utf8');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-  assert.ok(core.includes("d.addEventListener('click', onDocumentClick)"));
+  assert.ok(core.includes("d.addEventListener('click', onDocumentClick, true)"));
   assert.ok(core.includes("closest?.('[data-go]')"));
   assert.ok(core.includes('app.navigate = navigate'));
   assert.ok(core.includes('w.MMCloud?.admin'));
@@ -129,7 +131,7 @@ test('Firebase başlangıcı hata ve gecikme durumlarında uygulamayı kilitlemi
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert.ok(client.includes("if(!window.firebase||!window.firebaseConfig||!window.firebaseConfig.apiKey)"));
   assert.ok(client.includes("state.authReady=true"));
-  assert.ok(client.includes("new Promise(resolve=>setTimeout(()=>resolve(false),7000))"));
+  assert.ok(client.includes("new Promise(resolve=>setTimeout(()=>resolve(false),20000))"));
   assert.ok(client.includes("auth.onAuthStateChanged(async user=>"));
   assert.ok(client.includes("Oturum kontrol edilemedi: "));
   assert.ok(html.includes('id="firebaseStatus"'));

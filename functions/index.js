@@ -11,6 +11,18 @@ const SUPPORT_HANDOFF_SECRET = defineSecret('SUPPORT_HANDOFF_SECRET');
 function requireUser(req){if(!req.auth)throw new HttpsError('unauthenticated','Önce giriş yapmalısın.');if(req.auth.token.email_verified!==true)throw new HttpsError('permission-denied','Önce e-posta adresini doğrulamalısın.');return req.auth.uid;}
 function requireAdmin(req){const uid=requireUser(req);if(req.auth.token.admin!==true||req.auth.token.email!==ADMIN_EMAIL||req.auth.token.email_verified!==true)throw new HttpsError('permission-denied','Bu işlem yalnızca doğrulanmış Hako admin hesabına açıktır.');return uid;}
 async function userDoc(uid){const d=await db.doc(`users/${uid}`).get();if(!d.exists)throw new HttpsError('failed-precondition','Kullanıcı profili henüz hazır değil. Sayfayı yenileyip tekrar dene.');if(d.data().banned)throw new HttpsError('permission-denied','Hesabın yönetici tarafından kalıcı olarak yasaklandı.');}
+
+// İstemci Firestore yazma kurallarına takılmadan, doğrulanmış Auth kimliğiyle profil temelini güvenli eşitler.
+exports.syncUserProfile=onCall(async req=>{
+ const uid=requireUser(req);await rateLimit(uid,'syncUserProfile',20);
+ const ref=db.doc('users/'+uid),snap=await ref.get();
+ if(snap.exists&&snap.data().banned)throw new HttpsError('permission-denied','Hesabın yönetici tarafından yasaklandı.');
+ const device=String(req.data?.device||'Bilinmeyen cihaz').slice(0,40);
+ const displayName=String(req.auth.token.name||snap.data()?.displayName||'Kullanıcı').slice(0,80);
+ await ref.set({email:req.auth.token.email,displayName,device,lastSeen:Field.serverTimestamp()},{merge:true});
+ return{ok:true};
+});
+
 async function rateLimit(uid,action,max,windowMs=10*60*1000){
  const key=crypto.createHash('sha256').update(action+':'+uid).digest('hex').slice(0,40);
  const ref=db.doc('apiRateLimits/'+key),now=Date.now();
