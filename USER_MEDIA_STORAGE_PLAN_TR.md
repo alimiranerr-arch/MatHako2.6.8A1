@@ -18,7 +18,7 @@
 ## Kota ve güvenlik
 - Worker yükleme öncesi her shard'ın Git tree sayımını yapar; depo başına 1.000 görsel sınırını uygular.
 - Aynı shard üzerinde eşzamanlı yüklemeler GitHub Contents API lock dosyasıyla sıraya alınır.
-- En fazla 10 shard taranır; bu sayı Cloudflare Free harici alt-istek bütçesi için sabitlenmiştir.
+- En fazla 8 shard taranır; bu sayı Cloudflare Free harici alt-istek bütçesi için sabitlenmiştir.
 - Depo dolu veya kilitliyse yükleme reddedilir. Ücretli plana geçiş/otomatik faturalandırma yoktur.
 - Firebase ID token, imza, issuer, audience, e-posta doğrulaması kontrol edilir. Admin endpoint ayrıca admin claim ve e-posta ister.
 - GitHub token yalnızca Worker secret'tır; tarayıcı koduna girmez.
