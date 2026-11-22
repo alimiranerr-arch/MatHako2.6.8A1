@@ -200,5 +200,7 @@ window.firebaseConfig = {
    },e=>{msg('wxNow','Konum alınamadı veya izin verilmedi.');b.disabled=false;},{enableHighAccuracy:false,timeout:10000,maximumAge:300000});
   });
  }
- document.addEventListener('DOMContentLoaded',init);
+ // Bu dosya index.html'de uygulama HTML'inden sonra yüklenir. DOMContentLoaded beklemek,
+ // sonraki klasik scriptlerden biri takılırsa Firebase ve arayüz başlangıcını kilitleyebilir.
+ init();
 })();
