@@ -15,7 +15,11 @@
         const ticket=result.data&&result.data.ticket;
         if(!ticket)throw new Error("Güvenli destek bağlantısı oluşturulamadı.");
         location.href=SUPPORT_URL+"#handoff="+encodeURIComponent(ticket);
-      }catch(e){console.error("[HakoSupport:0110] Güvenli destek devri başarısız:",{code:e.code,message:e.message,details:e.details});alert("Destek bağlantısı açılamadı: "+(e.message||"Bilinmeyen hata")+" (Hata kodu: 0110)");}
+      }catch(e){
+        console.error("[HakoSupport:0110] Güvenli destek devri başarısız:",{code:e.code,message:e.message,details:e.details});
+        const direct=confirm("Güvenli hesap aktarımı şu anda çalışmıyor (0110). Destek sitesini doğrudan açalım mı? Hesap bilgilerin otomatik aktarılmayacak.");
+        if(direct)window.open(SUPPORT_URL,"_blank","noopener");
+      }
       finally{b.disabled=false;b.textContent="💬 Hako Destek";}
     });
     document.body.append(b);
