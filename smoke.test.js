@@ -69,7 +69,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(functions.includes('Düello skorları yalnızca doğrulanmış oyun oturumundan gönderilebilir'));
   assert.ok(social.includes('emails.length>9'));
   assert.ok(social.includes('currentSenderName'));
-  assert.ok(social.includes('image\\/(png|jpeg|gif|webp)'));
+  assert.ok(social.includes("'image/png'") && social.includes("'image/webp'"));
   assert.ok(features.includes('membershipActive'));
   const authClient=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
   assert.ok(authClient.includes('recordVisitor(user).then(()=>true)'));
