@@ -3,7 +3,7 @@
   'use strict';
 
   const app = w.MatematikMacerasi = w.MatematikMacerasi || {};
-  app.version = '2.6.9';
+  app.version = '2.7.0';
   app.modules = app.modules || {};
 
   function sections() {
