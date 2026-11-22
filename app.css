@@ -58,3 +58,14 @@ body[data-mm-mode="dark"]{background-color:#0f172a!important;color:#f8fafc!impor
 
 /* Gmail doğrulaması olmadan günlük Mini Pass içeriği görünmez ve etkileşime kapalıdır. */
 .mini-pass{position:relative}.mini-pass-lock{display:none;position:absolute;inset:0;z-index:5;align-items:center;justify-content:center;text-align:center;padding:18px;background:rgba(8,13,32,.94);color:#fff;border-radius:22px}.mini-pass.mini-pass-locked .mini-pass-lock{display:flex}.mini-pass.mini-pass-locked>:not(.mini-pass-lock){filter:blur(3px);pointer-events:none;user-select:none}.mini-pass-lock>div{max-width:340px}.mini-pass-lock .lk{display:block;font-size:2rem}
+/* 2.7.0: Ayar kaydetme çubuğu pencereye sabitlenir; sayfa ile kaybolmaz. */
+#s7:not(.hide) #saveSettings.savebar{position:fixed;left:50%;transform:translateX(-50%);bottom:max(10px,env(safe-area-inset-bottom));width:min(980px,calc(100vw - 24px));margin:0;z-index:10050}
+#s7:not(.hide){padding-bottom:90px}
+.difficulty-cards button{flex:1 1 120px;min-height:58px;border:2px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);font-weight:850;padding:10px}
+.difficulty-cards button[aria-pressed=true]{border-color:#ffb703;background:#fff3c4;box-shadow:0 0 0 2px #ffb70355}
+.special-shop{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;padding:8px;background:linear-gradient(135deg,#172b74,#365fca);border-radius:16px}
+.special-shop .card{margin:0;min-width:0;background:linear-gradient(160deg,#dcecff,#fff);color:#172b55;border:2px solid #a8c7ff;border-radius:12px;box-shadow:0 5px 14px #001b5333}
+.special-shop .card img{display:block;width:100%;max-height:130px;object-fit:contain;background:#b8dcff;border-radius:9px}
+.special-shop .card button{width:100%;background:#1d8b42;color:#fff;border:0}
+.mini-pass-admin-gif{width:32px;height:32px;object-fit:contain;vertical-align:middle;border-radius:7px}
+.visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
