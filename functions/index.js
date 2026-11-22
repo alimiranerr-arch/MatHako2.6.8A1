@@ -1,4 +1,5 @@
 const {onCall, HttpsError} = require('firebase-functions/v2/https');
+const {defineSecret} = require('firebase-functions/params');
 const {onDocumentCreated} = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
 const crypto = require('crypto');
@@ -6,6 +7,7 @@ function randomJoinCode(){const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return 
 admin.initializeApp();
 const db=admin.firestore(), Field=admin.firestore.FieldValue;
 const ADMIN_EMAIL='alimiranerr@gmail.com';
+const SUPPORT_HANDOFF_SECRET = defineSecret('SUPPORT_HANDOFF_SECRET');
 function requireUser(req){if(!req.auth)throw new HttpsError('unauthenticated','Önce giriş yapmalısın.');if(req.auth.token.email_verified!==true)throw new HttpsError('permission-denied','Önce e-posta adresini doğrulamalısın.');return req.auth.uid;}
 function requireAdmin(req){const uid=requireUser(req);if(req.auth.token.admin!==true||req.auth.token.email!==ADMIN_EMAIL||req.auth.token.email_verified!==true)throw new HttpsError('permission-denied','Bu işlem yalnızca doğrulanmış Hako admin hesabına açıktır.');return uid;}
 async function userDoc(uid){const d=await db.doc(`users/${uid}`).get();if(!d.exists)throw new HttpsError('failed-precondition','Kullanıcı profili henüz hazır değil. Sayfayı yenileyip tekrar dene.');if(d.data().banned)throw new HttpsError('permission-denied','Hesabın yönetici tarafından kalıcı olarak yasaklandı.');}
@@ -454,3 +456,18 @@ exports.createDuel=onCall(async req=>{
 });
 exports.joinDuel=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const code=String(req.data?.code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);if(!code)throw new HttpsError('invalid-argument','Düello kodu gerekli.');let topic='Karışık';await db.runTransaction(async tx=>{const r=db.doc(`duels/${code}`),d=await tx.get(r);if(!d.exists||d.data().expiresAt<Date.now())throw new HttpsError('not-found','Düello bulunamadı veya süresi doldu.');const x=d.data();if(x.hostUid===uid)throw new HttpsError('failed-precondition','Kendi düellona katılamazsın.');if(x.invitedUid&&x.invitedUid!==uid)throw new HttpsError('permission-denied','Bu düello başka bir oyuncuya gönderilmiş.');if(x.status!=='waiting')throw new HttpsError('failed-precondition','Bu düello dolu veya tamamlanmış.');topic=x.topic||'Karışık';tx.update(r,{players:[x.hostUid,uid],status:'playing',joinedAt:Field.serverTimestamp()});});return{ok:true,code,topic};});
 exports.submitDuelResult=onCall(async()=>{throw new HttpsError('failed-precondition','Düello skorları yalnızca doğrulanmış oyun oturumundan gönderilebilir.');});
+
+
+// One-time signed handoff from the verified main-site account to HakoSupport.
+exports.createSupportHandoff = onCall({secrets:[SUPPORT_HANDOFF_SECRET]}, async req => {
+ const uid=requireUser(req);
+ await userDoc(uid);
+ await rateLimit(uid,'support-handoff',4,5*60*1000);
+ const email=String(req.auth.token.email||'').trim().toLowerCase();
+ if(!email) throw new HttpsError('failed-precondition','Ana hesap e-postası bulunamadı.');
+ const now=Date.now();
+ const payload={v:1,aud:'hako-support',uid,email,emailVerified:req.auth.token.email_verified===true,iat:now,exp:now+5*60*1000,jti:crypto.randomBytes(24).toString('hex')};
+ const body=Buffer.from(JSON.stringify(payload)).toString('base64url');
+ const signature=crypto.createHmac('sha256',SUPPORT_HANDOFF_SECRET.value()).update(body).digest('base64url');
+ return {ticket:body+'.'+signature,expiresAt:payload.exp};
+});
