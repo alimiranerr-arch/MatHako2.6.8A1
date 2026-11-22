@@ -119,6 +119,17 @@ test('Firebase başlangıcı hata ve gecikme durumlarında uygulamayı kilitlemi
   assert.ok(html.includes('id="firebaseStatus"'));
 });
 
+test('Skor gizliliği tercihi kullanıcıya özel buluta kaydediliyor ve çevrimdışı korunuyor', () => {
+  const settings=fs.readFileSync(path.join(root,'settings.js'),'utf8');
+  const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
+  const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
+  assert.ok(settings.includes("doc('privacy').onSnapshot"));
+  assert.ok(settings.includes('hideFromPublicLb:value'));
+  assert.ok(settings.includes("addEventListener('change',savePrivacy)"));
+  assert.ok(rules.includes("doc=='privacy'&&validPrivacy(request.resource.data)"));
+  assert.ok(game.includes("public:!$('hideFromPublicLb')?.checked"));
+});
+
 test('PWA ikon yolları depodaki gerçek dosyalarla eşleşiyor', () => {
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.webmanifest'),'utf8'));
