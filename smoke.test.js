@@ -155,7 +155,7 @@ test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı
   assert.ok(settings.includes("navigator.serviceWorker.register('./sw.js')"));
   assert.ok(sync.includes('loadAppearance')&&sync.includes('saveAppearance'));
   assert.ok(extensions.includes('available:true'));
-  assert.ok(client.includes('apiKey: ""'),'Doğrulanmamış Firebase API key depoda tutulmamalı.');
+  assert.ok(/apiKey:\s*"[^"]{20,}"/.test(client),'Firebase Web API key yapılandırması eksik.');
   assert.ok(settings.includes("httpsCallable('redeemGiftCode')"));
   assert.ok(social.includes('ensureNotificationPanel'));
   assert.ok(social.includes('displayName') && social.includes('friend.data()'));
