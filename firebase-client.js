@@ -90,13 +90,16 @@ window.firebaseConfig = {
     }
     status('Profil bilgileri eşitleniyor…');
     let profileSaved=false;
-    try{
-     profileSaved=await Promise.race([
-      recordVisitor(user).then(()=>true),
-      new Promise(resolve=>setTimeout(()=>resolve(false),7000))
-     ]);
-    }catch(e){console.warn('Profil kaydı tamamlanamadı:',e);status('Oturum açıldı ancak profil kaydedilemedi: '+e.message,true);}
-    if(!profileSaved)status('Oturum açıldı; profil eşitlemesi gecikiyor. İnternet bağlantısını kontrol et.',true);
+    const profileWrite=recordVisitor(user).then(()=>{
+     status('Profil eşitlemesi tamamlandı. Hesap hazır.');
+     return true;
+    }).catch(e=>{
+     console.warn('[Profil eşitleme 0108] Firestore kullanıcı profili yazılamadı:',{code:e.code,message:e.message});
+     status('Oturum açıldı ancak profil kaydedilemedi: '+(e.message||'Bilinmeyen hata')+' (Hata kodu: 0108)',true);
+     return false;
+    });
+    profileSaved=await Promise.race([profileWrite,new Promise(resolve=>setTimeout(()=>resolve(false),15000))]);
+    if(!profileSaved)status('Oturum açıldı; profil eşitlemesi 15 saniyede tamamlanmadı. (Hata kodu: 0108)',true);
     try{const p=await state.db.collection('users').doc(user.uid).get();if(!p.data()?.surname||!p.data()?.school){const form=$('accountRegisterForm');form?.classList.remove('hide');if($('regGmail'))$('regGmail').value=user.email||'';if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';}else status('Hesap hazır. İyi eğlenceler!');}catch(e){console.warn('Profil formu hazırlanamadı:',e);}
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     ready(user);
