@@ -47,6 +47,7 @@
    finally{if(button)button.disabled=false;}
  }
  document.addEventListener("DOMContentLoaded",()=>{
+   if($("storageWorkerUrl")&&w.MMStorageWorkerUrl)$("storageWorkerUrl").value=w.MMStorageWorkerUrl;
    $("storageRefreshBtn")?.addEventListener("click",refresh);
    $("storageRequestShardBtn")?.addEventListener("click",requestShard);
  });
