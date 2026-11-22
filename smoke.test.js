@@ -134,6 +134,19 @@ test('Firebase başlangıcı hata ve gecikme durumlarında uygulamayı kilitlemi
   assert.ok(html.includes('id="firebaseStatus"'));
 });
 
+test('Firebase istemcisi DOMContentLoaded beklemeden güvenli biçimde başlıyor', () => {
+  const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.ok(!client.includes("document.addEventListener('DOMContentLoaded',init)"),
+    'Firebase istemcisi DOMContentLoaded olayına bağlı kalmamalı.');
+  assert.ok(/\\binit\\(\\);\\s*\\}\\)\\(\\);\\s*$/.test(client),
+    'Firebase istemcisi dosya sonunda init() çağırmalı.');
+  const clientScript=html.indexOf('./firebase-client.js');
+  const bodyEnd=html.lastIndexOf('</body>');
+  assert.ok(clientScript>=0 && bodyEnd>clientScript,
+    'Firebase istemcisi, uygulama HTML içeriğinden sonra body sonunda yüklenmeli.');
+});
+
 test('Skor gizliliği tercihi kullanıcıya özel buluta kaydediliyor ve çevrimdışı korunuyor', () => {
   const settings=fs.readFileSync(path.join(root,'settings.js'),'utf8');
   const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
