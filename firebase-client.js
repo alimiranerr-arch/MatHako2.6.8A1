@@ -122,7 +122,7 @@ window.firebaseConfig = {
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
   if(!user.email)throw Error('Google hesabından e-posta bilgisi alınamadı.');
-  await state.db.collection('users').doc(user.uid).set({email:user.email.toLowerCase(),displayName:String(user.displayName||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  await state.db.collection('users').doc(user.uid).set({email:user.email,displayName:String(user.displayName||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
  }
  async function loadAdminSettings(){
   const d=await state.db.doc('settings/site').get();if(d.exists){const x=d.data();if($('hakoMaintenanceToggle'))$('hakoMaintenanceToggle').checked=!!x.maintenance;if($('hakoImportantToggle'))$('hakoImportantToggle').checked=!!x.important;if($('hakoSevereToggle'))$('hakoSevereToggle').checked=!!x.severe;if($('hakoMaintenanceImage'))$('hakoMaintenanceImage').value=x.maintenanceImage||'bakim-molasi.png';if($('hakoImportantImage'))$('hakoImportantImage').value=x.importantImage||'helpy-onemli-is.webp';}
@@ -165,7 +165,7 @@ window.firebaseConfig = {
     if(!displayName||!surname||!nickname||!school)throw Error('Ad, soyad, lakap ve okul alanlarını doldur.');
     await auth.currentUser.updateProfile({displayName});
     const avatarData=await window.MMSettings?.saveAvatar(auth.currentUser)||{avatar:$('presetAvatarSelect')?.value||'🦊',avatarPath:''};
-    await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email.toLowerCase(),displayName,surname,nickname,school,className:'7. sınıf',...avatarData},{merge:true});
+    await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email,displayName,surname,nickname,school,className:'7. sınıf',...avatarData},{merge:true});
     const form=$('accountRegisterForm');form?.classList.add('hide');if(out)out.textContent='Profilin kaydedildi. Maceraya hoş geldin!';
    }catch(e){if(out)out.textContent=e.message;}
   });}
