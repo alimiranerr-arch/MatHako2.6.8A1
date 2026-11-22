@@ -109,8 +109,8 @@
  async function upload(file){
   if(!file||!activeChat)return;
   if(file.size>15*1024*1024)throw Error('Dosya en fazla 15 MB olabilir.');
-  if(!/^(image\\/(png|jpeg|gif|webp)|audio\\/(mpeg|ogg|wav|webm|mp4)|video\\/(mp4|webm|ogg))$/.test(file.type))throw Error('Bu dosya türü desteklenmiyor.');
-  const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');if(!worker)throw Error('Sohbet medya sunucusu henüz yapılandırılmadı.');
+  if(!['image/png','image/jpeg','image/gif','image/webp','audio/mpeg','audio/ogg','audio/wav','audio/webm','audio/mp4','video/mp4','video/webm','video/ogg'].includes(file.type))throw Error('Bu dosya türü desteklenmiyor.');
+  let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);if(!worker)throw Error('Sohbet medya sunucusu henüz yapılandırılmadı.');
   const chatId=activeChat,token=await cloud().user.getIdToken();
   const response=await fetch(worker+'/v1/chat-upload?chatId='+encodeURIComponent(chatId),{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
   const result=await response.json().catch(()=>({}));if(!response.ok||!result.path)throw Error(result.message||result.error||'Dosya yüklenemedi.');
