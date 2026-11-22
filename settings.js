@@ -38,10 +38,12 @@
  async function resolveAvatarUrl(path){
   const prefix='avatars/'+(w.MMCloud?.user?.uid||'')+'/';
   if(!path||!path.startsWith(prefix))return '';
+  const storedPath=path.slice(prefix.length);
+  if(!storedPath.startsWith('users/'))return w.firebase?.storage?w.firebase.storage().ref(path).getDownloadURL(): '';
   const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');
   if(!worker)return '';
   const token=await w.MMCloud.user.getIdToken();
-  const response=await fetch(worker+'/v1/media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({path:path.slice(prefix.length)})});
+  const response=await fetch(worker+'/v1/media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({path:storedPath})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.url)throw Error(data.error||'Profil resmi alınamadı.');
   return data.url;
