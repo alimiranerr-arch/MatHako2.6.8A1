@@ -40,7 +40,7 @@
   if(!path||!path.startsWith(prefix))return '';
   const storedPath=path.slice(prefix.length);
   if(!storedPath.startsWith('users/'))return w.firebase?.storage?w.firebase.storage().ref(path).getDownloadURL(): '';
-  const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');
+  let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
   if(!worker)return '';
   const token=await w.MMCloud.user.getIdToken();
   const response=await fetch(worker+'/v1/media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({path:storedPath})});
@@ -56,7 +56,7 @@
   if(!file)return{avatar:emoji,avatarPath:''};
   if(file.size>2*1024*1024)throw Error('Profil resmi en fazla 2 MB olabilir.');
   if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Profil resmi PNG, JPEG veya WebP olmalı.');
-  const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');
+  let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
   if(!worker)throw Error('Görsel sunucusu henüz yapılandırılmadı. Daha sonra tekrar dene.');
   const token=await user.getIdToken();
   const response=await fetch(worker+'/v1/upload',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
