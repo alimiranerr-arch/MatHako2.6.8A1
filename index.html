@@ -1038,6 +1038,19 @@ body.hako-notice-open{overflow:hidden}
   <div class="card"><h2>🏷️ Unvan oluştur</h2><input id="adminTitleName" maxlength="32" placeholder="Unvan adı"><input id="adminTitlePrice" type="number" min="0" placeholder="Altın fiyatı"><button class="go" id="publishTitle">Unvanı yayınla</button><p id="titleMsg" class="msg"></p></div>
 </div>
 
+  <div class="card" id="adminStorageNetwork">
+    <h2>🗄️ Hako Storage Network</h2>
+    <p class="note">Her özel depoda en fazla 1.000 görsel. Yeni depo yalnızca yönetici talebiyle açılır; en fazla 10 depo kaydedilir. Ücretsiz kullanım sınırları aşılırsa yükleme durur.</p>
+    <label>Cloudflare Worker adresi<input id="storageWorkerUrl" type="url" placeholder="https://hako-user-media.<hesap>.workers.dev"></label>
+    <div class="row">
+      <button type="button" class="btn" id="storageRefreshBtn">Kota durumunu getir</button>
+      <button type="button" class="go" id="storageRequestShardBtn">＋ Yeni özel depo talep et</button>
+    </div>
+    <div id="storageNetworkStatus" class="msg" aria-live="polite">Worker adresi yapılandırıldıktan sonra kota bilgisi görüntülenir.</div>
+    <div id="storageNetworkList" class="sl"></div>
+    <p class="note">Güvenlik: GitHub token'ı bu panele veya tarayıcıya girilmez. Yeni depo talebi kaydedildikten sonra depo GitHub'da Private olarak oluşturulmalı ve adı Worker'ın STORAGE_REPOSITORIES değişkenine yönetici tarafından eklenmelidir. Worker otomatik ücretli plana geçmez.</p>
+  </div>
+
 </section>
 
 
