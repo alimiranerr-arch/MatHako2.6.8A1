@@ -1,4 +1,4 @@
-const {onCall, HttpsError} = require('firebase-functions/v2/https');
+const {onCall, onRequest, HttpsError} = require('firebase-functions/v2/https');
 const {defineSecret} = require('firebase-functions/params');
 const {onDocumentCreated} = require('firebase-functions/v2/firestore');
 const admin = require('firebase-admin');
@@ -470,4 +470,39 @@ exports.createSupportHandoff = onCall({secrets:[SUPPORT_HANDOFF_SECRET]}, async 
  const body=Buffer.from(JSON.stringify(payload)).toString('base64url');
  const signature=crypto.createHmac('sha256',SUPPORT_HANDOFF_SECRET.value()).update(body).digest('base64url');
  return {ticket:body+'.'+signature,expiresAt:payload.exp};
+});
+
+
+// HakoSupport signed callback: award main-site coins once per published bug report.
+exports.grantSupportBugReward = onRequest({secrets:[SUPPORT_HANDOFF_SECRET],maxInstances:5}, async (req,res) => {
+  if (req.method !== 'POST') return res.status(405).json({error:'method-not-allowed'});
+  try {
+    const raw = req.rawBody;
+    const supplied = String(req.get('x-hako-signature') || '');
+    const expected = crypto.createHmac('sha256', SUPPORT_HANDOFF_SECRET.value()).update(raw).digest('hex');
+    const a = Buffer.from(supplied, 'hex'), b = Buffer.from(expected, 'hex');
+    if (!a.length || a.length !== b.length || !crypto.timingSafeEqual(a,b)) return res.status(401).json({error:'invalid-signature'});
+    const d = JSON.parse(raw.toString('utf8'));
+    const reportId=String(d.reportId||''), uid=String(d.mainUid||''), coins=Number(d.coins), level=String(d.level||''), issuedAt=Number(d.issuedAt);
+    if (!/^[A-Za-z0-9_-]{10,80}$/.test(reportId) || !uid || uid.length>128 ||
+        !Number.isSafeInteger(coins) || coins<0 || coins>100000 ||
+        !['critical','normal','safe'].includes(level) ||
+        !Number.isSafeInteger(issuedAt) || Math.abs(Date.now()-issuedAt)>5*60*1000) {
+      return res.status(400).json({error:'invalid-payload'});
+    }
+    const rewardRef=db.doc('supportBugRewardLedger/'+reportId), userRef=db.doc('users/'+uid);
+    let already=false;
+    await db.runTransaction(async tx=>{
+      const [rewardSnap,userSnap]=await Promise.all([tx.get(rewardRef),tx.get(userRef)]);
+      if(rewardSnap.exists){already=true;return;}
+      if(!userSnap.exists || userSnap.data().banned) throw new Error('user-unavailable');
+      const current=Math.max(0,Number(userSnap.data().coins)||0);
+      tx.update(userRef,{coins:current+coins});
+      tx.create(rewardRef,{reportId,uid,coins,level,source:'HakoSupport',createdAt:Field.serverTimestamp()});
+    });
+    return res.status(200).json({ok:true,alreadyRewarded:already});
+  } catch (err) {
+    console.error('Support bug reward callback failed',err.message);
+    return res.status(400).json({error:'reward-rejected'});
+  }
 });
