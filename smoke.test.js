@@ -74,7 +74,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   const authClient=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
   assert.ok(authClient.includes("call('syncUserProfile',{device})"));
   assert.ok(authClient.includes('state.profileReady=profileWrite'));
-  assert.ok(backend.includes('exports.syncUserProfile=onCall'));
+  assert.ok(fs.readFileSync(path.join(root,'functions/index.js'),'utf8').includes('exports.syncUserProfile=onCall'));
   assert.ok(rules.includes('function validProfile'));
   assert.ok(rules.includes('data.displayName.size()<=80'));
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
