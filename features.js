@@ -109,8 +109,9 @@
    if(!root)return;root.replaceChildren();
    for(let i=1;i<=30;i++){
     const tile=document.createElement('div');tile.className='mini-pass-tile'+(!isPremium&&i<level?' done':'');
-    const icon=isPremium?(active?['💎','🎟️','👑','🪙','✨'][i%5]:'🔒'):(i%5===0?'🃏':'🪙');
-    const amount=isPremium?(active?'Üyelik bonusu':'Kilitli'):(i%5===0?'Kart şansı':'+15 altın');
+    if(isPremium&&!active){tile.classList.add('empty');root.appendChild(tile);continue;}
+    const icon=isPremium?['💎','🎟️','👑','🪙','✨'][i%5]:(i%5===0?'🃏':'🪙');
+    const amount=isPremium?'Premium ödül':(i%5===0?'Kart şansı':'+15 altın');
     tile.innerHTML='<strong>'+icon+'</strong><small>GÜN '+i+'</small><small>'+amount+'</small>';
     root.appendChild(tile);
    }
