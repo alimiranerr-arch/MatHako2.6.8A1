@@ -1234,6 +1234,19 @@ body.hako-notice-open{overflow:hidden}
 
   </div>
 
+  <div class="card" id="playerMarketCard">
+    <h2>🤝 Oyuncu Pazarı</h2>
+    <p class="note">Kartlarını, unvanlarını ve aktif üyeliklerini diğer oyunculara altın karşılığında sat.</p>
+    <div class="form">
+      <label>Satışa çıkaracağın ürün<select id="playerMarketItem"><option value="">Envanter yükleniyor…</option></select></label>
+      <label>Fiyat (altın)<input id="playerMarketPrice" type="number" min="1" max="1000000" step="1" placeholder="Örn. 250"></label>
+    </div>
+    <button type="button" class="go" id="playerMarketListBtn">Satışa çıkar</button>
+    <p class="msg" id="playerMarketMsg" aria-live="polite"></p>
+    <h3 class="sub">Oyuncuların ilanları</h3>
+    <div id="playerMarketListings"><p class="note">İlanlar yükleniyor…</p></div>
+  </div>
+
   <div class="card">
 
     <h2>💸 Altın aktar</h2>
