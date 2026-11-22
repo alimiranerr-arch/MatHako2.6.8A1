@@ -104,9 +104,14 @@
     window.addEventListener("storage", function (event) {
       if (event.key === KEY) render();
     });
-    // Admin login state is controlled by the original application scripts.
+    // Only watch the admin visibility controls. Watching the whole body also
+    // observes render() changing the notice overlay/body classes, creating a
+    // MutationObserver feedback loop that can freeze the page.
     const observer = new MutationObserver(render);
-    observer.observe(document.body, {subtree: true, attributes: true, attributeFilter: ["class", "style", "hidden"]});
+    ["adminOpen", "tabAdmin"].forEach(id => {
+      const target = $(id);
+      if (target) observer.observe(target, { attributes: true, attributeFilter: ["class"] });
+    });
     render();
   });
 })();
