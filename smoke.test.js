@@ -248,3 +248,26 @@ test('2.6.9 sürümü, Mini Pass Gmail kilidi, ödül hata kodu ve profil açıl
   assert.ok(core.includes("profileQuickMenu") && core.includes("aria-hidden"));
   assert.ok(!social.includes("(Hata kodu: 0114)'+' (Hata kodu: 0114)"));
 });
+
+test('2.7.0 market, admin görünür kullanıcı aralığı, GIF ve hata kodları', () => {
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const css=fs.readFileSync(path.join(root,'app.css'),'utf8');
+  const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
+  const features=fs.readFileSync(path.join(root,'features.js'),'utf8');
+  const duels=fs.readFileSync(path.join(root,'duels.js'),'utf8');
+  const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
+  const backend=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
+  const mirror=fs.readFileSync(path.join(root,'index.js'),'utf8');
+  assert.ok(html.includes('data-mk="special"'));
+  assert.ok(html.includes('id="gameDifficultyCards"'));
+  assert.ok(html.includes('id="admOnlineMin"') && html.includes('id="admOnlineMax"'));
+  assert.ok(html.includes('id="admMiniPassGif"') && html.includes('id="miniPassAdminGif"'));
+  assert.ok(css.includes('#s7:not(.hide) #saveSettings.savebar{position:fixed'));
+  assert.ok(game.includes('#gameDifficultyCards'));
+  assert.ok(client.includes("setOnlineDisplayRange") && client.includes("setMiniPassGif"));
+  assert.ok(features.includes('Hata kodu: 0126') && features.includes('Hata kodu: 0130') && features.includes('Hata kodu: 0132'));
+  assert.ok(client.includes("'0128'"));
+  assert.ok(duels.includes('Hata kodu: 0134') && duels.includes('Hata kodu: 0136'));
+  assert.ok(backend.includes('exports.setOnlineDisplayRange') && backend.includes('exports.setMiniPassGif'));
+  assert.equal(backend,mirror,'Root ve Functions backend kaynakları eşleşmeli.');
+});
