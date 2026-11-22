@@ -1,43 +1,43 @@
-MATEMATİK MACERASI – ENTEGRASYON VE KONTROL RAPORU
+MATEMATİK MACERASI – GELİŞTİRME DURUM RAPORU
 Tarih: 21.11.2026
+Çalışma dalı: hako/fix-audit-2026-11-21
+PR: #1 (açık, taslak)
 
-UYGULANAN WEB / FIREBASE BAĞLANTILARI
-- Firebase Authentication: Google popup girişi, doğrulanmış admin custom claim kontrolü.
-- Admin hesabı: alimiranerr@gmail.com (tek admin; e-posta doğrulaması ve custom claim şartı).
-- Sohbet: kullanıcıların e-posta ile DM/grup başlatması, gerçek zamanlı Firestore mesajları.
-- Medya: görsel/ses/video dosyası yükleme ve sohbet mesajında gösterme; tarayıcı MediaRecorder ile ses kaydı.
-- Admin moderasyonu: sohbet/grup kayıtları ve son mesajları (medya dahil) admin panelinde izleme.
-- Market: admin GIF yükleme ve ürün yayınlama; altınla satın alma ve envanter kaydı.
-- Üyelik: üyelik tipi market ürünleri; satın alma sonrası kullanıcı belgesine üyelik ve 30 günlük süre.
-- Günlük çark: Cloud Function üzerinden günlük tek hak, sunucu tarafında rastgele ödül ve altın verme.
-- Çark ödül havuzu: admin panelinden düzenlenebilir.
-- Unvanlar: admin unvan yayınlar; kullanıcı altınla satın alır ve profilinde görünür.
-- Mevsim temaları: admin tarafından tüm kullanıcılara normal/yılbaşı/cadılar bayramı/ramazan/kurban teması yayınlama.
-- Profil: ad, soyad, okul, sınıf, takma ad düzenleme; profil alanlarının gerçek zamanlı gösterimi.
-- Ban: admin kullanıcı listesinden kalıcı ban; Auth hesabı devre dışı bırakılır, yenileme tokenları iptal edilir, Firestore kuralları erişimi keser. Hako admin korunur.
-- Başarısız giriş kaydı: e-posta, eşleşen bilinen ad ve zaman kaydedilir; parola veya OTP kaydedilmez.
-- Dönem seçimi: admin 1. dönem veya 1.+2. dönem konularını yayınlar; konu listesi bu seçime göre güncellenir.
-- Bakım modu ve kullanıcı onaylı yaklaşık konum önceki Firebase entegrasyonundan korunmuştur.
+TAMAMLANAN KOD ÇALIŞMALARI
+- Firebase başlangıç ve hata gösterimi iyileştirildi; sonsuz bekleme yerine sınırlı bekleme ve görünür hata durumu var.
+- Firebase Firestore/Storage kuralları sıkılaştırıldı. Kullanıcı profili, sohbet, mesaj, medya, arkadaşlık, bildirim, skor, ödül, transfer ve yönetici verileri için erişim ayrıldı.
+- Kullanıcı profili tamamlanmadan callable oyun/ödül işlemleri çalıştırılamaz.
+- E-posta değişikliği doğrulama bağlantısıyla tamamlanır; başarılı değişiklikten sonra 30 günlük sunucu taraflı sınır uygulanır.
+- Görünüm ayarları yerel saklama ve kullanıcıya özel Firestore senkronizasyonu ile çalışır.
+- Avatar emoji seçimi ve 2 MB PNG/JPEG/WebP özel avatar yükleme akışı eklendi.
+- Konum paylaşımı açık onayla çalışır; koordinat admin görünümü için iki ondalık basamağa yuvarlanır. Hava durumu Open-Meteo üzerinden alınır.
+- Klasik, sonsuz, 10 soruluk, denklem ve diğer mevcut oyun akışları sunucu üretimli soru oturumlarına bağlandı. Cevaplar ve puan sunucuda doğrulanır; sonsuz mod süresi sunucu tarafından denetlenir.
+- Yanlış cevapları sunucuda saklanan önceki oturumdan yeniden çözme akışı eklendi.
+- Liderlik tablosu mod filtresi ve düello ayrı sonuç akışı korunur.
+- Arkadaş ekleme/kabul, özel sohbet, grup sohbeti, medya ve bildirim merkezi bağlandı.
+- Arkadaş seçerek doğrudan düello daveti, rastgele eşleşme ve grup yarışması akışları sunucuya bağlandı. Düello zorluğu sunucu soru üretimine aktarılır.
+- Market, envanter, ürün yayınlama, yönetici envanter hediyesi, günlük çark, Mini Pass, günlük görevler ve altın transferi callable backend üzerinden yürütülür.
+- 4 haneli, sunucuda üretilen tek kullanımlık hediye kodu oluşturma/kullanma akışı eklendi.
+- PDF rapor çıktısına isteğe bağlı son oyun hataları eklendi.
+- Yönetici sohbet/DM/mesaj/bildirim, kullanıcı, geri bildirim, öğretmen başvurusu ve başarısız giriş görünümleri ayrıldı.
+- Yönetici özellik aç/kapat ayarları sunucuya kaydedilir.
+- PWA manifest yolları düzeltildi; statik uygulama kabuğu için service worker eklendi.
+- Test dosyasına yeni regresyon kontrolleri eklendi.
 
-GÜVENLİK NOTLARI
-- Sohbet alanında mesajların moderasyon amacıyla yönetici tarafından incelenebileceği açıkça belirtilmiştir.
-- Konum paylaşımı isteğe bağlıdır ve kullanıcı butonuyla başlatılır. Gerçek cihaz adı tarayıcıdan alınmaz; cihaz sınıfı tahmin edilir.
-- Market/çark/üyelik oyun içi altın sistemidir; gerçek para ödeme altyapısı değildir.
-- Admin yetkisi istemci e-posta kontrolüne dayanmaz; Firebase custom claim + doğrulanmış e-posta ve Cloud Functions kontrolü kullanılır.
-- Storage dosyaları sohbet üyeliğine göre kurallandırılmıştır. Firebase indirme URL'leri paylaşılırsa URL'yi bilen kişi erişebilir; bağlantıları herkese açık paylaşmayın.
+DIŞ YAPILANDIRMA GEREKTİREN İŞLER
+- firebase-client.js içindeki Firebase web apiKey alanı bilerek boştur. Önceden doğrulanmamış bir anahtar uydurulmaması için kaldırıldı. Gerçek web uygulaması yapılandırması Firebase Console'dan eklenmelidir.
+- App Check SDK istemcisi hazırlandı; reCAPTCHA v3 site key henüz girilmedi ve enforcement açılmadı. APP_CHECK_KURULUMU_TR.md.
+- Cloud Functions, Firestore/Storage kuralları ve indeksler canlı Firebase'e dağıtılmadı.
+- Blaze plan/faturalandırma gereksinimi ve olası ücretler kullanıcı onayı olmadan kabul edilmedi.
 
-TESTLER
-- Tüm yerel JavaScript dosyaları ve Cloud Functions için `node --check` başarılı.
-- HTML'de yinelenen ID kalmadı; yerel script yolları doğrulandı.
-- Eklenen `node tests/smoke.test.js` otomatik test paketi 5/5 başarılı.
-- QR örnekleri QR kod çözücüyle doğrulandı; `MM:ABC123` içeriği başarıyla okundu.
-- HTML'deki yerel script, stil, ikon ve görsel yollarının tamamı mevcut.
-- ZIP bütünlük testi başarılı.
-- Firebase Emulator / canlı Firebase entegrasyon testi bu ortamda yapılamadı; Firebase projesine deploy edilmedi. Kamera donanımı da gerçek cihazda test edilmedi.
+TEST / YAYIN DURUMU
+- Kullanıcının talimatı nedeniyle bu geliştirme turunda npm test, node --check, emulator veya canlı tarayıcı testi çalıştırılmadı.
+- GitHub Actions workflow otomatik push/PR tetiklerinden çıkarıldı; manuel tetiklemeye alındı. Kullanıcı “test et” dediğinde test edilecek.
+- Önceki SHA'larda başarılı olan CI sonuçları yeni değişikliklerin testi sayılmaz.
+- main dalı değiştirilmedi. PR açık/taslak ve birleştirilmedi. Canlıya deploy yapılmadı.
 
-TAMAMLANMAYAN / KAYNAK GEREKTİREN KONULAR
-- Orijinal game.js/core.js/sync.js kaynakları önceki arşivlerde yok. Bu nedenle orijinal oyun soru üretimi, puanlama, ilerleme ve çevrimdışı senkronizasyonu yeniden oluşturulmuş değildir.
-- Sezon temaları şimdilik mevcut paleti bozmayan küçük emoji/başlık görselleridir; özel GIF dosyaları henüz sağlanmadı.
-- E-posta değişimini 30 günde bir sınırlama akışı bu paket içinde henüz uygulanmadı.
-- Düello puan/doğru cevap alanları istemciden geldiği için hileye karşı kesin korumalı değildir; güvenli yarışma için soruların ve cevap doğrulamasının sunucu tarafına taşınması gerekir.
-- Bu ZIP Firebase'e otomatik yükleme yapmaz. `FIREBASE_KURULUM_TR.txt` adımlarına göre Firestore/Storage kuralları ve Cloud Functions deploy edilmelidir.
+SONRAKİ ADIM
+1. Gerçek Firebase web config apiKey'i Firebase Console'dan ekle.
+2. App Check site key'i ekle ve metrikleri izledikten sonra enforcement ayarını kullanıcı onayıyla aç.
+3. Kullanıcı “test et” dediğinde otomatik testleri, emulator kurallarını ve tarayıcı akışlarını çalıştır.
+4. Test sonuçlarına göre düzeltmeleri tamamla; merge ve deploy için ayrıca açık onay al.

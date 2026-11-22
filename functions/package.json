@@ -1,0 +1,15 @@
+{
+  "name": "matematik-macerasi-functions",
+  "description": "Matematik Macerası güvenli Firebase arka ucu",
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "firebase emulators:start --only functions,firestore,auth,storage"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.2",
+    "firebase-functions": "^6.3.2"
+  }
+}

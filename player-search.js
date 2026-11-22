@@ -1,5 +1,15 @@
-/* Oyuncu bul: tam ID eşleşmesi veya ada göre başlangıç eşleşmesi. */
-(function(w){'use strict';const $=id=>document.getElementById(id);const esc=s=>String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- async function search(){const c=w.MMCloud,q=($('idSearch')?.value||'').trim(),out=$('playerSearchResults');if(!out)return;if(!c?.user){out.textContent='Oyuncu aramak için önce giriş yapmalısın.';return;}if(q.length<2){out.textContent='En az 2 karakter yaz.';return;}out.textContent='Aranıyor…';try{let exact=await c.db.collection('users').doc(q).get(),docs=[];if(exact.exists)docs=[exact];else{let s=await c.db.collection('users').orderBy('displayName').startAt(q).endAt(q+'\uf8ff').limit(10).get();docs=s.docs;}out.innerHTML='';if(!docs.length){out.textContent='Oyuncu bulunamadı.';return;}docs.forEach(d=>{let u=d.data(),row=document.createElement('div');row.className='player-result';let title=document.createElement('b');title.textContent=u.displayName||u.nickname||'Oyuncu';let id=document.createElement('small');id.textContent='ID: '+(u.playerId||d.id);row.append(title,id);out.append(row)});}catch(e){out.textContent='Arama başarısız: '+e.message;}}
+/* Oyuncu arama: profil koleksiyonunu doğrudan okumaz; sınırlı alanları callable üzerinden alır. */
+(function(w){'use strict';const $=id=>document.getElementById(id);
+ async function search(){
+  const c=w.MMCloud,q=($('idSearch')?.value||'').trim(),out=$('playerSearchResults');
+  if(!out)return;if(!c?.user){out.textContent='Oyuncu aramak için önce giriş yapmalısın.';return;}
+  if(q.length<2){out.textContent='En az 2 karakter yaz.';return;}
+  out.textContent='Aranıyor…';
+  try{
+   const r=await c.fn.httpsCallable('searchPlayers')({query:q}),players=r.data.players||[];
+   out.innerHTML='';if(!players.length){out.textContent='Oyuncu bulunamadı.';return;}
+   players.forEach(u=>{const row=document.createElement('div');row.className='player-result';const title=document.createElement('b');title.textContent=u.displayName||'Oyuncu';const id=document.createElement('small');id.textContent='ID: '+u.playerId;row.append(title,id);out.append(row);});
+  }catch(e){out.textContent='Arama başarısız: '+e.message;}
+ }
  document.addEventListener('DOMContentLoaded',()=>{$('idSearchBtn')?.addEventListener('click',search);$('idSearch')?.addEventListener('keydown',e=>{if(e.key==='Enter')search()});});
 })(window);

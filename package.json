@@ -1,8 +1,12 @@
 {
-  "name": "matematik-macerasi-functions",
-  "description": "Matematik Macerası güvenli Firebase arka ucu",
-  "main": "index.js",
-  "engines": {"node": "20"},
-  "scripts": {"serve": "firebase emulators:start --only functions,firestore,auth,storage", "deploy": "firebase deploy --only functions,firestore:rules,storage"},
-  "dependencies": {"firebase-admin": "^13.0.2", "firebase-functions": "^6.3.2"}
+  "name": "matematik-macerasi",
+  "version": "2.7.0",
+  "private": true,
+  "scripts": {
+    "test": "node smoke.test.js",
+    "check:js": "node smoke.test.js",
+    "deploy:rules": "firebase deploy --only firestore:rules,storage",
+    "deploy:functions": "firebase deploy --only functions"
+  },
+  "devDependencies": {}
 }

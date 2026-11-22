@@ -1,37 +1,42 @@
-YENI EKLENENLER
-- 7. sinif matematik soru motoru: 10 konu + karisik mod.
-- Klasik: 5 can, sure siniri yok, can bitene kadar devam.
-- Sonsuz: 5 can ve soru basina 10 saniye.
-- Skor kaydi submitGameScore callable uzerinden yapilir; herkese acik tablo tercihi public alanina yazilir. Gizli skorlar genel tabloda listelenmez; admin yetkisiyle okunabilir.
-- Oyuncu arama: tam Firebase UID aramasi ve ada gore baslangic eslesmesi.
-- Market uyeliginde ayni anda bir aktif uyelik siniri sunucu fonksiyonuna eklendi.
+MATEMATİK MACERASI – GELİŞTİRME ÖZETİ
 
-ONEMLI
-- Bu ZIP kaynak paketidir; GitHub Pages'e yuklemek Firebase Cloud Functions'i otomatik deploy etmez.
-- submitGameScore ve purchaseMarketItem degisiklikleri icin functions klasorunden npm install ve firebase deploy --only functions gerekir.
-- Firestore skor okuma kurali ve sorgu indeksi icin firebase deploy --only firestore:rules,firestore:indexes gerekir.
-- Admin panelinde son 100 skor (gizli olanlar dahil) icin ayri yonetim tablosu eklendi.
-- Duello davetlerinin gercek zamanli eslestirilmesi, MiniPass'in kart dusurme takvimi ve yonetim panelinde skorlarin ayri tablo olarak listelenmesi bu pakette tam sunucu akisi olarak tamamlanmamistir. Mevcut HTML'deki duello arayuzu korunmustur; canli eslestirme icin backend gelistirmesi gerekir.
-- Firebase projesine bagli canli test yapilmamistir. Yerel JavaScript sozdizimi ve ZIP butunlugu test edilmistir.
+OYUN
+- Sunucu taraflı soru üretimi ve cevap/puan doğrulaması.
+- Klasik ve sonsuz modlar; sonsuz modda sunucu zaman aşımı.
+- Düello zorluk seviyesi ve arkadaş seçerek doğrudan davet.
+- Rastgele rakip bulma ve grup yarışmaları.
+- Yanlış cevapları önceki sunucu oturumundan yeniden çözme.
+- Genel liderlik tablosu ile düello sonuçlarının ayrılması.
 
-EK GELİŞTİRMELER (revizyon)
-- Kodla düello oluşturma ve 6 karakterli kodla katılma callable uçları eklendi.
-- Her iki oyuncu kendi 10 soruluk oyun sonucunu submitDuelResult üzerinden gönderir; iki sonuç gelince düello tamamlanır.
-- Düello belgeleri yalnızca katılımcılar ve admin tarafından okunabilir; istemci doğrudan yazamaz.
-- MiniPass günlük ödülü +15 altın verir; %22 olasılıkla Temel Oyun Kartı da envantere eklenir.
-- Marketten miniPass türünde 30 günlük ürün yayınlanabilir; membership ve miniPass aynı aktif üyelik kilidini paylaşır.
-- Ek kısa oyun modları: 10 Soruluk ve Denklem Terazisi. Klasik mod 5 can; süreli sonsuz mod 5 can ve 10 saniyelik soru sayacı.
-- Soru üretiminde yüzde indirim, tümler açı, çember çapı ve veri açıklığı varyasyonları eklendi.
+SOSYAL
+- Arkadaş isteği gönderme/kabul/ret ve arkadaş adlarının gizlilik kurallarına uygun gösterimi.
+- Özel sohbet, grup sohbeti, görsel/ses/video paylaşımı.
+- Bildirim merkezi, okunmamış bildirim sayacı, arkadaş ve düello davetleri.
+- Kullanıcı çıkış yaptığında özel sohbet/bildirim/oyun verileri arayüzden temizlenir.
 
-SINIRLAR
-- Düello gerçek zamanlı aynı anda oynanan bir maç değildir; kodla davet edilen, iki oyuncunun ayrı ayrı sonuç gönderdiği asenkron düellodur.
-- QR kodu yerel SVG üreticisiyle oluşturulur; desteklenen tarayıcılarda kamera ile taranabilir.
-- Cloud Functions ve Firestore kuralları canlı Firebase projesine dağıtılmadan bu çevrim içi özellikler çalışmaz.
+ÖDÜL VE EKONOMİ
+- Market, ürün yayınlama, envanter, ürün satışı, üyelik ve Mini Pass.
+- Günlük çark ve günlük görevler.
+- Arkadaşlara notlu altın transferi; tek işlem 500, günlük toplam 1000 altın sınırı.
+- Yönetici tarafından yayınlanıp envantere verilebilen ürünler.
+- Dört haneli, tek kullanımlık hediye kodu: +25 altın ve Temel Oyun Kartı.
 
-QR DÜELLO DAVETİ (GÜNCEL)
-- Düello davet kodu artık çevrimdışı çalışan yerel QR üreticisiyle gerçek QR görseline çevrilir.
-- QR içeriği MM:KOD biçimindedir; tarama sonrası kod alanı otomatik doldurulur.
-- Kamera ile QR okuma BarcodeDetector destekli tarayıcılarda çalışır ve HTTPS/kamera izni gerektirir. Desteklenmeyen tarayıcılarda kod elle girilebilir.
-- QR kitaplığı dış CDN kullanmaz; vendor/qrcode.js paket içindedir.
-- Düello konu listesi artık doldurulur; katılan oyuncuya ev sahibinin seçtiği konu sunucu yanıtıyla aktarılır.
-- Ev sahibi, rakip katılmadan oyunu başlatamaz. Her iki taraf da 10 soruluk modda oynar (5 can nedeniyle oyun daha erken bitebilir).
+HESAP VE AYARLAR
+- Profil bilgileri ve avatar seçimi/özel görsel yükleme.
+- E-posta değişiminde Firebase doğrulama bağlantısı ve başarılı değişiklikten sonra 30 günlük sunucu sınırı.
+- Görünüm, renk, açık/koyu mod, ses/titreşim, emoji ve durum tercihleri.
+- Görünüm ayarları kullanıcı hesabıyla cihazlar arasında senkronize edilir.
+- Kullanıcı onayıyla yaklaşık konum ve Open-Meteo hava durumu.
+- PWA service worker ile statik uygulama kabuğu önbelleği; Firebase verileri önbelleğe alınmaz.
+
+YÖNETİM
+- Kullanıcı listesi ve ban işlemi.
+- Gruplar, özel sohbetler, mesajlar, mesaj bildirimleri, geri bildirim ve öğretmen başvuruları.
+- Yönetici özellik aç/kapat ayarları, bakım/duyuru, dönem ve sezon ayarları.
+- Hediye kodu oluşturma ve market ürünü yayınlama/oyuncu envanterine verme.
+
+KALAN DIŞ ADIMLAR
+- Firebase web apiKey gerçek Firebase Console değerinden eklenmeli. Kodda bilerek boş bırakıldı.
+- App Check reCAPTCHA site key girilmeli; ardından metrikler doğrulanıp enforcement açılmalı.
+- Firebase backend ve güvenlik kuralları deploy edilmedi.
+- Kullanıcı “test et” demeden test çalıştırılmayacak. main'e merge veya canlıya deploy yapılmayacak.

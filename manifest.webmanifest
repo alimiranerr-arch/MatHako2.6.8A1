@@ -3,39 +3,39 @@
   "short_name": "Mat. Macerası",
   "description": "7. sınıf matematik oyunu: konular, zorluklar, sonsuz mod, düellolar ve görevler.",
   "lang": "tr",
-  "id": "/",
-  "start_url": "/",
-  "scope": "/",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#fff7e0",
   "theme_color": "#ffb703",
   "icons": [
     {
-      "src": "/icons/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/icon.svg",
+      "src": "./icon.svg",
       "sizes": "any",
       "type": "image/svg+xml"
     },
     {
-      "src": "/icons/icon-96.png",
+      "src": "./icon-96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
@@ -49,10 +49,10 @@
     {
       "name": "Rekabet",
       "short_name": "Rekabet",
-      "url": "/?tab=s9",
+      "url": "./?tab=s9",
       "icons": [
         {
-          "src": "/icons/icon-96.png",
+          "src": "./icon-96.png",
           "sizes": "96x96"
         }
       ]
@@ -60,10 +60,10 @@
     {
       "name": "Günlük görevler",
       "short_name": "Görevler",
-      "url": "/?tab=s8",
+      "url": "./?tab=s8",
       "icons": [
         {
-          "src": "/icons/icon-96.png",
+          "src": "./icon-96.png",
           "sizes": "96x96"
         }
       ]

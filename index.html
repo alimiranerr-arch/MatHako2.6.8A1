@@ -26,9 +26,9 @@
 
 <link rel="manifest" href="manifest.webmanifest">
 
-<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 
 <link rel="stylesheet" href="app.css">
 
@@ -205,32 +205,22 @@ body.theme-day {
 
 }
 
-#bannedOverlay.hide {
-  display: none !important;
+#bannedOverlay {
+  position: fixed;
+  inset: 0;
+  background: #0f172a;
+  color: #fff;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
 }
 
-  position: fixed;
-
-  inset: 0;
-
-  background: #0f172a;
-
-  color: #fff;
-
-  z-index: 999999;
-
-  display: flex;
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  text-align: center;
-
-  padding: 24px;
-
+#bannedOverlay.hide {
+  display: none !important;
 }
 
 
@@ -409,6 +399,8 @@ body.hako-notice-open{overflow:hidden}
 
     <div id="gmailAuthBox">
 
+      <p id="firebaseStatus" class="note" role="status" aria-live="polite">Firebase bağlantısı hazırlanıyor…</p>
+
       <div class="row generated-style-03">
 
         <div>
@@ -432,11 +424,8 @@ body.hako-notice-open{overflow:hidden}
           <label>Gmail Adresi<input id="regGmail" type="email" placeholder="ornek@gmail.com" required></label>
 
           <div class="inline generated-style-07">
-
-            <input id="regVerifyCode" maxlength="6" placeholder="Doğrulama Kodu (İsteğe bağlı)">
-
-            <button type="button" class="btn" id="sendGmailVerifyBtn">Kod Gönder</button>
-
+            <button type="button" class="btn" id="sendGmailVerifyBtn">📧 Doğrulama e-postası gönder</button>
+            <span class="note" id="regVerifyMsg" aria-live="polite"></span>
           </div>
 
           <label>Ad (Benzersiz)<input id="regFirstName" maxlength="20" placeholder="Adın" required></label>
@@ -531,6 +520,7 @@ body.hako-notice-open{overflow:hidden}
 
     </div>
 
+    <div class="form"><label>🎚️ Oyun zorluğu<select id="gameDifficulty"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option><option value="impossible">İmkânsız</option></select></label></div>
     <div id="topicBlock">
 
       <div class="row generated-style-12">
@@ -571,25 +561,7 @@ body.hako-notice-open{overflow:hidden}
 
     <div class="inv" id="inv"></div>
 
-    <div class="generated-style-15">
-
-      <label class="note generated-style-16"><b>😊 Aktif Sohbet / Oyun Emojisi Seç:</b></label>
-
-      <select id="activeEmojiSelect" class="sel">
-
-        <option value="😎">😎 Havalı</option>
-
-        <option value="🔥">🔥 Ateş</option>
-
-        <option value="🎉">🎉 Kutlama</option>
-
-        <option value="🧠">🧠 Zeka Küpü</option>
-
-        <option value="👑">👑 Kral</option>
-
-      </select>
-
-    </div>
+    <select id="activeEmojiSelect" hidden aria-hidden="true"><option value=""></option></select>
 
     <p class="note">Kartları oyun sırasında soruların altından kullanabilirsin. Daha fazlası <button class="linkbtn" data-go="s5">🛒 Market</button>’te!</p>
 
@@ -633,6 +605,10 @@ body.hako-notice-open{overflow:hidden}
 
       <button data-lb="endless" aria-selected="false">♾️ Sonsuz</button>
 
+      <button data-lb="retry" aria-selected="false">🔟 10 Soruluk</button>
+
+      <button data-lb="balance" aria-selected="false">⚖️ Denklem Terazisi</button>
+
       <button data-lb="duel" aria-selected="false">⚔️ Rekabet</button>
 
     </div>
@@ -667,20 +643,6 @@ body.hako-notice-open{overflow:hidden}
 
   <!-- Admin Giriş Kutusu (Göze çarpmayan minimal tasarım + Admin panelden kapatılabilir) -->
   <div class="card stealth-admin-box" id="adminLogin">
-
-    <div id="adminLocked">
-
-      <div class="inline">
-
-        <input id="apw" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="8" placeholder="••••" autocomplete="off" class="generated-style-21">
-
-        <button class="btn generated-style-22" id="apwBtn">Giriş</button>
-
-      </div>
-
-      <p class="msg err generated-style-23" id="apwMsg" aria-live="polite"></p>
-
-    </div>
 
     <div id="adminOpen" class="hide">
 
@@ -850,7 +812,7 @@ body.hako-notice-open{overflow:hidden}
 
     <div class="form">
 
-      <label class="switch"><input type="checkbox" id="admToggleAdminBox" checked> Ana sayfadaki Admin şifre kutusunu göster</label>
+      <label class="switch"><input type="checkbox" id="admToggleAdminBox" checked> Ana sayfadaki yönetici paneli kısayolunu göster</label>
 
       <label class="switch"><input type="checkbox" id="admToggleWheel" checked> 🎡 Günlük Çark özelliğini aktif tut</label>
 
@@ -859,6 +821,7 @@ body.hako-notice-open{overflow:hidden}
       <label class="switch"><input type="checkbox" id="admToggleMarket" checked> 🛒 Market bölümünü aktif tut</label>
 
       <label class="switch"><input type="checkbox" id="admToggleOnline" checked> 🌐 Online / Sosyal / Rekabet özelliklerini aktif tut</label>
+      <p class="msg" id="adminFeatureFlagsMsg" aria-live="polite"></p>
 
     </div>
 
@@ -878,7 +841,7 @@ body.hako-notice-open{overflow:hidden}
       <label>Önemli işlem görseli<select id="hakoImportantImage"><option value="helpy-onemli-is.webp">Helpy (önemli iş)</option><option value="helpy-teknik-onarim.gif">Helpy teknik onarım GIF</option><option value="bakim-molasi.png">Bakım Molası GIF</option></select></label>
       <button type="button" class="go" id="hakoSaveGifSettings">💾 Duyuru ayarlarını kaydet</button>
       <p class="msg" id="hakoGifAdminMsg" aria-live="polite"></p>
-      <p class="note">Önemli: Bu ZIP'te ortak sunucu ayarı ve doğrulanabilir admin backend'i bulunmuyor. Bu nedenle kaydetme yalnızca aynı tarayıcıda çalışır; tüm ziyaretçilere eş zamanlı yayın için backend entegrasyonu gerekir.</p>
+      <p class="note">Bu ayarlar doğrulanmış yönetici hesabıyla sunucuya kaydedilir ve kullanıcılara eş zamanlı uygulanır.</p>
     </div>
 
   <!-- Admin: Kullanıcı Yönetimi, Banlama, Ad Değiştirme İzni & Konum Verileri -->
@@ -899,9 +862,10 @@ body.hako-notice-open{overflow:hidden}
 
     <h2>📩 Gelen Geri Bildirimler & Ad Değişiklik Talepleri</h2>
 
-    <p class="note generated-style-06">Kullanıcıların gönderdiği geri bildirimler adları ve detaylı bilgileriyle burada görünür. Yanıt yazabilir, ad değişikliğine izin verebilir veya banlayabilirsin.</p>
+    <p class="note generated-style-06">Kullanıcı geri bildirimlerini ve öğretmen başvurularını burada inceleyebilirsin. Mesajlar yalnızca yetkili yönetici tarafından görüntülenir.</p>
 
     <div id="adminFeedbackList" class="sl"></div>
+    <h3>👩‍🏫 Öğretmen başvuruları</h3><div id="adminTeacherRequestsList" class="sl"></div>
 
   </div>
 
@@ -934,12 +898,19 @@ body.hako-notice-open{overflow:hidden}
 
 
 
+  <div class="card" id="adminGiftCodeCreator">
+    <h2>🎁 Tek kullanımlık hediye kodu</h2>
+    <p class="note">4 haneli kod oluştur. Her kod yalnızca bir oyuncu tarafından bir kez kullanılabilir.</p>
+    <button type="button" class="btn" id="adminCreateGiftCodeBtn">Yeni hediye kodu oluştur</button>
+    <p class="msg" id="adminGiftCodeMsg" aria-live="polite"></p>
+  </div>
+
   <!-- Admin: Canlı Chat ve Grup Uzaktan İzleme -->
   <div class="card" id="adminChatMonitor">
 
     <h2>💬 Canlı Chat & Grup Denetim Merkezi</h2>
 
-    <p class="note generated-style-06">Görüşmelerin moderasyon amacıyla yetkili yöneticilerce incelenebileceğini kullanıcılar bilmelidir. Bu alan henüz gerçek zamanlı sohbet verisine bağlanmadı.</p>
+    <p class="note generated-style-06">Sohbetler, gruplar ve kullanıcı bildirimleri yönetici moderasyonu için burada görüntülenir.</p>
 
     <div class="seg" id="adminChatSeg">
 
@@ -947,11 +918,12 @@ body.hako-notice-open{overflow:hidden}
 
       <button type="button" data-achat="dms" aria-selected="false">✉️ Özel Sohbetler</button>
 
+      <button type="button" data-achat="messages" aria-selected="false">💬 Mesajlar</button>
       <button type="button" data-achat="reports" aria-selected="false">🚨 Bildirilenler</button>
 
     </div>
 
-    <div id="adminChatFeed" class="generated-style-40"></div><div id="adminMessageFeed" class="generated-style-40"></div>
+    <div id="adminGroupsFeed" class="generated-style-40"></div><div id="adminDmsFeed" class="generated-style-40 hide"></div><div id="adminReportsFeed" class="generated-style-40 hide"></div><div id="adminMessageFeed" class="generated-style-40 hide"></div>
 
   </div>
 
@@ -1050,8 +1022,34 @@ body.hako-notice-open{overflow:hidden}
 50 Altın|50
 5 Altın|5
 100 Altın|100</textarea><button class="go" id="saveWheelRewards">Çarkı kaydet</button><p id="wheelAdminMsg" class="msg"></p></div>
+  <div class="card" id="adminEconomySettings">
+    <h2>💰 Altın Ekonomisi</h2>
+    <p class="note">Transfer sınırlarını ve oyun/düello skorlarının vereceği altını buradan yönet.</p>
+    <div class="form">
+      <label>Günlük transfer limiti (altın)<input id="admDailyTransferLimit" type="number" min="1" max="1000000" value="1000"></label>
+      <label>Tek seferlik transfer limiti (altın)<input id="admSingleTransferLimit" type="number" min="1" max="50000" value="500"></label>
+      <label>Her 1 skor için verilecek altın<input id="admCoinsPerScore" type="number" min="0" max="100" value="5"></label>
+      <label>Oyun başına en fazla ödül (altın)<input id="admMaxGameReward" type="number" min="0" max="1000000" value="50000"></label>
+    </div>
+    <button type="button" class="go" id="saveEconomySettings">💾 Ekonomi ayarlarını kaydet</button>
+    <p class="msg" id="economySettingsMsg" aria-live="polite"></p>
+  </div>
+
   <div class="card"><h2>🏷️ Unvan oluştur</h2><input id="adminTitleName" maxlength="32" placeholder="Unvan adı"><input id="adminTitlePrice" type="number" min="0" placeholder="Altın fiyatı"><button class="go" id="publishTitle">Unvanı yayınla</button><p id="titleMsg" class="msg"></p></div>
 </div>
+
+  <div class="card" id="adminStorageNetwork">
+    <h2>🗄️ Hako Storage Network</h2>
+    <p class="note">Her özel depoda en fazla 1.000 görsel. Yeni depo yalnızca yönetici talebiyle açılır; en fazla 8 depo kaydedilir. Ücretsiz kullanım sınırları aşılırsa yükleme durur.</p>
+    <label>Cloudflare Worker adresi<input id="storageWorkerUrl" type="url" placeholder="https://hako-user-media.<hesap>.workers.dev"></label>
+    <div class="row">
+      <button type="button" class="btn" id="storageRefreshBtn">Kota durumunu getir</button>
+      <button type="button" class="go" id="storageRequestShardBtn">＋ Yeni özel depo talep et</button>
+    </div>
+    <div id="storageNetworkStatus" class="msg" aria-live="polite">Worker adresi yapılandırıldıktan sonra kota bilgisi görüntülenir.</div>
+    <div id="storageNetworkList" class="sl"></div>
+    <p class="note">Güvenlik: GitHub token'ı bu panele veya tarayıcıya girilmez. Yeni depo talebi kaydedildikten sonra depo GitHub'da Private olarak oluşturulmalı ve adı Worker'ın STORAGE_REPOSITORIES değişkenine yönetici tarafından eklenmelidir. Worker otomatik ücretli plana geçmez.</p>
+  </div>
 
 </section>
 
@@ -1223,7 +1221,7 @@ body.hako-notice-open{overflow:hidden}
 
       <label>Kime?<select id="trTo"></select></label>
 
-      <label>Miktar<input id="trAmt" type="number" inputmode="numeric" min="1" max="100" placeholder="ör. 20"></label>
+      <label>Miktar<input id="trAmt" type="number" inputmode="numeric" min="1" max="500" placeholder="ör. 20"></label>
 
       <label>Not (isteğe bağlı)<input id="trNote" maxlength="40" placeholder="Süper Can için 🙌"></label>
 
@@ -1306,7 +1304,7 @@ body.hako-notice-open{overflow:hidden}
 
         <label>Konu<select id="duelTopic"></select></label>
 
-        <label>Zorluk<select id="duelDiff"></select></label>
+        <label>Zorluk<select id="duelDiff"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option><option value="impossible">İmkânsız</option></select></label>
 
       </div>
 
@@ -1405,7 +1403,13 @@ body.hako-notice-open{overflow:hidden}
 <!-- ================= AYARLAR ================= -->
 <section id="s7" class="hide">
 
-  <div class="card" id="setAccount"></div>
+  <div class="card" id="setAccount">
+    <h2>📧 E-posta adresimi değiştir</h2>
+    <p class="note">Güvenlik için yeni adresine doğrulama bağlantısı gönderilir. E-posta değişikliği 30 günde bir yapılabilir.</p>
+    <label>Yeni e-posta <input id="newAccountEmail" type="email" maxlength="254" placeholder="yeni@ornek.com"></label>
+    <button class="btn" type="button" id="requestEmailChangeBtn">Doğrulama bağlantısı gönder</button>
+    <p class="msg" id="emailChangeMsg" aria-live="polite"></p>
+  </div>
 
   <div class="card">
 
@@ -1769,7 +1773,7 @@ body.hako-notice-open{overflow:hidden}
 
 <div id="hakoPublicNotice" class="hako-notice" hidden role="dialog" aria-modal="true" aria-labelledby="hakoNoticeTitle">
  <div class="hako-notice-card">
-  <img id="hakoNoticeImage" src="assets/bakim-molasi.png" alt="Teknik duyuru görseli">
+  <img id="hakoNoticeImage" src="bakim-molasi.png" alt="Teknik duyuru görseli">
   <h2 id="hakoNoticeTitle">Bakım Molası</h2>
   <p id="hakoNoticeText">Sistem üzerinde çalışma yapılıyor. Lütfen daha sonra tekrar deneyin.</p>
   <button type="button" id="hakoNoticeClose" class="btn">Anladım</button>
@@ -1808,8 +1812,10 @@ body.hako-notice-open{overflow:hidden}
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-check-compat.js"></script>
 
 <script src="./firebase-client.js"></script>
+<script src="./media-config.js"></script>
 <script src="./qrcode.js"></script>
 <script src="./fixtures.js"></script>
 <script src="./core.js"></script>
@@ -1818,10 +1824,13 @@ body.hako-notice-open{overflow:hidden}
 <script src="./player-search.js"></script>
 <script src="./admin-scores.js"></script>
 <script src="./features.js"></script>
+<script src="./settings.js"></script>
 <script src="./social.js"></script>
 <script src="./duels.js"></script>
 <script src="./admin.js"></script>
+<script src="./admin-tools.js"></script>
 <script src="./hako_extensions.js"></script>
 <script src="./helpy-notices.js"></script>
+<script src="./support-bridge.js"></script>
 </body>
 </html>
