@@ -133,11 +133,11 @@
   const active=$('activeEmojiSelect');if(active){active.replaceChildren();const chosen=ownedEmojis.filter(x=>emojis.includes(keyOf(x)));(chosen.length?chosen:ownedEmojis).forEach(item=>{const o=document.createElement('option');o.value=item.emoji||item.name;o.textContent=(item.emoji||'😊')+' '+item.name;active.appendChild(o)});if(!active.options.length){const o=document.createElement('option');o.value='';o.textContent='Kuşanılmış emoji yok';active.appendChild(o);}}
  }
 
- let stopPlayerMarket=null;
+ let stopPlayerMarket=null,stopPlayerMarketListings=null;
  function bindPlayerMarket(){
   const select=$('playerMarketItem'),btn=$('playerMarketListBtn'),out=$('playerMarketMsg'),box=$('playerMarketListings');
   if(!c()?.user||!c()?.db)return;
-  stopPlayerMarket?.();
+  stopPlayerMarket?.();stopPlayerMarketListings?.();
   const drawOwned=()=>{
    if(!select)return;
    const inv=Array.isArray(window.MMCloud?.userData?.inventory)?window.MMCloud.userData.inventory:[];
@@ -153,7 +153,7 @@
    btn.disabled=true;try{await call('createPlayerMarketListing',{itemId,price});if(out)out.textContent='İlanın Oyuncu Pazarı’na eklendi.';if($('playerMarketPrice'))$('playerMarketPrice').value='';}
    catch(e){if(out)out.textContent=e.message||'İlan oluşturulamadı.';}finally{btn.disabled=false;}
   });}
-  if(box) c().db.collection('playerMarketListings').where('active','==',true).onSnapshot(s=>{
+  if(box) stopPlayerMarketListings=c().db.collection('playerMarketListings').where('active','==',true).onSnapshot(s=>{
    box.replaceChildren();if(s.empty){box.textContent='Şu anda oyuncu ilanı yok.';return;}
    s.docs.forEach(d=>{const x=d.data(),card=document.createElement('article');card.className='card';
     const title=document.createElement('b');title.textContent=(x.emoji||'🎁')+' '+(x.name||'Oyuncu ürünü');
@@ -212,6 +212,6 @@
  }
  function admin(){}
  function watchAdminSubmissions(){}
- function init(){bind();bindPdf();bindPublicForms();let started=false;window.addEventListener('mm-auth-ready',e=>{if(!e.detail.user){applyMiniPassAccess(null);started=false;stopShop?.();stopUser?.();stopCurriculum?.();stopTransfers.forEach(fn=>fn());stopTransfers=[];if($('trTo'))$('trTo').replaceChildren();if($('trList')){$('trList').replaceChildren();$('trList').dataset.live='';}if($('inventory'))$('inventory').replaceChildren();if($('dailyTasks'))$('dailyTasks').textContent='Görevleri görmek için giriş yap.';if($('profileView'))$('profileView').textContent='Profil bilgileri için giriş yap.';if($('ownedMemberships'))$('ownedMemberships').textContent='';if($('activePassBadge'))$('activePassBadge').textContent='';document.querySelectorAll('[data-coins]').forEach(x=>x.textContent='0');return}applyMiniPassAccess(e.detail.user);if(started)return;started=true;watchCurriculum();Promise.resolve(c()?.profileReady).finally(()=>renderShop());loadUser();bindPlayerMarket();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()});if(c()?.user){applyMiniPassAccess(c().user);started=true;watchCurriculum();Promise.resolve(c()?.profileReady).finally(()=>renderShop());loadUser();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()}else{applyMiniPassAccess(null)}}
+ function init(){bind();bindPdf();bindPublicForms();let started=false;window.addEventListener('mm-auth-ready',e=>{if(!e.detail.user){applyMiniPassAccess(null);started=false;stopShop?.();stopPlayerMarket?.();stopPlayerMarketListings?.();stopUser?.();stopCurriculum?.();stopTransfers.forEach(fn=>fn());stopTransfers=[];if($('trTo'))$('trTo').replaceChildren();if($('trList')){$('trList').replaceChildren();$('trList').dataset.live='';}if($('inventory'))$('inventory').replaceChildren();if($('dailyTasks'))$('dailyTasks').textContent='Görevleri görmek için giriş yap.';if($('profileView'))$('profileView').textContent='Profil bilgileri için giriş yap.';if($('ownedMemberships'))$('ownedMemberships').textContent='';if($('activePassBadge'))$('activePassBadge').textContent='';document.querySelectorAll('[data-coins]').forEach(x=>x.textContent='0');return}applyMiniPassAccess(e.detail.user);if(started)return;started=true;watchCurriculum();Promise.resolve(c()?.profileReady).finally(()=>renderShop());loadUser();bindPlayerMarket();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()});if(c()?.user){applyMiniPassAccess(c().user);started=true;watchCurriculum();Promise.resolve(c()?.profileReady).finally(()=>renderShop());loadUser();bindPlayerMarket();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()}else{applyMiniPassAccess(null)}}
  document.addEventListener('DOMContentLoaded',init);w.MatematikMacerasi=w.MatematikMacerasi||{};w.MatematikMacerasi.register?.('features',{renderShop});
 })(window);
