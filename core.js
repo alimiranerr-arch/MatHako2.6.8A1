@@ -42,6 +42,10 @@
   }
 
   function onDocumentClick(event) {
+    const profileButton=event.target?.closest?.('#meChip');
+    if(profileButton){const menu=d.getElementById('profileQuickMenu');if(menu){const open=menu.classList.toggle('show');profileButton.setAttribute('aria-expanded',String(open));}event.preventDefault();return;}
+    if(!event.target?.closest?.('#profileQuickMenu')){const menu=d.getElementById('profileQuickMenu');if(menu){menu.classList.remove('show');d.getElementById('meChip')?.setAttribute('aria-expanded','false');}}
+    const quick=event.target?.closest?.('[data-profile-go]');if(quick){const target=quick.dataset.profileGo;d.getElementById('profileQuickMenu')?.classList.remove('show');d.getElementById('meChip')?.setAttribute('aria-expanded','false');if(target==='profile'){navigate('s6');d.getElementById('profileCard')?.scrollIntoView({behavior:'smooth',block:'start'});}else navigate(target);event.preventDefault();return;}
     const homeTab = event.target?.closest?.('[data-home-tab]');
     if (homeTab && !homeTab.disabled) {
       const key = homeTab.dataset.homeTab;
@@ -67,6 +71,16 @@
     }
   }
 
+  function showError(message, code) {
+    let box=d.getElementById('mmErrorToast');
+    if(!box){box=d.createElement('div');box.id='mmErrorToast';box.setAttribute('role','alert');box.setAttribute('aria-live','assertive');box.className='mm-error-toast';d.body.appendChild(box);}
+    box.replaceChildren();
+    const title=d.createElement('strong');title.textContent='⚠️ Bir sorun oluştu';box.appendChild(title);
+    const body=d.createElement('span');body.textContent=String(message||'İşlem tamamlanamadı.');box.appendChild(body);
+    if(code){const badge=d.createElement('b');badge.className='mm-error-code';badge.textContent='Hata kodu: '+String(code);box.appendChild(badge);}
+    const close=d.createElement('button');close.type='button';close.textContent='Kapat';close.addEventListener('click',()=>box.remove());box.appendChild(close);
+    box.classList.add('show');return box;
+  }
   function init() {
     if (app.navigationReady) return;
     app.navigationReady = true;
@@ -90,6 +104,7 @@
   }
 
   app.navigate = navigate;
+  w.MMError={show:showError};
   app.register = function (name, api) {
     app.modules[name] = api || {};
   };
