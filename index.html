@@ -1428,7 +1428,7 @@ body.hako-notice-open{overflow:hidden}
 <!-- ================= AYARLAR ================= -->
 <section id="s7" class="hide">
 
-  <div class="card" id="setAccount">
+  <div class="card hide" id="setAccount" aria-hidden="true">
     <h2>📧 E-posta adresimi değiştir</h2>
     <p class="note">Güvenlik için yeni adresine doğrulama bağlantısı gönderilir. E-posta değişikliği 30 günde bir yapılabilir.</p>
     <label>Yeni e-posta <input id="newAccountEmail" type="email" maxlength="254" placeholder="yeni@ornek.com"></label>
@@ -1505,18 +1505,14 @@ body.hako-notice-open{overflow:hidden}
     <p><b>Mevsim / hava efekti</b></p>
 
     <select id="fxSel" class="sel">
-
-      <option value="auto">🌍 Konuma Göre Otomatik</option>
-
-      <option value="sunny">☀️ Güneşli (Tepede Güneş)</option>
-
-      <option value="rain">🌧️ Yağmurlu</option>
-
-      <option value="snow">❄️ Karlı</option>
-
+      <option value="auto">🌍 Konuma göre mevsim</option>
+      <option value="spring">🌸 İlkbahar</option>
+      <option value="summer">☀️ Yaz</option>
+      <option value="autumn">🍂 Sonbahar</option>
+      <option value="winter">❄️ Kış</option>
       <option value="none">✨ Kapalı</option>
-
     </select>
+    <p class="note" id="seasonLockNote" aria-live="polite">Mevsimi otomatik veya elle seçebilirsin.</p>
 
     <div class="row generated-style-54">
 
@@ -1542,76 +1538,10 @@ body.hako-notice-open{overflow:hidden}
 
 
 
-  <!-- Geri Bildirim (Gmail ile giriş yapılana kadar buhulu kilitli) -->
-  <div class="card lockable" id="feedbackCard">
-
-    <div class="lockover" id="fbLockOver">
-
-      <div>
-
-        <span class="lk generated-style-57">🔒</span>
-
-        <b>Bu özellik Gmail ile kullanılabilir</b>
-
-        <p class="generated-style-58">Geri bildirim göndermek ve ad düzeltme talebi açmak için Gmail ile giriş yap.</p>
-
-        <button type="button" class="go gLogin">G Gmail ile Giriş Yap</button>
-
-      </div>
-
-    </div>
-
-    <h2>💬 Geri bildirim (Maks 500 karakter)</h2>
-
-    <form name="geri-bildirim" id="fbForm" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-
-      <input type="hidden" name="form-name" value="geri-bildirim">
-
-      <p class="hide"><label>Doldurma: <input name="bot-field"></label></p>
-
-      <input type="hidden" name="oyuncu" id="fbName">
-
-      <input type="hidden" name="surum" value="2.7.0">
-
-      <div class="seg" id="fbKind">
-
-        <button type="button" data-k="Öneri" aria-selected="true">💡 Öneri</button>
-
-        <button type="button" data-k="Hata" aria-selected="false">🐞 Hata</button>
-
-        <button type="button" data-k="Ad Değişikliği" aria-selected="false">✏️ Ad Değişikliği</button>
-
-        <button type="button" data-k="Teşekkür" aria-selected="false">💛 Teşekkür</button>
-
-      </div>
-
-      <input type="hidden" name="tur" id="fbTur" value="Öneri">
-
-      <textarea name="mesaj" id="fbMsg" maxlength="500" rows="3" placeholder="Aklındakini yaz (Maks 500 karakter)…" required></textarea>
-
-      <div class="row generated-style-34">
-
-        <span class="note generated-style-35" id="fbChars">0/500</span>
-
-        <button class="btn generated-style-36" type="submit">Gönder</button>
-
-      </div>
-
-      <p class="msg" id="fbOut" aria-live="polite"></p>
-
-      <p class="counter">📨 Gönderdiğin geri bildirim: <b id="fbCount">0</b></p>
-
-      <p class="cooldown hide" id="fbCool"></p>
-
-    </form>
-
-  </div>
-
-
-
   <!-- Öğretmen Formu (Branş ve Öğrenci sayısı kaldırıldı, Tercih edilen iletişime göre E-posta / Telefon dinamik değişir, Okul üzerinden kaldırıldı) -->
-  <div class="card">
+  <div class="card lockable" id="teacherFormCard">
 
+    <div class="lockover" id="teacherFormLock"><div><span class="lk">🔒</span><b>Öğretmen formu kilitli</b><p>Formu açmak için Gmail ile giriş yap.</p><button type="button" class="go gLogin">G Gmail ile giriş yap</button></div></div>
     <h2>👩‍🏫 Öğretmen formu</h2>
 
     <p class="note generated-style-06">Öğretmenler sınıfları için erişim, rapor ya da yeni konu talebinde bulunabilir.</p>
