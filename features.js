@@ -4,13 +4,46 @@
  function renderShop(){if(!c()?.db||!c()?.user)return;const shop=$('shop');if(!shop)return;const active=document.querySelector('#mktSeg [aria-selected="true"]')?.dataset.mk||'cards';stopShop?.();stopShop=c().db.collection('market').where('published','==',true).onSnapshot(s=>{shop.innerHTML='';s.forEach(doc=>{const d=doc.data();if(active==='memberships'&&!['membership','miniPass'].includes(d.type))return;if(active==='badges'&&d.type!=='badge')return;if(active==='emojis'&&d.type!=='emoji')return;if(active==='cards'&&!['card','item'].includes(d.type))return;if(active==='titles'&&d.type!=='title')return;if(['themes','avatars'].includes(active)&&d.type!==active.slice(0,-1))return;const card=document.createElement('article');card.className='card';card.innerHTML=`<b>${safe(d.name)}</b><p>${safe(d.description||'')}</p>${d.gifUrl?`<img src="${safe(d.gifUrl)}" alt="" style="max-width:100px;max-height:100px">`:''}<p>🪙 ${Number(d.price)||0}</p><button class="btn">Satın al</button>`;card.querySelector('button').onclick=()=>call('purchaseMarketItem',{itemId:doc.id}).then(()=>alert('Satın alma tamamlandı.')).catch(e=>alert(e.message));shop.appendChild(card)})},e=>{shop.textContent='Market yüklenemedi: '+e.message;console.warn('Market akışı:',e)})}
  function safe(v){return String(v||'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))}
  function loadTasks(){
-  const box=$('dailyTasks');if(!box||!c()?.user)return;
-  call('getDailyTasks').then(r=>{box.innerHTML='';const tasks=r.data.tasks||[];
+  const box=$('dailyTasks');
+  if(!box||!c()?.user)return;
+  call('getDailyTasks').then(r=>{
+   box.innerHTML='';
+   const tasks=r.data.tasks||[];
    if(!tasks.length){box.textContent='Şu anda yayınlanmış görev yok.';return;}
-   tasks.forEach(t=>{const li=document.createElement('li'),title=document.createElement('b'),meta=document.createElement('p'),btn=document.createElement('button');
-    title.textContent=t.title;if(t.gifUrl){const img=document.createElement('img');img.alt='Görev görseli';img.loading='lazy';img.style.maxWidth='140px';img.style.maxHeight='100px';li.appendChild(img);if(String(t.gifUrl).startsWith('adminMedia/')){(async()=>{try{const worker=String(w.MMStorageWorkerUrl||'').replace(/\/+$/,'');if(!worker)throw Error('Worker URL yok');const response=await fetch(worker+'/v1/task-media-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:t.gifUrl})});const data=await response.json().catch(()=>({}));if(!response.ok||!data.url)throw Error(data.error||'Görsel alınamadı');img.src=data.url;}catch(e){img.alt='Görev görseli yüklenemedi';}})();}else img.src=t.gifUrl;}meta.textContent='+'+Number(t.reward||0)+' altın · '+(t.mode==='any'?'Herhangi bir mod':t.mode)+' · en az '+t.minQuestions+' soru / '+t.minScore+' puan';
-    btn.className='btn';btn.textContent=t.claimed?'Ödül alındı':'Ödülü al';btn.disabled=!!t.claimed;
-    btn.onclick=()=>call('claimDailyTask',{taskId:t.id}).then(()=>{btn.textContent='Ödül alındı';btn.disabled=true;}).catch(e=>alert(e.message));
+   tasks.forEach(t=>{
+    const li=document.createElement('li');
+    const title=document.createElement('b');
+    const meta=document.createElement('p');
+    const btn=document.createElement('button');
+    title.textContent=t.title||'Görev';
+    if(t.gifUrl){
+     const img=document.createElement('img');
+     img.alt='Görev görseli';img.loading='lazy';
+     img.style.maxWidth='140px';img.style.maxHeight='100px';
+     li.appendChild(img);
+     if(String(t.gifUrl).startsWith('adminMedia/')){
+      (async()=>{
+       try{
+        const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');
+        if(!worker)throw Error('Worker URL yok');
+        const response=await fetch(worker+'/v1/task-media-url',{
+         method:'POST',headers:{'Content-Type':'application/json'},
+         body:JSON.stringify({path:t.gifUrl})
+        });
+        const data=await response.json().catch(()=>({}));
+        if(!response.ok||!data.url)throw Error(data.error||'Görsel alınamadı');
+        img.src=data.url;
+       }catch(e){img.alt='Görev görseli yüklenemedi';}
+      })();
+     }else{img.src=t.gifUrl;}
+    }
+    meta.textContent='+'+Number(t.reward||0)+' altın · '+(t.mode==='any'?'Herhangi bir mod':t.mode)+' · en az '+t.minQuestions+' soru / '+t.minScore+' puan';
+    btn.className='btn';
+    btn.textContent=t.claimed?'Ödül alındı':'Ödülü al';
+    btn.disabled=!!t.claimed;
+    btn.onclick=()=>call('claimDailyTask',{taskId:t.id}).then(()=>{
+     btn.textContent='Ödül alındı';btn.disabled=true;
+    }).catch(e=>alert(e.message));
     li.append(title,meta,btn);box.appendChild(li);
    });
   }).catch(e=>{box.textContent='Görevler yüklenemedi: '+e.message;});
