@@ -168,7 +168,35 @@
   },e=>{box.textContent='Oyuncu Pazarı yüklenemedi: '+e.message;});
  }
  function loadUser(){if(!c()?.user||!c()?.db)return;stopUser?.();stopUser=c().db.collection('users').doc(c().user.uid).onSnapshot(d=>{if(!d.exists)return;const u=d.data();window.MMCloud.userData=u;const pmSelect=$('playerMarketItem');if(pmSelect){const eligible=(u.inventory||[]).filter(x=>['card','title','membership','miniPass'].includes(x.type)&&!x.listed&&x.itemId);pmSelect.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent=eligible.length?'Ürün seç':'Satılabilir kart/unvan/üyelik yok';pmSelect.appendChild(empty);eligible.forEach(x=>{const o=document.createElement('option');o.value=x.itemId;o.textContent=(x.emoji||'🎁')+' '+x.name+' · '+x.type;pmSelect.appendChild(o);});}document.querySelectorAll('[data-coins]').forEach(x=>x.textContent=Number(u.coins)||0);renderLoadout($('inv'),u);const inv=$('inventory');if(inv){inv.innerHTML='';(u.inventory||[]).forEach(item=>{const row=document.createElement('div');row.className='row';const p=document.createElement('span');p.textContent=`${item.name||'Ürün'} · ${item.type||'eşya'}`;row.appendChild(p);if(item.itemId&&!['membership','miniPass','title'].includes(item.type)){const b=document.createElement('button');b.className='btn';b.textContent='Sat (yarı fiyat)';b.onclick=()=>call('sellInventoryItem',{itemId:item.itemId}).then(r=>alert('Ürün satıldı. +'+r.data.refund+' altın')).catch(e=>alert(e.message));row.appendChild(b)}inv.appendChild(row)})}const membershipActive=Number(u.membershipUntil)>Date.now();const own=$('ownedMemberships');if(own)own.textContent=membershipActive?`Aktif üyelik: ${u.membership}`:'Aktif ücretli üyelik yok.';const pass=$('activePassBadge');if(pass)pass.textContent=membershipActive?u.membership:'Mini Pass';renderMiniPass(u);const quickName=$('quickMenuName'),quickEmail=$('quickMenuEmail'),quickAvatar=$('quickMenuAvatar');if(quickName)quickName.textContent=u.displayName||c().user.displayName||'Kullanıcı';if(quickEmail)quickEmail.textContent=c().user.email||'Hesap';if(quickAvatar)quickAvatar.textContent=u.avatar||'🙂';const p=$('profileView');if(p)p.innerHTML=`<p><b>${safe(u.displayName||c().user.displayName||'Kullanıcı')}</b> ${safe(u.title||'')}</p><p>Okul: ${safe(u.school||'Belirtilmedi')}</p><p>Sınıf: ${safe(u.className||'7. sınıf')}</p><p>Takma ad: ${safe(u.nickname||'Yok')}</p><p>Soyadı: ${safe(u.surname||'Belirtilmedi')}</p>`},e=>{const p=$('profileView');if(p)p.textContent='Profil yüklenemedi: '+e.message+' (Hata kodu: 0132)';w.MMError?.show?.('Profil yüklenemedi: '+e.message,'0132');console.warn('Profil akışı:',e)});}
- function bindProfile(){const b=$('profileEditBtn');if(!b||b.dataset.bound)return;b.dataset.bound='1';b.addEventListener('click',async()=>{const displayName=prompt('Adın:',c().user.displayName||'');if(displayName===null)return;const surname=prompt('Soyadın:');if(surname===null)return;const school=prompt('Okulun:');if(school===null)return;const nickname=prompt('Takma ad (isteğe bağlı):');if(nickname===null)return;const className=prompt('Sınıfın:','7. sınıf');if(className===null)return;try{const clean=String(displayName).trim().slice(0,80);if(!clean)throw Error('Ad boş olamaz.');await c().user.updateProfile({displayName:clean});await c().db.collection('users').doc(c().user.uid).set({displayName:clean,surname:surname.trim().slice(0,80),school:school.trim().slice(0,120),nickname:nickname.trim().slice(0,40),className:className.trim().slice(0,30)},{merge:true});}catch(e){alert('Profil güncellenemedi: '+e.message);}});}
+ function bindProfile(){
+  const b=$('profileEditBtn');if(!b||b.dataset.bound)return;b.dataset.bound='1';
+  b.addEventListener('click',async()=>{
+   const displayName=prompt('Adın:',c().user.displayName||'');if(displayName===null)return;
+   const surname=prompt('Soyadın:');if(surname===null)return;
+   const school=prompt('Okulun:');if(school===null)return;
+   const nickname=prompt('Takma ad (isteğe bağlı):');if(nickname===null)return;
+   const className=prompt('Sınıfın:','7. sınıf');if(className===null)return;
+   try{
+    const clean={displayName:String(displayName).trim().slice(0,80),surname:String(surname).trim().slice(0,80),school:String(school).trim().slice(0,120),nickname:String(nickname).trim().slice(0,40),className:String(className).trim().slice(0,30)};
+    if(!clean.displayName)throw Error('Ad boş olamaz.');
+    const previous=window.MMCloud?.userData||{};
+    const fields=[['Ad',previous.displayName||c().user.displayName||'',clean.displayName],['Soyad',previous.surname||'',clean.surname],['Okul',previous.school||'',clean.school],['Takma ad',previous.nickname||'',clean.nickname],['Sınıf',previous.className||'',clean.className]];
+    const changedFields=fields.filter(x=>String(x[1]).trim()!==String(x[2]).trim()).map(x=>x[0]);
+    await c().user.updateProfile({displayName:clean.displayName});
+    await c().db.collection('users').doc(c().user.uid).set(clean,{merge:true});
+    window.MMCloud.userData={...previous,...clean};
+    if(changedFields.length&&c().user.emailVerified){
+     try{
+      const token=await c().user.getIdToken();
+      const response=await fetch('https://hako-profile-mailer.alimiranerr.workers.dev/profile-change-notice',{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({changedFields})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.ok)throw Error(result.error||'Bildirim servisi yanıt vermedi.');
+      alert('Profilin güncellendi. Değişiklik bildirimi doğrulanmış e-posta adresine gönderildi.');
+     }catch(mailError){console.warn('Profil e-posta bildirimi gönderilemedi:',mailError);alert('Profilin kaydedildi ancak e-posta bildirimi gönderilemedi. Daha sonra tekrar deneyebiliriz.');}
+    }else{alert('Profilin başarıyla güncellendi.'+(c().user.emailVerified?'':' E-posta adresin doğrulanmadığı için bildirim gönderilmedi.'));}
+   }catch(e){alert('Profil güncellenemedi: '+e.message);}
+  });
+}
  function watchCurriculum(){stopCurriculum?.();stopCurriculum=c().db.doc('settings/curriculum').onSnapshot(s=>{const mode=s.exists?s.data().mode:'first',topics=[...(w.MatematikMacerasi.fixtures?.topics.firstTerm||[]),...(mode==='second'?(w.MatematikMacerasi.fixtures?.topics.secondTerm||[]):[])],box=$('tp'),badge=$('curriculumBadge');if(badge)badge.textContent=mode==='second'?'1. + 2. Dönem Konuları':'1. Dönem Konuları';if(box){box.innerHTML='';topics.forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',()=>{box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')});box.appendChild(b)})}const toggle=$('toggleSemesterBtn');if(toggle)toggle.textContent=mode==='second'?'📅 1. Dönem Konularına Dön':'📅 2. Dönem Konularına Geç (1. + 2. Dönem Birlikte)';},e=>{const box=$('tp');if(box)box.textContent='Konular yüklenemedi: '+e.message+' (Hata kodu: 0126)';w.MMError?.show?.('Konular yüklenemedi: '+e.message,'0126');console.warn('Müfredat akışı:',e)});}
 
  function applyMiniPassAccess(user){
