@@ -139,7 +139,7 @@ test('Firebase istemcisi DOMContentLoaded beklemeden güvenli biçimde başlıyo
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert.ok(!client.includes("document.addEventListener('DOMContentLoaded',init)"),
     'Firebase istemcisi DOMContentLoaded olayına bağlı kalmamalı.');
-  assert.ok(/\\binit\\(\\);\\s*\\}\\)\\(\\);\\s*$/.test(client),
+  assert.ok(client.trimEnd().endsWith('init();\n})();'),
     'Firebase istemcisi dosya sonunda init() çağırmalı.');
   const clientScript=html.indexOf('./firebase-client.js');
   const bodyEnd=html.lastIndexOf('</body>');
