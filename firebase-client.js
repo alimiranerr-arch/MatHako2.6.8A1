@@ -63,7 +63,14 @@ window.firebaseConfig = {
    const auth=firebase.auth();
    auth.onAuthStateChanged(async user=>{
     state.user=user;state.admin=false;showAdmin(false);
-    if(!user){
+    const authBox=$('gmailAuthBox');
+    if(user){
+     authBox?.classList.add('hide');
+     document.querySelectorAll('.gLogin').forEach(button=>button.classList.add('hide'));
+     document.querySelectorAll('.lockover').forEach(overlay=>overlay.classList.add('hide'));
+    }else{
+     authBox?.classList.remove('hide');
+     document.querySelectorAll('.gLogin').forEach(button=>button.classList.remove('hide'));
      $('profileCard')?.classList.add('hide');
      const menu=$('profileQuickMenu');menu?.classList.remove('show');menu?.setAttribute('aria-hidden','true');
      status('Firebase bağlantısı hazır. Gmail ile giriş yapabilirsin.');
@@ -120,10 +127,22 @@ window.firebaseConfig = {
     console.error('Firebase oturum hatası:',e);status('Oturum kontrol edilemedi: '+e.message,true);ready(null,e);
    });
    document.querySelectorAll('.gLogin').forEach(b=>b.addEventListener('click',async()=>{
+    if(state.user){return;}
     b.disabled=true;
-    try{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider);}
-    catch(e){try{await call('logLoginFailure',{email:$('regGmail')?.value||''});}catch(_){}if(e.code==='auth/popup-closed-by-user')window.MMError?.show?.('Google giriş penceresi kapatıldı. Yeniden dene.','0128');else window.MMError?.show?.('Giriş yapılamadı: '+e.message,'0128');}
-    finally{b.disabled=false;}
+    const provider=new firebase.auth.GoogleAuthProvider();
+    provider.setCustomParameters({prompt:'select_account'});
+    try{
+     await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+     await auth.signInWithPopup(provider);
+    }catch(e){
+     if(['auth/popup-blocked','auth/operation-not-supported-in-this-environment','auth/cancelled-popup-request'].includes(e.code)){
+      try{await auth.signInWithRedirect(provider);return;}
+      catch(redirectError){e=redirectError;}
+     }
+     call('logLoginFailure',{email:$('regGmail')?.value||''}).catch(()=>{});
+     status('Google girişi açılamadı: '+(e.code||'')+' · '+(e.message||'Bilinmeyen hata'),true);
+     window.MMError?.show?.('Giriş yapılamadı: '+(e.code||'')+' · '+e.message,'0128');
+    }finally{b.disabled=false;}
    }));
    bindAdmin(); bindConsent(); bindEmailChange(auth); bindRegistrationForm(auth);
   }catch(e){
