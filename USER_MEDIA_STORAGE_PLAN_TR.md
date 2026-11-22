@@ -47,3 +47,5 @@
 - Mevcut Firebase Storage ekleri geçiş süresince eski URL üzerinden görüntülenebilir.
 - Worker URL boşken yeni avatar/sohbet yüklemesi hata mesajı verir; Firebase Storage'a sessiz fallback yapılmaz.
 - Sohbet dosyalarını silme/moderasyon henüz yoktur; bu nedenle silme arayüzü eklenmeden kota dolan dosyalar otomatik temizlenmez.
+
+- Yönetici günlük görev GIF/PNG/WebP yüklemesi de Worker'a taşındı; görev dokümanında `adminMedia/tasks/...` yolu tutulur, kullanıcılar için imzalı URL yenilenir.
