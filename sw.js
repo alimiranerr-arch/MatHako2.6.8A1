@@ -26,5 +26,5 @@ self.addEventListener('fetch',event=>{
  const path=url.pathname;
  const isShell=APP_ASSETS.some(asset=>new URL(asset,self.location.href).pathname===path);
  if(!isShell)return;
- event.respondWith(fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));}return response;}).catch(()=>caches.match(request)));
+ event.respondWith(caches.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok){const copy=response.clone();caches.open(CACHE_NAME).then(cache=>cache.put(request,copy));}return response;})));
 });
