@@ -70,7 +70,8 @@
   function init() {
     if (app.navigationReady) return;
     app.navigationReady = true;
-    d.addEventListener('click', onDocumentClick);
+    // Capture aşaması, modül butonlarının bubble aşamasında olayı durdurmasından etkilenmez.
+    d.addEventListener('click', onDocumentClick, true);
 
     const adminSection = d.getElementById('s3');
     if (adminSection && !w.MMCloud?.admin) adminSection.classList.add('hide');
