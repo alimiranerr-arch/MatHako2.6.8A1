@@ -99,7 +99,7 @@ test('Emoji ve kart ekipman sistemi güvenli ve arayüze bağlı', () => {
 test('Ortak başlangıç ve sekme gezinmesi etkin', () => {
   const core=fs.readFileSync(path.join(root,'core.js'),'utf8');
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
-  assert.ok(core.includes("d.addEventListener('click', onDocumentClick)"));
+  assert.ok(core.includes("d.addEventListener('click', onDocumentClick, true)"));
   assert.ok(core.includes("closest?.('[data-go]')"));
   assert.ok(core.includes('app.navigate = navigate'));
   assert.ok(core.includes('w.MMCloud?.admin'));
