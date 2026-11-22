@@ -19,6 +19,9 @@ test('Tüm JavaScript dosyaları sözdizimi kontrolünden geçiyor', () => {
   walk(root);
   for (const file of files) execFileSync(process.execPath, ['--check', file], {stdio:'pipe'});
   assert.ok(files.length >= 10);
+  assert.ok(fs.readFileSync(path.join(root,'core.js'),'utf8').includes('MMError'));
+  assert.ok(fs.readFileSync(path.join(root,'core.js'),'utf8').includes('profileQuickMenu'));
+  assert.ok(fs.readFileSync(path.join(root,'features.js'),'utf8').includes("' current'"));
 });
 
 test('Firebase yapılandırma JSON dosyaları geçerli', () => {
