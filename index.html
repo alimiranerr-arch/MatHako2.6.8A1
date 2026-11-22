@@ -854,6 +854,12 @@ body.hako-notice-open{overflow:hidden}
       <label class="switch"><input type="checkbox" id="admToggleMarket" checked> 🛒 Market bölümünü aktif tut</label>
 
       <label class="switch"><input type="checkbox" id="admToggleOnline" checked> 🌐 Online / Sosyal / Rekabet özelliklerini aktif tut</label>
+      <h3>🟢 Aktif kullanıcı sayısı</h3>
+      <p class="note">İki kutuyu da boş bırakırsan gerçek çevrimiçi sayısı görünür. Örnek: 120–180.</p>
+      <div class="row"><label>En az<input id="admOnlineMin" type="number" min="1" max="1000000" placeholder="120"></label><label>En çok<input id="admOnlineMax" type="number" min="1" max="1000000" placeholder="180"></label></div>
+      <button type="button" class="btn" id="saveOnlineRange">💾 Aralığı kaydet</button><p class="msg" id="onlineRangeMsg" aria-live="polite"></p>
+      <h3>🎟️ Mini Pass GIF</h3><label>GIF URL<input id="admMiniPassGif" type="url" placeholder="https://.../animasyon.gif"></label>
+      <button type="button" class="btn" id="saveMiniPassGif">💾 GIF'i kaydet</button><p class="msg" id="miniPassGifMsg" aria-live="polite"></p>
       <p class="msg" id="adminFeatureFlagsMsg" aria-live="polite"></p>
 
     </div>
