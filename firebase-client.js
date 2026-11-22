@@ -80,33 +80,37 @@ window.firebaseConfig = {
      else console.warn('Firebase kimlik doğrulama yanıtı gecikti; yönetici özellikleri geçici olarak kapalı.');
     }catch(e){console.warn('Kimlik bilgileri alınamadı:',e);}
     showAdmin(state.admin);
-    try{const emailChange=await call('completeEmailChange');if(emailChange.data?.changed)status('E-posta değişikliğin doğrulandı ve profilin güncellendi.');}catch(e){if(e.code!=='functions/not-found')console.warn('E-posta değişikliği tamamlanamadı:',e.message);}
+    // Oturumu hemen aç; profil eşitlemesi arka planda çalışsın.
+    ready(user);
+    status('Hesap hazır. Profil bilgileri arka planda eşitleniyor…');
+    state.profileReady=recordVisitor(user).then(()=>{
+     status('Profil eşitlemesi tamamlandı. Hesap hazır.');
+     return true;
+    }).catch(e=>{
+     console.error('[Profil eşitleme 0108] Profil kaydı başarısız:',{code:e.code,message:e.message});
+     status('Profil kaydı tamamlanamadı: '+(e.message||'Bilinmeyen hata')+' (Hata kodu: 0108; Firebase: '+(e.code||'unknown')+')',true);
+     return false;
+    });
+    call('completeEmailChange').then(r=>{
+     if(r.data?.changed)status('E-posta değişikliğin doğrulandı ve profilin güncellendi.');
+    }).catch(e=>{if(e.code!=='functions/not-found')console.warn('E-posta değişikliği tamamlanamadı:',e.message);});
     if(user.email===ADMIN&&user.emailVerified&&!state.admin){
      call('claimHakoAdmin').then(()=>auth.currentUser?.getIdToken(true)).then(()=>{
       if(auth.currentUser?.uid!==user.uid)return;
       return auth.currentUser.getIdTokenResult().then(token=>{
        state.admin=token.claims.admin===true&&user.email===ADMIN&&user.emailVerified;
        showAdmin(state.admin);if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
-       ready(user);
       });
      }).catch(e=>console.warn('Admin claim:',e.message));
     }
-    status('Profil bilgileri eşitleniyor…');
-    let profileSaved=false;
-    const profileWrite=recordVisitor(user).then(()=>{
-     status('Profil eşitlemesi tamamlandı. Hesap hazır.');
-     return true;
-    }).catch(e=>{
-     console.error('[Profil eşitleme 0108] Sunucu profil eşitlemesi başarısız:',{code:e.code,message:e.message});
-     status('Oturum açıldı ancak profil kaydedilemedi: '+(e.message||'Bilinmeyen hata')+' (Hata kodu: 0108; Firebase: '+(e.code||'unknown')+')',true);
-     return false;
-    });
-    state.profileReady=profileWrite;
-    profileSaved=await Promise.race([profileWrite,new Promise(resolve=>setTimeout(()=>resolve(false),20000))]);
-    if(!profileSaved)status('Oturum açıldı; profil eşitlemesi 20 saniyede tamamlanmadı. (Hata kodu: 0108)',true);
-    try{const p=await state.db.collection('users').doc(user.uid).get();if(!p.data()?.surname||!p.data()?.school){const form=$('accountRegisterForm');form?.classList.remove('hide');if($('regGmail'))$('regGmail').value=user.email||'';if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';}else status('Hesap hazır. İyi eğlenceler!');}catch(e){console.warn('Profil formu hazırlanamadı:',e);}
+    state.db.collection('users').doc(user.uid).get().then(p=>{
+     if(!p.data()?.surname||!p.data()?.school){
+      const form=$('accountRegisterForm');form?.classList.remove('hide');
+      if($('regGmail'))$('regGmail').value=user.email||'';
+      if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';
+     }
+    }).catch(e=>console.warn('Profil formu hazırlanamadı:',e));
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
-    ready(user);
     state.db.collection('users').doc(user.uid).onSnapshot(d=>{
      if(d.exists&&d.data().banned){$('bannedOverlay')?.classList.remove('hide');$('bannedOverlay')?.setAttribute('aria-hidden','false');auth.signOut().catch(()=>{});}
     },e=>console.warn('Ban durumu okunamadı:',e));
@@ -129,15 +133,20 @@ window.firebaseConfig = {
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
   if(!user?.uid||!user.email)throw Error('Google hesabından doğrulanmış e-posta bilgisi alınamadı.');
-  try{await call('syncUserProfile',{device});return;}
-  catch(syncError){
-   console.warn('syncUserProfile çağrısı başarısız; güvenlik kurallarıyla sınırlı Firestore eşitlemesi deneniyor:',syncError.code,syncError.message);
-   const ref=state.db.collection('users').doc(user.uid),snap=await ref.get();
-   if(snap.exists&&snap.data()?.banned)throw Error('Hesabın yönetici tarafından kalıcı olarak yasaklandı.');
-   const profile={displayName:String(user.displayName||user.email.split('@')[0]||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()};
-   if(!snap.exists)profile.email=user.email;
-   await ref.set(profile,{merge:true});
+  const ref=state.db.collection('users').doc(user.uid),snap=await ref.get();
+  if(snap.exists&&snap.data()?.banned)throw Error('Hesabın yönetici tarafından kalıcı olarak yasaklandı.');
+  const profile={displayName:String(user.displayName||user.email.split('@')[0]||'Kullanıcı').slice(0,80),device,lastSeen:firebase.firestore.FieldValue.serverTimestamp()};
+  if(!snap.exists){
+   profile.email=user.email;
+   await ref.set(profile);
+   return;
   }
+  if(snap.data()?.email===user.email){
+   await ref.set(profile,{merge:true});
+   return;
+  }
+  // Eski profil şemasında e-posta alanını yalnızca güvenli sunucu fonksiyonu tamamlayabilir.
+  await call('syncUserProfile',{device});
  }
  async function loadAdminSettings(){
   const d=await state.db.doc('settings/site').get();if(d.exists){const x=d.data();if($('hakoMaintenanceToggle'))$('hakoMaintenanceToggle').checked=!!x.maintenance;if($('hakoImportantToggle'))$('hakoImportantToggle').checked=!!x.important;if($('hakoSevereToggle'))$('hakoSevereToggle').checked=!!x.severe;if($('hakoMaintenanceImage'))$('hakoMaintenanceImage').value=x.maintenanceImage||'bakim-molasi.png';if($('hakoImportantImage'))$('hakoImportantImage').value=x.importantImage||'helpy-onemli-is.webp';}
