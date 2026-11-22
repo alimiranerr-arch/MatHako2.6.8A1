@@ -42,6 +42,22 @@
   }
 
   function onDocumentClick(event) {
+    const homeTab = event.target?.closest?.('[data-home-tab]');
+    if (homeTab && !homeTab.disabled) {
+      const key = homeTab.dataset.homeTab;
+      const panels = Array.from(d.querySelectorAll('[data-home-panel]'));
+      if (panels.some(panel => panel.dataset.homePanel === key)) {
+        panels.forEach(panel => {
+          const active = panel.dataset.homePanel === key;
+          panel.classList.toggle('hide', !active);
+          panel.setAttribute('aria-hidden', String(!active));
+        });
+        d.querySelectorAll('[data-home-tab]').forEach(tab => {
+          tab.setAttribute('aria-selected', String(tab === homeTab));
+        });
+      }
+      return;
+    }
     const control = event.target?.closest?.('[data-go]');
     if (!control || control.disabled || control.getAttribute('aria-disabled') === 'true') return;
     const id = control.dataset.go;
