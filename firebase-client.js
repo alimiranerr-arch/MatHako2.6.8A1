@@ -10,7 +10,7 @@ window.firebaseConfig = {
 };
 (function(){
  const $=id=>document.getElementById(id), ADMIN='alimiranerr@gmail.com';
- const state={user:null,admin:false,db:null,fn:null}; window.MMCloud=state;
+ const state={user:null,admin:false,db:null,fn:null,firebaseLoaderSettled:false}; window.MMCloud=state;
  function msg(id,s){const e=$(id);if(e)e.textContent=s;}
  function status(text,isError=false){const el=$('firebaseStatus');if(el){el.textContent=text;el.classList.toggle('err',!!isError);el.classList.toggle('ok',!isError);}}
  function ready(user,error){state.authReady=true;window.dispatchEvent(new CustomEvent('mm-auth-ready',{detail:{user:user||null,admin:!!state.admin,error:error||null}}));}
@@ -36,15 +36,19 @@ window.firebaseConfig = {
   try{await call('setFeatureFlags',flags);msg('adminFeatureFlagsMsg','Özellik ayarları sunucuya kaydedildi.');}catch(e){msg('adminFeatureFlagsMsg','Kaydedilemedi: '+e.message);}
  }
  function init(){
-  if(!window.firebase&&window.MMFBReady){
+  if(window.MMFBReady&&!state.firebaseLoaderSettled){
    if(state.firebaseInitPending)return;
    state.firebaseInitPending=true;
    status('Firebase bağlantısı hazırlanıyor…');
-   window.MMFBReady.then(result=>{
+   const timeout=new Promise(resolve=>setTimeout(()=>resolve({error:'Firebase SDK yüklemesi 20 saniyede tamamlanmadı.'}),20000));
+   Promise.race([window.MMFBReady,timeout]).then(result=>{
     state.firebaseInitPending=false;
+    state.firebaseLoaderSettled=true;
     if(result?.error){const e=new Error('Firebase SDK yüklenemedi: '+result.error);console.error('Firebase SDK yüklenemedi:',e);status(e.message,true);ready(null,e);return;}
+    const missing=['auth','firestore','functions'].filter(name=>typeof window.firebase?.[name]!=='function');
+    if(missing.length){const e=new Error('Firebase SDK eksik modülle yüklendi: '+missing.join(', '));console.error('Firebase SDK eksik:',e);status(e.message,true);ready(null,e);return;}
     init();
-   });
+   }).catch(error=>{state.firebaseInitPending=false;state.firebaseLoaderSettled=true;const e=error instanceof Error?error:new Error(String(error));console.error('Firebase yükleyici hatası:',e);status('Firebase yükleyici hatası: '+e.message,true);ready(null,e);});
    return;
   }
   if(!window.firebase||!window.firebaseConfig||!window.firebaseConfig.apiKey){
