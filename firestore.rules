@@ -33,7 +33,7 @@ service cloud.firestore {
     && (!request.resource.data.keys().hasAny(['emoji']) || (request.resource.data.emoji is string && request.resource.data.emoji.size()<=8))
     && request.resource.data.type in ['text','media']
     && (!request.resource.data.keys().hasAny(['mediaUrl']) || (request.resource.data.mediaUrl is string && request.resource.data.mediaUrl.matches('https://.*')))
-    && (!request.resource.data.keys().hasAny(['mediaPath']) || (request.resource.data.mediaPath is string && request.resource.data.mediaPath.size()<=500 && request.resource.data.mediaPath.matches('chatMedia/[^/]+/'+request.auth.uid+'_.*')))
+    && (!request.resource.data.keys().hasAny(['mediaPath']) || (request.resource.data.mediaPath is string && request.resource.data.mediaPath.size()<=500 && (request.resource.data.mediaPath.matches('chatMedia/[^/]+/'+request.auth.uid+'_.*') || request.resource.data.mediaPath.matches('chatMedia/[^/]+/'+request.auth.uid+'/[a-f0-9-]{36}\\.(jpg|png|gif|webp|mp3|ogg|wav|webm|m4a|mp4|ogv)'))))
     && (!request.resource.data.keys().hasAny(['mediaType']) || (request.resource.data.mediaType is string && request.resource.data.mediaType.matches('(image|audio|video)/[a-zA-Z0-9.+-]+')));
   }
   match /settings/{doc}{allow read:if doc in ['site','theme','curriculum','features','economy']||admin();allow write:if admin();}
