@@ -115,7 +115,7 @@ window.firebaseConfig = {
    document.querySelectorAll('.gLogin').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true;
     try{const provider=new firebase.auth.GoogleAuthProvider();await auth.signInWithPopup(provider);}
-    catch(e){try{await call('logLoginFailure',{email:$('regGmail')?.value||''});}catch(_){}if(e.code==='auth/popup-closed-by-user')window.MMError?.show?.('Google giriş penceresi kapatıldı. Yeniden dene.',128);else window.MMError?.show?.('Giriş yapılamadı: '+e.message,128);}
+    catch(e){try{await call('logLoginFailure',{email:$('regGmail')?.value||''});}catch(_){}if(e.code==='auth/popup-closed-by-user')window.MMError?.show?.('Google giriş penceresi kapatıldı. Yeniden dene.','0128');else window.MMError?.show?.('Giriş yapılamadı: '+e.message,'0128');}
     finally{b.disabled=false;}
    }));
    bindAdmin(); bindConsent(); bindEmailChange(auth); bindRegistrationForm(auth);
