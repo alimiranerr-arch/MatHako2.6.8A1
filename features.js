@@ -1,7 +1,44 @@
 /* Market, üyelik, günlük çark, unvan ve mevsim temaları. Ödemeler gerçek para değil oyun altınıdır. */
 (function(w){const $=id=>document.getElementById(id),c=()=>w.MMCloud;let unsub=[],stopShop=null,stopCurriculum=null,stopUser=null,stopTransfers=[];
  const call=(n,d)=>c().fn.httpsCallable(n)(d||{});
- function renderShop(){if(!c()?.db||!c()?.user)return;const shop=$('shop');if(!shop)return;const active=document.querySelector('#mktSeg [aria-selected="true"]')?.dataset.mk||'special';stopShop?.();stopShop=c().db.collection('market').where('published','==',true).onSnapshot(s=>{shop.innerHTML='';s.forEach(doc=>{const d=doc.data();if(active==='special'&&!(['card','item','badge','emoji','membership','miniPass','theme','title','avatar'].includes(d.type)||d.special===true||d.featured===true))return;if(active!=='special'&&active==='memberships'&&!['membership','miniPass'].includes(d.type))return;if(active==='badges'&&d.type!=='badge')return;if(active==='emojis'&&d.type!=='emoji')return;if(active==='cards'&&!['card','item'].includes(d.type))return;if(active==='titles'&&d.type!=='title')return;if(['themes','avatars'].includes(active)&&d.type!==active.slice(0,-1))return;const card=document.createElement('article');card.className='card';card.innerHTML=`<b>${safe(d.name)}</b><p>${safe(d.description||'')}</p>${d.gifUrl?`<img src="${safe(d.gifUrl)}" alt="" style="max-width:100px;max-height:100px">`:''}<p>🪙 ${Number(d.price)||0}</p><button class="btn">Satın al</button>`;card.querySelector('button').onclick=()=>call('purchaseMarketItem',{itemId:doc.id}).then(()=>alert('Satın alma tamamlandı.')).catch(e=>alert(e.message));shop.appendChild(card)})},e=>{shop.textContent='Market yüklenemedi: '+e.message+' (Hata kodu: 0130)';w.MMError?.show?.('Market yüklenemedi: '+e.message,'0130');console.warn('Market akışı [0130]:',e)})}
+ function renderShop(){
+  const shop=$('shop');if(!shop)return;
+  if(!c()?.db){shop.textContent='Market bağlantısı hazırlanıyor…';return;}
+  if(!c()?.user){shop.textContent='Market ürünlerini görmek ve satın almak için Gmail ile giriş yap.';return;}
+  stopShop?.();
+  shop.textContent='Market ürünleri yükleniyor…';
+  stopShop=c().db.collection('market').where('published','==',true).onSnapshot(snapshot=>{
+   shop.replaceChildren();
+   if(snapshot.empty){shop.textContent='Şu anda markette yayınlanmış ürün yok.';return;}
+   const docs=snapshot.docs.slice().sort((a,b)=>{
+    const x=a.data(),y=b.data();
+    return String(x.type||'').localeCompare(String(y.type||''),'tr')||String(x.name||'').localeCompare(String(y.name||''),'tr');
+   });
+   docs.forEach(doc=>{
+    const item=doc.data();
+    const card=document.createElement('article');card.className='card';
+    const title=document.createElement('b');title.textContent=item.name||'Market ürünü';
+    const desc=document.createElement('p');desc.textContent=item.description||'';
+    card.append(title,desc);
+    if(item.gifUrl){const img=document.createElement('img');img.src=item.gifUrl;img.alt=item.name||'Ürün görseli';img.loading='lazy';img.style.cssText='display:block;max-width:100%;max-height:130px;object-fit:contain;margin:8px auto';card.appendChild(img);}
+    const price=document.createElement('p');price.textContent='🪙 '+(Number(item.price)||0)+' altın';card.appendChild(price);
+    const buy=document.createElement('button');buy.type='button';buy.className='btn';buy.textContent='Satın al';buy.disabled=!c()?.user?.emailVerified;
+    if(buy.disabled)buy.title='Satın almak için doğrulanmış Gmail hesabı gerekir';
+    buy.addEventListener('click',async()=>{
+     if(!c()?.user?.emailVerified){w.MMError?.show?.('Satın almak için Gmail hesabını doğrula.',124);return;}
+     buy.disabled=true;
+     try{await call('purchaseMarketItem',{itemId:doc.id});alert('Satın alma tamamlandı.');}
+     catch(e){w.MMError?.show?.(e.message||'Satın alma tamamlanamadı.',130);}
+     finally{buy.disabled=false;}
+    });
+    card.appendChild(buy);shop.appendChild(card);
+   });
+  },e=>{
+   shop.textContent='Market yüklenemedi: '+(e.message||'Bağlantı hatası')+' (Hata kodu: 0130)';
+   w.MMError?.show?.('Market yüklenemedi: '+(e.message||'Bağlantı hatası'),'0130');
+   console.warn('Market akışı [0130]:',e);
+  });
+ }
  function safe(v){return String(v||'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))}
  function loadTasks(){
   const box=$('dailyTasks');
@@ -129,13 +166,7 @@
   draw(free,false);draw(premium,true);
  }
  function bind(){
-  document.querySelectorAll('#mktSeg [data-mk]').forEach(btn=>{
-   if(btn.dataset.bound)return;btn.dataset.bound='1';
-   btn.addEventListener('click',()=>{
-    document.querySelectorAll('#mktSeg [data-mk]').forEach(x=>x.setAttribute('aria-selected',String(x===btn)));
-    renderShop();
-   });
-  });
+  renderShop();
   const claim=$('claimMiniPassBtn');
   if(claim&&!claim.dataset.bound){claim.dataset.bound='1';claim.addEventListener('click',async()=>{
    if(!c()?.user?.emailVerified){w.MMError?.show?.('Günlük Mini Pass için doğrulanmış Gmail hesabıyla giriş yapmalısın.',124);return;}
