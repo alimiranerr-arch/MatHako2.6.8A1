@@ -542,7 +542,7 @@ body.hako-notice-open{overflow:hidden}
 
     </div>
 
-    <div class="form"><label>🎚️ Oyun zorluğu<select id="gameDifficulty"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option><option value="impossible">İmkânsız</option></select></label></div>
+    <div class="form"><label>🎚️ Oyun zorluğu</label><div class="diffs difficulty-cards" id="gameDifficultyCards" role="radiogroup" aria-label="Oyun zorluğu"><button type="button" data-difficulty="easy" aria-pressed="false">🟢 Kolay</button><button type="button" data-difficulty="medium" aria-pressed="true">🟡 Orta</button><button type="button" data-difficulty="hard" aria-pressed="false">🟠 Zor</button><button type="button" data-difficulty="impossible" aria-pressed="false">🔴 İmkânsız</button></div><select id="gameDifficulty" class="visually-hidden" aria-hidden="true" tabindex="-1"><option value="easy">Kolay</option><option value="medium" selected>Orta</option><option value="hard">Zor</option><option value="impossible">İmkânsız</option></select></div>
     <div id="topicBlock">
 
       <div class="row generated-style-12">
@@ -854,6 +854,12 @@ body.hako-notice-open{overflow:hidden}
       <label class="switch"><input type="checkbox" id="admToggleMarket" checked> 🛒 Market bölümünü aktif tut</label>
 
       <label class="switch"><input type="checkbox" id="admToggleOnline" checked> 🌐 Online / Sosyal / Rekabet özelliklerini aktif tut</label>
+      <h3>🟢 Aktif kullanıcı sayısı</h3>
+      <p class="note">İki kutuyu da boş bırakırsan gerçek çevrimiçi sayısı görünür. Örnek: 120–180.</p>
+      <div class="row"><label>En az<input id="admOnlineMin" type="number" min="1" max="1000000" placeholder="120"></label><label>En çok<input id="admOnlineMax" type="number" min="1" max="1000000" placeholder="180"></label></div>
+      <button type="button" class="btn" id="saveOnlineRange">💾 Aralığı kaydet</button><p class="msg" id="onlineRangeMsg" aria-live="polite"></p>
+      <h3>🎟️ Mini Pass GIF</h3><label>GIF URL<input id="admMiniPassGif" type="url" placeholder="https://.../animasyon.gif"></label>
+      <button type="button" class="btn" id="saveMiniPassGif">💾 GIF'i kaydet</button><p class="msg" id="miniPassGifMsg" aria-live="polite"></p>
       <p class="msg" id="adminFeatureFlagsMsg" aria-live="polite"></p>
 
     </div>
@@ -1185,11 +1191,11 @@ body.hako-notice-open{overflow:hidden}
     <div id="miniPassBox" class="mini-pass mini-pass-locked">
       <div id="miniPassLock" class="mini-pass-lock" role="status" aria-live="polite"><div><span class="lk">🔒</span><b id="miniPassLockTitle">Günlük Mini Pass kilitli</b><p id="miniPassLockText">Günlük ödül yolunu açmak için Gmail ile giriş yap.</p><button type="button" class="btn gLogin">G Gmail ile giriş yap</button></div></div>
       <div class="mini-pass-head"><div class="mini-pass-season">SEZON 01 · 30 GÜNLÜK ÖDÜL YOLU</div>
-        <div><b>🎟️ GÜNLÜK MINI PASS</b><div class="note">Her gün giriş yap, ödül yolunda ilerle!</div></div>
+        <div><b><img id="miniPassAdminGif" class="mini-pass-admin-gif hide" alt="Yönetici Mini Pass GIF'i"> GÜNLÜK MINI PASS</b><div class="note">Her gün giriş yap, ödül yolunda ilerle!</div></div>
         <span class="mini-pass-level" id="miniPassLevel">1 / 30</span>
       </div>
       <div class="mini-pass-track premium premium-empty" id="miniPassPremiumTrack" aria-label="Üyelik satın alındığında açılacak boş ödül yolu">
-        <div class="mini-pass-track-label">👑 ÜYELİK YOLU <span id="miniPassPremiumState">Market üyeliğiyle açılır</span></div>
+        <div class="mini-pass-track-label"><span>ÜYELİK YOLU</span> <span id="miniPassPremiumState">Market üyeliğiyle açılır</span></div>
         <div class="mini-pass-tiles" id="miniPassPremiumTiles"></div>
       </div>
       <div class="mini-pass-track free">
@@ -1217,7 +1223,7 @@ body.hako-notice-open{overflow:hidden}
 
     <div class="seg" id="mktSeg">
 
-      <button data-mk="cards" aria-selected="true">🃏 Kartlar</button>
+      <button data-mk="special" aria-selected="true">✨ Özel</button>\n      <button data-mk="cards" aria-selected="false">🃏 Kartlar</button>
 
       <button data-mk="badges" aria-selected="false">🏅 Özel Rozetler</button>
 
@@ -1231,7 +1237,7 @@ body.hako-notice-open{overflow:hidden}
 
     </div>
 
-    <div class="shop" id="shop"></div>
+    <div class="shop special-shop" id="shop"></div>
 
   </div>
 
@@ -1606,7 +1612,7 @@ body.hako-notice-open{overflow:hidden}
 
     <p class="kv">Hako/Presents · Matematik Macerası</p>
 
-    <p class="version">Sürüm 2.6.9</p>
+    <p class="version">Sürüm 2.7.0</p>
 
     <button class="btn" id="resetBtn">🗑️ Bu cihazdaki ayarları sıfırla</button>
 
@@ -1624,7 +1630,7 @@ body.hako-notice-open{overflow:hidden}
 
   <button class="go savebar" id="saveSettings">💾 Ayarları kaydet</button>
 
-  <p class="hakofoot"><span id="hakoTap">hako</span> · sürüm: 2.6.9 <button class="ghostkey" id="ghostKey" aria-label="Yönetici">·</button></p>
+  <p class="hakofoot"><span id="hakoTap">hako</span> · sürüm: 2.7.0 <button class="ghostkey" id="ghostKey" aria-label="Yönetici">·</button></p>
 
 </section>
 
