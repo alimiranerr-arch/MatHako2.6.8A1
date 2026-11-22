@@ -72,7 +72,9 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(social.includes("'image/png'") && social.includes("'image/webp'"));
   assert.ok(features.includes('membershipActive'));
   const authClient=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
-  assert.ok(authClient.includes('recordVisitor(user).then(()=>true)'));
+  assert.ok(authClient.includes("call('syncUserProfile',{device})"));
+  assert.ok(authClient.includes('state.profileReady=profileWrite'));
+  assert.ok(backend.includes('exports.syncUserProfile=onCall'));
   assert.ok(rules.includes('function validProfile'));
   assert.ok(rules.includes('data.displayName.size()<=80'));
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
