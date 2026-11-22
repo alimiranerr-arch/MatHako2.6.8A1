@@ -24,7 +24,7 @@
      if(String(t.gifUrl).startsWith('adminMedia/')){
       (async()=>{
        try{
-        const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');
+        let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
         if(!worker)throw Error('Worker URL yok');
         const response=await fetch(worker+'/v1/task-media-url',{
          method:'POST',headers:{'Content-Type':'application/json'},
@@ -72,7 +72,7 @@
    }catch(e){alert('Rapor oluşturulamadı: '+e.message);}
   });
  }
- function bind(){bindPdf();bindPublicForms();document.querySelectorAll('#mktSeg [data-mk]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('#mktSeg [data-mk]').forEach(x=>x.setAttribute('aria-selected',String(x===b)));renderShop()}));$('spinBtn')?.addEventListener('click',async()=>{try{const r=await call('spinDailyWheel');$('spinMsg').textContent=`Kazandın: ${r.data.label} · +${r.data.coins} altın`; }catch(e){$('spinMsg').textContent=e.message}});$('claimMiniPassBtn')?.addEventListener('click',()=>call('claimMiniPass').then(r=>alert(`Günlük ödül: +${r.data.coins} altın${r.data.card?' ve 1 Temel Oyun Kartı':''}`)).catch(e=>alert(e.message)));$('admPublishTaskBtn')?.addEventListener('click',async()=>{try{const title=$('admTaskText')?.value.trim(),reward=Number($('admTaskReward')?.value||0);let gifUrl=$('admTaskGifUrl')?.value.trim()||'';const file=$('admTaskGifFile')?.files?.[0];if(file){if(file.size>5*1024*1024)throw Error('Görev görseli en fazla 5 MB olabilir.');if(!['image/gif','image/webp','image/png'].includes(file.type))throw Error('GIF, WebP veya PNG kullan.');const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');if(!worker)throw Error('Görsel sunucusu henüz yapılandırılmadı.');const token=await c().user.getIdToken();const response=await fetch(worker+'/v1/admin-task-upload',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});const data=await response.json().catch(()=>({}));if(!response.ok||!data.path)throw Error(data.error||'Görev görseli yüklenemedi.');gifUrl=data.path;}await call('publishDailyTask',{title,reward,mode:'any',minScore:50,minQuestions:5,gifUrl});if($('admTaskMsg'))$('admTaskMsg').textContent='Görev yayınlandı. En az 5 soruda 50 puan gerekir.';loadTasks();}catch(e){if($('admTaskMsg'))$('admTaskMsg').textContent='Yayınlanamadı: '+e.message;}});}
+        let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
  function renderLoadout(root,u){
   if(!root)return;
   const inventory=Array.isArray(u.inventory)?u.inventory:[],emojis=Array.isArray(u.equippedEmojis)?u.equippedEmojis.slice(0,5):[],cards=Array.isArray(u.equippedCards)?u.equippedCards.slice(0,5):[];
