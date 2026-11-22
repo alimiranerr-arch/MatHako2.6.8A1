@@ -350,12 +350,9 @@ body.hako-notice-open{overflow:hidden}
 
   </div>
 
-  <div id="profileQuickMenu" class="profile-quick-menu" role="menu" aria-label="Profil menüsü">
+  <div id="profileQuickMenu" class="profile-quick-menu" role="menu" aria-label="Hesap menüsü" aria-hidden="true">
     <div class="profile-quick-head"><span id="quickMenuAvatar">🙂</span><div><b id="quickMenuName">Misafir</b><small id="quickMenuEmail">Hesabım</small></div></div>
     <button type="button" role="menuitem" data-profile-go="profile">👤 Profilimi görüntüle</button>
-    <button type="button" role="menuitem" data-profile-go="s6">👥 Arkadaşlar ve sosyal</button>
-    <button type="button" role="menuitem" data-profile-go="s9">⚔️ Rekabet ve düello</button>
-    <button type="button" role="menuitem" data-profile-go="s7">⚙️ Ayarlar</button>
   </div>
 
   <div class="idsearch">
@@ -1185,7 +1182,7 @@ body.hako-notice-open{overflow:hidden}
 
     <p class="note generated-style-06">Her yeni hesapta <b>Mini Pass</b> otomatik başlar: her gün küçük bir miktar altın ve temel oyun kartları kazandırır. Daha fazlası için marketten özel üyelik alabilirsin.</p>
 
-    <div id="miniPassBox" class="mini-pass">
+    <div id="miniPassBox" class="mini-pass mini-pass-locked">\n      <div id="miniPassLock" class="mini-pass-lock" role="status" aria-live="polite"><div><span class="lk">🔒</span><b id="miniPassLockTitle">Günlük Mini Pass kilitli</b><p id="miniPassLockText">Günlük ödül yolunu açmak için Gmail ile giriş yap.</p><button type="button" class="btn gLogin">G Gmail ile giriş yap</button></div></div>
       <div class="mini-pass-head"><div class="mini-pass-season">SEZON 01 · 30 GÜNLÜK ÖDÜL YOLU</div>
         <div><b>🎟️ GÜNLÜK MINI PASS</b><div class="note">Her gün giriş yap, ödül yolunda ilerle!</div></div>
         <span class="mini-pass-level" id="miniPassLevel">1 / 30</span>
@@ -1198,7 +1195,7 @@ body.hako-notice-open{overflow:hidden}
         <div class="mini-pass-track-label">🎁 ÜCRETSİZ ÖDÜLLER <span>Herkese açık</span></div>
         <div class="mini-pass-tiles" id="miniPassFreeTiles"></div>
       </div>
-      <div class="mini-pass-footer"><span class="note" id="miniPassRewardText">Günlük ödül: +15 altın, ara sıra temel kart</span><button class="btn" id="claimMiniPassBtn">🎁 Günlük Ödülü Al</button></div>
+      <div class="mini-pass-footer"><span class="note" id="miniPassRewardText">Günlük ödül: +15 altın, ara sıra temel kart</span><button class="btn" id="claimMiniPassBtn" disabled>🎁 Günlük Ödülü Al</button></div>
     </div>
 
     <div id="ownedMemberships"></div>
@@ -1608,7 +1605,7 @@ body.hako-notice-open{overflow:hidden}
 
     <p class="kv">Hako/Presents · Matematik Macerası</p>
 
-    <p class="version">Sürüm 2.7.0</p>
+    <p class="version">Sürüm 2.6.9</p>
 
     <button class="btn" id="resetBtn">🗑️ Bu cihazdaki ayarları sıfırla</button>
 
@@ -1626,7 +1623,7 @@ body.hako-notice-open{overflow:hidden}
 
   <button class="go savebar" id="saveSettings">💾 Ayarları kaydet</button>
 
-  <p class="hakofoot"><span id="hakoTap">hako</span> · sürüm: 2.7.0 <button class="ghostkey" id="ghostKey" aria-label="Yönetici">·</button></p>
+  <p class="hakofoot"><span id="hakoTap">hako</span> · sürüm: 2.6.9 <button class="ghostkey" id="ghostKey" aria-label="Yönetici">·</button></p>
 
 </section>
 
