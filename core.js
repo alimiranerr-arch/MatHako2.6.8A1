@@ -72,6 +72,8 @@
     app.navigationReady = true;
     d.addEventListener('click', onDocumentClick);
 
+    const adminSection = d.getElementById('s3');
+    if (adminSection && !w.MMCloud?.admin) adminSection.classList.add('hide');
     const visible = sections().find(section => !section.classList.contains('hide'));
     if (!visible || !d.getElementById('s0')) navigate('s0', { silent: true });
     else {
