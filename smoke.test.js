@@ -46,6 +46,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   const storage=fs.readFileSync(path.join(root,'storage.rules'),'utf8');
   const functions=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
   const social=fs.readFileSync(path.join(root,'social.js'),'utf8');
+  const duels=fs.readFileSync(path.join(root,'duels.js'),'utf8');
   const features=fs.readFileSync(path.join(root,'features.js'),'utf8');
   assert.ok(rules.includes('request.auth.uid in get('));
   assert.ok(rules.includes('request.resource.data.senderId==request.auth.uid'));
@@ -75,6 +76,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(authClient.includes("call('syncUserProfile',{device})"));
   assert.ok(authClient.includes('state.profileReady=profileWrite'));
   assert.ok(fs.readFileSync(path.join(root,'functions/index.js'),'utf8').includes('exports.syncUserProfile=onCall'));
+  assert.ok(rules.includes('function socialActive()'));
   assert.ok(rules.includes('function validProfile'));
   assert.ok(rules.includes('data.displayName.size()<=80'));
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
@@ -180,6 +182,7 @@ test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const settings=fs.readFileSync(path.join(root,'settings.js'),'utf8');
   const social=fs.readFileSync(path.join(root,'social.js'),'utf8');
+  const duels=fs.readFileSync(path.join(root,'duels.js'),'utf8');
   const admin=fs.readFileSync(path.join(root,'admin-tools.js'),'utf8');
   const sync=fs.readFileSync(path.join(root,'sync.js'),'utf8');
   const extensions=fs.readFileSync(path.join(root,'hako_extensions.js'),'utf8');
@@ -200,6 +203,11 @@ test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı
   assert.ok(/apiKey:\s*"[^"]{20,}"/.test(client),'Firebase Web API key yapılandırması eksik.');
   assert.ok(settings.includes("httpsCallable('redeemGiftCode')"));
   assert.ok(social.includes('ensureNotificationPanel'));
+  assert.ok(social.includes('Hata kodu: 0114'));
+  assert.ok(social.includes('Hata kodu: 0116'));
+  assert.ok(social.includes('Hata kodu: 0117'));
+  assert.ok(duels.includes('Hata kodu: 0118'));
+  assert.ok(duels.includes('Hata kodu: 0120'));
   assert.ok(social.includes('displayName') && social.includes('friend.data()'));
   assert.ok(admin.includes('resolveMessageReport'));
   assert.ok(rules.includes('match /giftCodes/{code}'));
