@@ -160,7 +160,7 @@ window.firebaseConfig = {
  function bindRegistrationForm(auth){
   const verify=$('sendGmailVerifyBtn'),complete=$('completeGmailRegBtn');
   if(verify&&!verify.dataset.bound){verify.dataset.bound='1';verify.addEventListener('click',async()=>{
-   const out=$('regVerifyMsg');try{if(!auth.currentUser)throw Error('Önce Gmail ile giriş yap.');if(auth.currentUser.emailVerified){if(out)out.textContent='E-posta adresin zaten doğrulanmış.';return;}await auth.currentUser.sendEmailVerification();if(out)out.textContent='Doğrulama bağlantısı e-posta adresine gönderildi.';}catch(e){if(out)out.textContent=e.message;}
+   const out=$('regVerifyMsg');try{if(!auth.currentUser)throw Error('Önce Gmail ile giriş yap.');if(auth.currentUser.emailVerified){if(out)out.textContent='E-posta adresin zaten doğrulanmış.';return;}await auth.currentUser.sendEmailVerification();if(out)out.textContent='Doğrulama bağlantısı e-posta adresine gönderildi.';}catch(e){if(out)out.textContent=(e.code==='auth/user-not-found'||e.code==='functions/not-found'?'Girilen e-posta adresi bulunamadı. (Hata kodu: 0122)':e.message);}
   });}
   if(complete&&!complete.dataset.bound){complete.dataset.bound='1';complete.addEventListener('click',async()=>{
    const out=$('regErrorMsg');try{

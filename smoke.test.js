@@ -76,6 +76,10 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(authClient.includes("call('syncUserProfile',{device})"));
   assert.ok(authClient.includes('state.profileReady=profileWrite'));
   assert.ok(fs.readFileSync(path.join(root,'functions/index.js'),'utf8').includes('exports.syncUserProfile=onCall'));
+  assert.ok(fs.readFileSync(path.join(root,'settings.js'),'utf8').includes('seasonEffect'));
+  assert.ok(fs.readFileSync(path.join(root,'settings.js'),'utf8').includes('settings/theme'));
+  assert.ok(fs.readFileSync(path.join(root,'index.html'),'utf8').includes('teacherFormLock'));
+  assert.ok(fs.readFileSync(path.join(root,'firebase-client.js'),'utf8').includes('Hata kodu: 0122'));
   assert.ok(rules.includes('function socialActive()'));
   assert.ok(rules.includes('function validProfile'));
   assert.ok(rules.includes('data.displayName.size()<=80'));
