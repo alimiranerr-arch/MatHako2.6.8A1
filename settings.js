@@ -35,15 +35,32 @@
  }
  function collect(){state.bw=!!$('bwOn')?.checked;state.bgOn=!!$('bgOn')?.checked;state.custom=!!$('customOn')?.checked;state.c1=$('c1')?.value||state.c1;state.c2=$('c2')?.value||state.c2;state.effect=$('fxSel')?.value||'none';state.sound=!!$('sndOn')?.checked;state.vibration=!!$('vibOn')?.checked}
  function status(value){const c=w.MMCloud;if(!c?.user||!c?.db){alert('Durumunu değiştirmek için giriş yapmalısın.');return}c.db.collection('users').doc(c.user.uid).set({status:value,statusUpdatedAt:w.firebase.firestore.FieldValue.serverTimestamp()},{merge:true}).catch(e=>alert('Durum kaydedilemedi: '+e.message))}
- function avatarView(emoji,path){const seq=++avatarLoadSeq,el=$('meAv');if(el){el.replaceChildren();if(path&&w.firebase?.storage){w.firebase.storage().ref(path).getDownloadURL().then(url=>{if(seq!==avatarLoadSeq)return;const img=d.createElement('img');img.src=url;img.alt='Profil resmi';img.style.cssText='width:30px;height:30px;object-fit:cover;border-radius:50%';el.replaceChildren(img)}).catch(()=>{if(seq===avatarLoadSeq)el.textContent=emoji||'🙂'})}else el.textContent=emoji||'🙂'}const preview=$('avatarPreviewBox');if(preview)preview.textContent=emoji||'🙂'}
+ async function resolveAvatarUrl(path){
+  const prefix='avatars/'+(w.MMCloud?.user?.uid||'')+'/';
+  if(!path||!path.startsWith(prefix))return '';
+  const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');
+  if(!worker)return '';
+  const token=await w.MMCloud.user.getIdToken();
+  const response=await fetch(worker+'/v1/media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({path:path.slice(prefix.length)})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.url)throw Error(data.error||'Profil resmi alınamadı.');
+  return data.url;
+ }
+ function avatarView(emoji,path){
+  const seq=++avatarLoadSeq,el=$('meAv');if(el){el.replaceChildren();if(path&&path.startsWith('avatars/'))resolveAvatarUrl(path).then(url=>{if(seq!==avatarLoadSeq||!url)return;const img=d.createElement('img');img.src=url;img.alt='Profil resmi';img.style.cssText='width:30px;height:30px;object-fit:cover;border-radius:50%';el.replaceChildren(img)}).catch(()=>{if(seq===avatarLoadSeq)el.textContent=emoji||'🙂'});else el.textContent=emoji||'🙂'}const preview=$('avatarPreviewBox');if(preview)preview.textContent=emoji||'🙂'
+ }
  async function saveAvatar(user){
   const emoji=$('presetAvatarSelect')?.value||'🦊',file=$('customAvatarFile')?.files?.[0];
   if(!file)return{avatar:emoji,avatarPath:''};
   if(file.size>2*1024*1024)throw Error('Profil resmi en fazla 2 MB olabilir.');
   if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Profil resmi PNG, JPEG veya WebP olmalı.');
-  const ext=file.type==='image/png'?'png':file.type==='image/webp'?'webp':'jpg',path='avatars/'+user.uid+'/avatar-'+Date.now()+'.'+ext;
-  await w.firebase.storage().ref(path).put(file,{contentType:file.type});
-  return{avatar:'🖼️',avatarPath:path};
+  const worker=String(w.MMStorageWorkerUrl||'').replace(/\\/+$/,'');
+  if(!worker)throw Error('Görsel sunucusu henüz yapılandırılmadı. Daha sonra tekrar dene.');
+  const token=await user.getIdToken();
+  const response=await fetch(worker+'/v1/upload',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.path)throw Error(data.message||data.error||'Profil resmi yüklenemedi.');
+  return{avatar:'🖼️',avatarPath:'avatars/'+user.uid+'/'+data.path};
  }
  async function syncAppearance(){const c=w.MMCloud;if(!c?.user||!w.MMCloudSync||syncedUid===c.user.uid)return;syncedUid=c.user.uid;try{const remote=await w.MMCloudSync.loadAppearance();if(remote){state={...defaults,...remote};persist();state=read();syncControls();apply();}else await w.MMCloudSync.saveAppearance(state);}catch(e){syncedUid='';console.warn('Görünüm ayarları buluta eşitlenemedi:',e);}}
  function watchProfile(){
