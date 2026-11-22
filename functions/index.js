@@ -78,6 +78,72 @@ exports.adminGrantInventoryItem=onCall(async req=>{
  return{ok:true,targetUid:target,itemId};
 });
 exports.purchaseMarketItem=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const id=String(req.data.itemId||'');if(!id)throw new HttpsError('invalid-argument','Ürün seçilmedi.');const result=await db.runTransaction(async tx=>{const ur=db.doc(`users/${uid}`),ir=db.doc(`market/${id}`);const [u,i]=await Promise.all([tx.get(ur),tx.get(ir)]);if(!i.exists||!i.data().published)throw new HttpsError('not-found','Ürün bulunamadı.');const price=Number(i.data().price)||0,coins=Number(u.data()?.coins)||0;if(coins<price)throw new HttpsError('failed-precondition','Yeterli altının yok.');if(['membership','miniPass'].includes(i.data().type)&&u.data()?.membershipUntil>Date.now())throw new HttpsError('failed-precondition','Aynı anda yalnızca bir aktif üyelik veya MiniPass alabilirsin.');tx.set(ur,{coins:coins-price,inventory:Field.arrayUnion({itemId:id,name:i.data().name,type:i.data().type,emoji:String(i.data().emoji||'🎁').slice(0,8),gifUrl:String(i.data().gifUrl||'').slice(0,1000),ownedAt:Date.now(),paidPrice:price}),...(['membership','miniPass'].includes(i.data().type)?{membership:i.data().name,membershipType:i.data().type,membershipUntil:Date.now()+30*86400000}:{}),...(i.data().type==='title'?{title:i.data().name}:{})},{merge:true});return{coins:coins-price,name:i.data().name};});return result;});
+
+exports.createPlayerMarketListing=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);await rateLimit(uid,'createPlayerMarketListing',10);
+ const itemId=String(req.data?.itemId||''),price=Number(req.data?.price);
+ if(!itemId||itemId.length>160||!Number.isSafeInteger(price)||price<1||price>1000000)throw new HttpsError('invalid-argument','Ürün ve 1-1.000.000 arası altın fiyatı gerekli.');
+ const userRef=db.doc('users/'+uid),listingRef=db.collection('playerMarketListings').doc();
+ let listing;
+ await db.runTransaction(async tx=>{
+  const u=await tx.get(userRef);if(!u.exists)throw new HttpsError('not-found','Oyuncu profili bulunamadı.');
+  const inv=Array.isArray(u.data().inventory)?u.data().inventory:[],idx=inv.findIndex(x=>x.itemId===itemId&&!x.listed);
+  if(idx<0)throw new HttpsError('not-found','Satışa çıkarılabilir ürün envanterinde bulunamadı veya zaten listede.');
+  const item=inv[idx],type=String(item.type||'');
+  if(!['card','title','membership','miniPass'].includes(type))throw new HttpsError('failed-precondition','Yalnızca kart, unvan ve üyelik satılabilir.');
+  if(['membership','miniPass'].includes(type)&&Number(u.data().membershipUntil)<=Date.now())throw new HttpsError('failed-precondition','Süresi dolmuş üyelik satılamaz.');
+  const next=inv.slice();next[idx]={...item,listed:true};
+  listing={sellerUid:uid,sellerName:String(u.data().displayName||req.auth.token.name||'Oyuncu').slice(0,80),itemId,name:String(item.name||'Oyuncu ürünü').slice(0,80),type,emoji:String(item.emoji||'🎁').slice(0,8),gifUrl:String(item.gifUrl||'').slice(0,1000),price,active:true,createdAt:Field.serverTimestamp()};
+  tx.update(userRef,{inventory:next});tx.create(listingRef,listing);
+ });
+ return{ok:true,listingId:listingRef.id};
+});
+exports.cancelPlayerMarketListing=onCall(async req=>{
+ const uid=requireUser(req);await userDoc(uid);const id=String(req.data?.listingId||'');if(!id)throw new HttpsError('invalid-argument','İlan seçilmedi.');
+ await db.runTransaction(async tx=>{
+  const lr=db.doc('playerMarketListings/'+id),l=await tx.get(lr);if(!l.exists||l.data().active!==true||l.data().sellerUid!==uid)throw new HttpsError('not-found','Aktif ilan bulunamadı.');
+  const ur=db.doc('users/'+uid),u=await tx.get(ur),inv=Array.isArray(u.data()?.inventory)?u.data().inventory:[],idx=inv.findIndex(x=>x.itemId===l.data().itemId&&x.listed);
+  if(idx>=0){const next=inv.slice();next[idx]={...next[idx],listed:false};tx.update(ur,{inventory:next});}
+  tx.update(lr,{active:false,cancelledAt:Field.serverTimestamp()});
+ });
+ return{ok:true};
+});
+exports.buyPlayerMarketListing=onCall(async req=>{
+ const buyerUid=requireUser(req);await userDoc(buyerUid);await rateLimit(buyerUid,'buyPlayerMarketListing',20);
+ const id=String(req.data?.listingId||'');if(!id)throw new HttpsError('invalid-argument','İlan seçilmedi.');
+ let purchased;
+ await db.runTransaction(async tx=>{
+  const lr=db.doc('playerMarketListings/'+id),l=await tx.get(lr);
+  if(!l.exists||l.data().active!==true)throw new HttpsError('not-found','Bu ilan artık satışta değil.');
+  const x=l.data(),sellerUid=x.sellerUid;if(sellerUid===buyerUid)throw new HttpsError('failed-precondition','Kendi ilanını satın alamazsın.');
+  const buyerRef=db.doc('users/'+buyerUid),sellerRef=db.doc('users/'+sellerUid);
+  const [b,s]=await Promise.all([tx.get(buyerRef),tx.get(sellerRef)]);
+  if(!b.exists||!s.exists||s.data().banned)throw new HttpsError('not-found','Satıcı veya alıcı hesabı bulunamadı.');
+  const buyer=b.data(),seller=s.data(),price=Number(x.price)||0;
+  if((Number(buyer.coins)||0)<price)throw new HttpsError('failed-precondition','Yeterli altının yok.');
+  const sellerInv=Array.isArray(seller.inventory)?seller.inventory:[],idx=sellerInv.findIndex(v=>v.itemId===x.itemId&&v.listed);
+  if(idx<0)throw new HttpsError('failed-precondition','Satılan ürün artık satıcının envanterinde değil.');
+  const item={...sellerInv[idx],listed:false},nextSeller=sellerInv.slice();nextSeller.splice(idx,1);
+  const nextBuyer=[...(Array.isArray(buyer.inventory)?buyer.inventory:[]),{...item,listed:false,ownedAt:Date.now(),paidPrice:price}];
+  const sellerPatch={coins:(Number(seller.coins)||0)+price,inventory:nextSeller};
+  const buyerPatch={coins:(Number(buyer.coins)||0)-price,inventory:nextBuyer};
+  if(['membership','miniPass'].includes(x.type)){
+   const until=Number(seller.membershipUntil)||0;
+   if(until<=Date.now()||Number(buyer.membershipUntil)>Date.now())throw new HttpsError('failed-precondition','Üyeliğin süresi dolmuş veya alıcının zaten aktif üyeliği var.');
+   const remaining=until-Date.now();
+   sellerPatch.membership='Mini Pass';sellerPatch.membershipType='miniPass';sellerPatch.membershipUntil=0;
+   buyerPatch.membership=item.name;buyerPatch.membershipType=x.type;buyerPatch.membershipUntil=Date.now()+remaining;
+  }
+  if(x.type==='title'){
+   if(String(seller.title||'')===String(item.name||''))sellerPatch.title='';
+   buyerPatch.title=String(item.name||'');
+  }
+  tx.update(sellerRef,sellerPatch);tx.update(buyerRef,buyerPatch);tx.update(lr,{active:false,soldAt:Field.serverTimestamp(),buyerUid});
+  purchased={name:x.name,price};
+ });
+ await db.collection('auditLogs').add({action:'player-market-sale',listingId:id,buyerUid,price:purchased.price,at:Field.serverTimestamp()});
+ return{ok:true,...purchased};
+});
 exports.spinDailyWheel=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const ref=db.doc(`wheelClaims/${uid}`);const cfg=await db.doc('settings/wheel').get();const rewards=cfg.exists&&Array.isArray(cfg.data().items)?cfg.data().items:[{label:'10 Altın',coins:10},{label:'25 Altın',coins:25},{label:'50 Altın',coins:50},{label:'5 Altın',coins:5},{label:'100 Altın',coins:100}];const r=rewards[crypto.randomInt(0,rewards.length)];await db.runTransaction(async tx=>{const [claim,user]=await Promise.all([tx.get(ref),tx.get(db.doc(`users/${uid}`))]);const today=istanbulDayKey();if(claim.exists&&claim.data().day===today)throw new HttpsError('failed-precondition','Bugünkü çark hakkını kullandın.');tx.set(ref,{day:today,at:Field.serverTimestamp(),reward:r});tx.set(db.doc(`users/${uid}`),{coins:(Number(user.data()?.coins)||0)+r.coins},{merge:true});});return r;});
 exports.claimMiniPass=onCall(async req=>{const uid=requireUser(req);await userDoc(uid);const ref=db.doc(`miniPassClaims/${uid}`),u=db.doc(`users/${uid}`),today=istanbulDayKey();let reward;await db.runTransaction(async tx=>{const [c,us]=await Promise.all([tx.get(ref),tx.get(u)]);if(c.exists&&c.data().day===today)throw new HttpsError('failed-precondition','Günlük Mini Pass ödülünü zaten aldın.');const dayIndex=((Number(c.data()?.dayIndex)||0)%30)+1;const card=crypto.randomInt(0,100)<22;reward={coins:15,dayIndex,card:card?{id:'basic-'+today,itemId:'minipass-'+today,name:'Temel Oyun Kartı',type:'card',emoji:'🃏'}:null};const inv=Array.isArray(us.data()?.inventory)?us.data().inventory:[];tx.set(ref,{day:today,dayIndex,at:Field.serverTimestamp(),reward});tx.set(u,{coins:(Number(us.data()?.coins)||0)+reward.coins,miniPassDay:dayIndex,...(card?{inventory:[...inv,{...reward.card,ownedAt:Date.now()}]}:{})},{merge:true});});return reward;});
 exports.logLoginFailure=onCall(async req=>{
