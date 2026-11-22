@@ -81,7 +81,6 @@ window.firebaseConfig = {
     }catch(e){console.warn('Kimlik bilgileri alınamadı:',e);}
     showAdmin(state.admin);
     // Oturumu hemen aç; profil eşitlemesi arka planda çalışsın.
-    ready(user);
     status('Hesap hazır. Profil bilgileri arka planda eşitleniyor…');
     state.profileReady=recordVisitor(user).then(()=>{
      status('Profil eşitlemesi tamamlandı. Hesap hazır.');
@@ -91,6 +90,7 @@ window.firebaseConfig = {
      status('Profil kaydı tamamlanamadı: '+(e.message||'Bilinmeyen hata')+' (Hata kodu: 0108; Firebase: '+(e.code||'unknown')+')',true);
      return false;
     });
+    ready(user);
     call('completeEmailChange').then(r=>{
      if(r.data?.changed)status('E-posta değişikliğin doğrulandı ve profilin güncellendi.');
     }).catch(e=>{if(e.code!=='functions/not-found')console.warn('E-posta değişikliği tamamlanamadı:',e.message);});
