@@ -69,3 +69,22 @@ body[data-mm-mode="dark"]{background-color:#0f172a!important;color:#f8fafc!impor
 .special-shop .card button{width:100%;background:#1d8b42;color:#fff;border:0}
 .mini-pass-admin-gif{width:32px;height:32px;object-fit:contain;vertical-align:middle;border-radius:7px}
 .visually-hidden{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+
+/* Koyu temada ana menü sekmeleri ve formlar yüksek kontrastlı kalır. */
+body.theme-night .home-tabs,
+body[data-mm-mode="dark"] .home-tabs{background:#1e293b!important;border-color:#475569!important;color:#f8fafc!important}
+body.theme-night .home-tabs button,
+body[data-mm-mode="dark"] .home-tabs button{background:transparent!important;color:#f8fafc!important;border:1px solid transparent}
+body.theme-night .home-tabs button[aria-selected="true"],
+body[data-mm-mode="dark"] .home-tabs button[aria-selected="true"]{background:#f59e0b!important;color:#111827!important;border-color:#fbbf24!important}
+body.theme-night .home-panel .card,
+body[data-mm-mode="dark"] .home-panel .card{background:#1e293b!important;color:#f8fafc!important;border-color:#475569!important}
+body.theme-night .home-panel .note,
+body.theme-night .home-panel .mut,
+body[data-mm-mode="dark"] .home-panel .note,
+body[data-mm-mode="dark"] .home-panel .mut{color:#cbd5e1!important}
+body.theme-night input,body.theme-night select,body.theme-night textarea,
+body[data-mm-mode="dark"] input,body[data-mm-mode="dark"] select,body[data-mm-mode="dark"] textarea{background:#0f172a!important;color:#f8fafc!important;border-color:#64748b!important}
+body.theme-night input::placeholder,body[data-mm-mode="dark"] input::placeholder{color:#94a3b8!important}
+.home-panel[hidden]{display:none!important}
