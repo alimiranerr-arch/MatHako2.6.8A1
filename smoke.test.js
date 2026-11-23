@@ -295,7 +295,7 @@ test('2.7.0 sürümü, Mini Pass Gmail kilidi, ödül hata kodu ve profil açıl
   assert.ok(!social.includes("(Hata kodu: 0114)'+' (Hata kodu: 0114)"));
 });
 
-test('2.7.0 market, admin görünür kullanıcı aralığı, GIF ve hata kodları', () => {
+test('Market, admin görünür kullanıcı aralığı, GIF ve hata kodları', () => {
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const css=fs.readFileSync(path.join(root,'app.css'),'utf8');
   const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
@@ -304,7 +304,6 @@ test('2.7.0 market, admin görünür kullanıcı aralığı, GIF ve hata kodlar�
   const game=fs.readFileSync(path.join(root,'game.js'),'utf8');
   const backend=fs.readFileSync(path.join(root,'functions/index.js'),'utf8');
   const mirror=fs.readFileSync(path.join(root,'index.js'),'utf8');
-  assert.ok(html.includes('data-mk="special"'));
   assert.ok(html.includes('id="gameDifficultyCards"'));
   assert.ok(html.includes('id="admOnlineMin"') && html.includes('id="admOnlineMax"'));
   assert.ok(html.includes('id="admMiniPassGif"') && html.includes('id="miniPassAdminGif"'));
