@@ -194,7 +194,7 @@
       alert('Profilin güncellendi. Değişiklik bildirimi doğrulanmış e-posta adresine gönderildi.');
      }catch(mailError){console.warn('Profil e-posta bildirimi gönderilemedi:',mailError);alert('Profilin kaydedildi ancak e-posta bildirimi gönderilemedi. Daha sonra tekrar deneyebiliriz.');}
     }else{alert('Profilin başarıyla güncellendi.'+(c().user.emailVerified?'':' E-posta adresin doğrulanmadığı için bildirim gönderilmedi.'));}
-   }catch(e){alert('Profil güncellenemedi: '+e.message);}
+   }catch(e){const message='Profil güncellenemedi: '+e.message+' (Hata kodu: 0134)';alert(message);w.MMError?.show?.(message,'0134');console.warn('Profil güncelleme hatası [0134]:',e);}
   });
 }
  function watchCurriculum(){stopCurriculum?.();stopCurriculum=c().db.doc('settings/curriculum').onSnapshot(s=>{const mode=s.exists?s.data().mode:'first',topics=[...(w.MatematikMacerasi.fixtures?.topics.firstTerm||[]),...(mode==='second'?(w.MatematikMacerasi.fixtures?.topics.secondTerm||[]):[])],box=$('tp'),badge=$('curriculumBadge');if(badge)badge.textContent=mode==='second'?'1. + 2. Dönem Konuları':'1. Dönem Konuları';if(box){box.innerHTML='';topics.forEach(t=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.addEventListener('click',()=>{box.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true')});box.appendChild(b)})}const toggle=$('toggleSemesterBtn');if(toggle)toggle.textContent=mode==='second'?'📅 1. Dönem Konularına Dön':'📅 2. Dönem Konularına Geç (1. + 2. Dönem Birlikte)';},e=>{const box=$('tp');if(box)box.textContent='Konular yüklenemedi: '+e.message+' (Hata kodu: 0126)';w.MMError?.show?.('Konular yüklenemedi: '+e.message,'0126');console.warn('Müfredat akışı:',e)});}
