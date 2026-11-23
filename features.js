@@ -171,11 +171,21 @@
  function bindProfile(){
   const b=$('profileEditBtn');if(!b||b.dataset.bound)return;b.dataset.bound='1';
   b.addEventListener('click',async()=>{
-   const displayName=prompt('Adın:',c().user.displayName||'');if(displayName===null)return;
-   const surname=prompt('Soyadın:');if(surname===null)return;
-   const school=prompt('Okulun:');if(school===null)return;
-   const nickname=prompt('Takma ad:');if(nickname===null)return;
-   const className=prompt('Sınıfın:','7. sınıf');if(className===null)return;
+   const askRequired=(label,initial='')=>{
+    let value=initial;
+    while(true){
+     const answer=prompt(label,value);
+     if(answer===null)return null;
+     value=String(answer).trim();
+     if(value)return value;
+     alert(label+' boş bırakılamaz. Lütfen bir değer gir.');
+    }
+   };
+   const displayName=askRequired('Adın:',c().user.displayName||'');if(displayName===null)return;
+   const surname=askRequired('Soyadın:');if(surname===null)return;
+   const school=askRequired('Okulun:');if(school===null)return;
+   const nickname=askRequired('Takma ad:');if(nickname===null)return;
+   const className=askRequired('Sınıfın:','7. sınıf');if(className===null)return;
    try{
     const clean={displayName:String(displayName).trim().slice(0,80),surname:String(surname).trim().slice(0,80),school:String(school).trim().slice(0,120),nickname:String(nickname).trim().slice(0,40),className:String(className).trim().slice(0,30)};
     const requiredFields=[['Ad',clean.displayName],['Soyad',clean.surname],['Okul',clean.school],['Takma ad',clean.nickname],['Sınıf',clean.className]];
