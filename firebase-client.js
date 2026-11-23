@@ -10,7 +10,7 @@ window.firebaseConfig = {
 };
 (function(){
  const $=id=>document.getElementById(id), ADMIN='alimiranerr@gmail.com';
- const state={user:null,admin:false,db:null,fn:null,firebaseLoaderSettled:false,profileReady:Promise.resolve(false)}; window.MMCloud=state;
+ const state={user:null,admin:false,db:null,fn:null,firebaseLoaderSettled:false,profileReady:Promise.resolve(false),presenceTimer:0}; window.MMCloud=state;
  function msg(id,s){const e=$(id);if(e)e.textContent=s;}
  function status(text,isError=false){const el=$('firebaseStatus');if(el){el.textContent=text;el.classList.toggle('err',!!isError);el.classList.toggle('ok',!isError);}}
  function ready(user,error){state.authReady=true;window.dispatchEvent(new CustomEvent('mm-auth-ready',{detail:{user:user||null,admin:!!state.admin,error:error||null}}));}
@@ -63,13 +63,19 @@ window.firebaseConfig = {
    const auth=firebase.auth();
    auth.onAuthStateChanged(async user=>{
     state.user=user;state.admin=false;showAdmin(false);
-    const authBox=$('gmailAuthBox');
+    const authBox=$('gmailAuthBox'),accountCard=$('accountCard'),registerForm=$('accountRegisterForm');
     if(user){
-     authBox?.classList.add('hide');
+     // Giriş tamamlanınca boş bir kart bırakma; eksik profil varsa kayıt formunu göstereceğiz.
+     authBox?.classList.remove('hide');
+     accountCard?.classList.add('hide');
+     registerForm?.classList.add('hide');
      document.querySelectorAll('.gLogin').forEach(button=>button.classList.add('hide'));
      document.querySelectorAll('.lockover').forEach(overlay=>overlay.classList.add('hide'));
     }else{
+     if(state.presenceTimer){clearInterval(state.presenceTimer);state.presenceTimer=0;}
+     accountCard?.classList.remove('hide');
      authBox?.classList.remove('hide');
+     registerForm?.classList.add('hide');
      document.querySelectorAll('.gLogin').forEach(button=>button.classList.remove('hide'));
      $('profileCard')?.classList.add('hide');
      const menu=$('profileQuickMenu');menu?.classList.remove('show');menu?.setAttribute('aria-hidden','true');
@@ -90,6 +96,7 @@ window.firebaseConfig = {
     // Oturumu hemen aç; profil eşitlemesi arka planda çalışsın.
     status('Hesap hazır. Profil bilgileri arka planda eşitleniyor…');
     state.profileReady=recordVisitor(user).then(()=>{
+     startPresence(user);
      status('Profil eşitlemesi tamamlandı. Hesap hazır.');
      return true;
     }).catch(e=>{
@@ -111,12 +118,20 @@ window.firebaseConfig = {
      }).catch(e=>console.warn('Admin claim:',e.message));
     }
     state.db.collection('users').doc(user.uid).get().then(p=>{
-     if(!p.data()?.surname||!p.data()?.school){
-      const form=$('accountRegisterForm');form?.classList.remove('hide');
+     const incomplete=!p.exists||!p.data()?.surname||!p.data()?.school||!p.data()?.nickname||!p.data()?.className;
+     if(incomplete){
+      accountCard?.classList.remove('hide');authBox?.classList.remove('hide');
+      registerForm?.classList.remove('hide');
       if($('regGmail'))$('regGmail').value=user.email||'';
       if($('regFirstName'))$('regFirstName').value=(user.displayName||'').split(' ')[0]||'';
+     }else{
+      registerForm?.classList.add('hide');accountCard?.classList.add('hide');
      }
-    }).catch(e=>console.warn('Profil formu hazırlanamadı:',e));
+    }).catch(e=>{
+     console.warn('Profil formu hazırlanamadı:',e);
+     accountCard?.classList.remove('hide');authBox?.classList.remove('hide');
+     status('Profil bilgileri okunamadı: '+e.message,true);
+    });
     if(state.admin)loadAdminSettings().catch(e=>console.warn('Admin ayarları:',e));
     state.db.collection('users').doc(user.uid).onSnapshot(d=>{
      if(d.exists&&d.data().banned){$('bannedOverlay')?.classList.remove('hide');$('bannedOverlay')?.setAttribute('aria-hidden','false');auth.signOut().catch(()=>{});}
@@ -144,10 +159,29 @@ window.firebaseConfig = {
      window.MMError?.show?.('Giriş yapılamadı: '+(e.code||'')+' · '+e.message,'0128');
     }finally{b.disabled=false;}
    }));
+   const switchAccount=$('switchAccountBtn');
+   if(switchAccount&&!switchAccount.dataset.bound){switchAccount.dataset.bound='1';switchAccount.addEventListener('click',async()=>{
+    switchAccount.disabled=true;
+    try{await auth.signOut();status('Oturum kapatıldı. Yeni Gmail hesabıyla giriş yapabilirsin.');}
+    catch(e){window.MMError?.show?.('Hesap değiştirilemedi: '+e.message,'0128');}
+    finally{switchAccount.disabled=false;}
+   });}
    bindAdmin(); bindConsent(); bindEmailChange(auth); bindRegistrationForm(auth);
   }catch(e){
    console.error('Firebase başlatılamadı',e);status('Firebase başlatılamadı: '+e.message,true);ready(null,e);
   }
+ }
+ function startPresence(user){
+  if(state.presenceTimer){clearInterval(state.presenceTimer);state.presenceTimer=0;}
+  if(!user?.uid||!state.db)return;
+  const ref=state.db.collection('onlinePresence').doc(user.uid);
+  const update=()=>ref.set({
+   uid:user.uid,
+   displayName:String(user.displayName||user.email?.split('@')[0]||'Oyuncu').slice(0,80),
+   lastSeen:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true}).catch(e=>console.warn('Çevrimiçi durumu güncellenemedi:',e));
+  update();
+  state.presenceTimer=setInterval(update,30000);
  }
  async function recordVisitor(user){
   const ua=navigator.userAgent;let device=/Android|iPhone|iPad/i.test(ua)?'Mobil cihaz':/Windows/i.test(ua)?'Windows bilgisayar':/Mac/i.test(ua)?'Mac':/Linux/i.test(ua)?'Linux cihaz':'Bilinmeyen cihaz';
@@ -215,7 +249,7 @@ window.firebaseConfig = {
     await auth.currentUser.updateProfile({displayName});
     const avatarData=await window.MMSettings?.saveAvatar(auth.currentUser)||{avatar:$('presetAvatarSelect')?.value||'🦊',avatarPath:''};
     await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email,displayName,surname,nickname,school,className,...avatarData},{merge:true});
-    const form=$('accountRegisterForm');form?.classList.add('hide');if(out)out.textContent='Profilin kaydedildi. Maceraya hoş geldin!';
+    const form=$('accountRegisterForm');form?.classList.add('hide');$('accountCard')?.classList.add('hide');if(out)out.textContent='Profilin kaydedildi. Maceraya hoş geldin!';
    }catch(e){if(out)out.textContent=e.message;}
   });}
  }
