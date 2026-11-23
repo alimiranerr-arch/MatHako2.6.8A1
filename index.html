@@ -30,7 +30,7 @@
 
 <link rel="apple-touch-icon" href="icon-192.png">
 
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app.css?v=20261123-02">
 
 <style>
 
@@ -353,6 +353,7 @@ body.hako-notice-open{overflow:hidden}
   <div id="profileQuickMenu" class="profile-quick-menu" role="menu" aria-label="Hesap menüsü" aria-hidden="true">
     <div class="profile-quick-head"><span id="quickMenuAvatar">🙂</span><div><b id="quickMenuName">Misafir</b><small id="quickMenuEmail">Hesabım</small></div></div>
     <button type="button" role="menuitem" data-profile-go="profile">👤 Profilimi görüntüle</button>
+    <button type="button" role="menuitem" id="switchAccountBtn">↪️ Hesap değiştir / çıkış yap</button>
   </div>
 
   <div class="idsearch">
@@ -1663,7 +1664,7 @@ body.hako-notice-open{overflow:hidden}
 
     </div>
 
-    <p class="note generated-style-06">Admin tarafından yayınlanan GIF görevleri tamamla, altın kazan!</p>
+    <p class="note generated-style-06">Günlük görevleri tamamla, altın kazan!</p>
 
     <ul class="dtasks" id="dailyTasks"></ul>
 
@@ -1687,6 +1688,8 @@ body.hako-notice-open{overflow:hidden}
       <span class="pill">🟢 <b id="onlineCount">0</b> online</span>
 
     </div>
+
+    <p class="note" id="onlineNames" aria-live="polite">Çevrimiçi oyuncular yükleniyor…</p>
 
     <div class="arena" id="arena">
 
@@ -1774,19 +1777,19 @@ body.hako-notice-open{overflow:hidden}
 
 <script src="./firebase-loader.js"></script>
 
-<script src="./firebase-client.js"></script>
+<script src="./firebase-client.js?v=20261123-02"></script>
 <script src="./media-config.js"></script>
 <script src="./qrcode.js"></script>
 <script src="./fixtures.js"></script>
-<script src="./core.js"></script>
+<script src="./core.js?v=20261123-02"></script>
 <script src="./sync.js"></script>
 <script src="./game.js"></script>
 <script src="./player-search.js"></script>
 <script src="./admin-scores.js"></script>
-<script src="./features.js?v=20261123-138"></script>
+<script src="./features.js?v=20261123-139"></script>
 <script src="./settings.js"></script>
 <script src="./social.js"></script>
-<script src="./duels.js"></script>
+<script src="./duels.js?v=20261123-02"></script>
 <script src="./admin.js"></script>
 <script src="./admin-tools.js"></script>
 <script src="./hako_extensions.js"></script>
