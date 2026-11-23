@@ -42,48 +42,48 @@
  function safe(v){return String(v||'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]))}
  function loadTasks(){
   const box=$('dailyTasks');
-  if(!box||!c()?.user)return;
-  call('getDailyTasks').then(r=>{
-   box.innerHTML='';
-   const tasks=r.data.tasks||[];
+  if(!box)return;
+  if(!c()?.user||!c()?.db){box.textContent='Görevleri görmek için giriş yap.';return;}
+  box.textContent='Görevler yükleniyor…';
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Istanbul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const date=Object.fromEntries(parts.map(p=>[p.type,p.value]));
+  const today=date.year+'-'+date.month+'-'+date.day;
+  Promise.all([
+   c().db.collection('dailyTasks').where('active','==',true).limit(30).get(),
+   c().db.collection('dailyTaskClaims').where('uid','==',c().user.uid).where('day','==',today).get()
+  ]).then(([taskSnap,claimSnap])=>{
+   box.replaceChildren();
+   const claimed=new Set(claimSnap.docs.map(d=>d.data().taskId));
+   const tasks=taskSnap.docs.map(d=>({id:d.id,...d.data(),claimed:claimed.has(d.id)}));
    if(!tasks.length){box.textContent='Şu anda yayınlanmış görev yok.';return;}
    tasks.forEach(t=>{
-    const li=document.createElement('li');
-    const title=document.createElement('b');
-    const meta=document.createElement('p');
-    const btn=document.createElement('button');
+    const li=document.createElement('li'),title=document.createElement('b'),meta=document.createElement('p'),btn=document.createElement('button');
     title.textContent=t.title||'Görev';
     if(t.gifUrl){
-     const img=document.createElement('img');
-     img.alt='Görev görseli';img.loading='lazy';
-     img.style.maxWidth='140px';img.style.maxHeight='100px';
-     li.appendChild(img);
+     const img=document.createElement('img');img.alt='Görev görseli';img.loading='lazy';img.style.maxWidth='140px';img.style.maxHeight='100px';li.appendChild(img);
      if(String(t.gifUrl).startsWith('adminMedia/')){
-      (async()=>{
-       try{
-        let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
-        if(!worker)throw Error('Worker URL yok');
-        const response=await fetch(worker+'/v1/task-media-url',{
-         method:'POST',headers:{'Content-Type':'application/json'},
-         body:JSON.stringify({path:t.gifUrl})
-        });
-        const data=await response.json().catch(()=>({}));
-        if(!response.ok||!data.url)throw Error(data.error||'Görsel alınamadı');
-        img.src=data.url;
-       }catch(e){img.alt='Görev görseli yüklenemedi';}
-      })();
-     }else{img.src=t.gifUrl;}
+      (async()=>{try{
+       let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
+       if(!worker)throw Error('Worker URL yok');
+       const response=await fetch(worker+'/v1/task-media-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:t.gifUrl})});
+       const data=await response.json().catch(()=>({}));if(!response.ok||!data.url)throw Error(data.error||'Görsel alınamadı');img.src=data.url;
+      }catch(e){img.alt='Görev görseli yüklenemedi';}})();
+     }else img.src=t.gifUrl;
     }
     meta.textContent='+'+Number(t.reward||0)+' altın · '+(t.mode==='any'?'Herhangi bir mod':t.mode)+' · en az '+t.minQuestions+' soru / '+t.minScore+' puan';
-    btn.className='btn';
-    btn.textContent=t.claimed?'Ödül alındı':'Ödülü al';
-    btn.disabled=!!t.claimed;
-    btn.onclick=()=>call('claimDailyTask',{taskId:t.id}).then(()=>{
-     btn.textContent='Ödül alındı';btn.disabled=true;
-    }).catch(e=>{w.MMError?.show?.(e.message||'Ödül alınamadı.',124);});
+    btn.className='btn';btn.textContent=t.claimed?'Ödül alındı':'Ödülü al';btn.disabled=!!t.claimed;
+    btn.onclick=()=>call('claimDailyTask',{taskId:t.id}).then(()=>{btn.textContent='Ödül alındı';btn.disabled=true;}).catch(e=>{
+     const code=(e.code==='functions/internal'||e.code==='internal'||e.code==='functions/not-found')?'0142':'0136';
+     w.MMError?.show?.(e.message||'Görev ödülü alınamadı.',''+code);
+    });
     li.append(title,meta,btn);box.appendChild(li);
    });
-  }).catch(e=>{box.textContent='Görevler yüklenemedi: '+e.message;});
+  }).catch(e=>{
+   const code=(e.code==='functions/internal'||e.code==='internal')?'0142':'0136';
+   box.textContent='Görevler yüklenemedi: '+(e.message||'Bağlantı hatası')+' (Hata kodu: '+code+')';
+   w.MMError?.show?.('Görevler yüklenemedi: '+(e.message||'Bağlantı hatası'),code);
+   console.warn('Görevler yüklenemedi ['+code+']:',e);
+  });
  }
  function bindTransfers(){
   const select=$('trTo'),btn=$('trBtn');if(!select||!c()?.user)return;stopTransfers.forEach(fn=>fn());stopTransfers=[];
@@ -157,7 +157,7 @@
    if(btn)btn.disabled=!options.length;
   };
   const userRef=c().db.collection('users').doc(c().user.uid);
-  const stopOwned=userRef.onSnapshot(s=>{if(s.exists){window.MMCloud.userData=s.data();drawOwned();}},e=>{if(out)out.textContent='Envanter okunamadı: '+e.message;});
+  const stopOwned=userRef.onSnapshot(s=>{if(s.exists){window.MMCloud.userData=s.data();drawOwned();}},e=>{if(out)out.textContent='Envanter okunamadı: '+e.message+' (Hata kodu: 0138)';w.MMError?.show?.('Envanter okunamadı: '+e.message,'0138');});
   stopPlayerMarket=()=>{stopOwned();stopPlayerMarket=null;};
   if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.addEventListener('click',async()=>{
    const itemId=select?.value,price=Number($('playerMarketPrice')?.value);
@@ -178,9 +178,9 @@
     else{const buy=document.createElement('button');buy.className='btn';buy.textContent='Altınla satın al';buy.onclick=async()=>{buy.disabled=true;try{await playerMarketRequest('buy',{listingId:d.id});if(out)out.textContent='Satın alma tamamlandı: '+x.name;}catch(e){if(out)out.textContent=e.message;}finally{buy.disabled=false;}};card.appendChild(buy);}
     box.appendChild(card);
    });
-  },e=>{box.textContent='Oyuncu Pazarı yüklenemedi: '+e.message;});
+  },e=>{box.textContent='Oyuncu Pazarı yüklenemedi: '+e.message+' (Hata kodu: 0140)';w.MMError?.show?.('Oyuncu Pazarı yüklenemedi: '+e.message,'0140');console.warn('Oyuncu Pazarı [0140]:',e);});
  }
- function loadUser(){if(!c()?.user||!c()?.db)return;stopUser?.();stopUser=c().db.collection('users').doc(c().user.uid).onSnapshot(d=>{if(!d.exists)return;const u=d.data();window.MMCloud.userData=u;const pmSelect=$('playerMarketItem');if(pmSelect){const eligible=(u.inventory||[]).filter(x=>['card','title','membership','miniPass'].includes(x.type)&&!x.listed&&x.itemId);pmSelect.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent=eligible.length?'Ürün seç':'Satılabilir kart/unvan/üyelik yok';pmSelect.appendChild(empty);eligible.forEach(x=>{const o=document.createElement('option');o.value=x.itemId;o.textContent=(x.emoji||'🎁')+' '+x.name+' · '+x.type;pmSelect.appendChild(o);});}document.querySelectorAll('[data-coins]').forEach(x=>x.textContent=Number(u.coins)||0);renderLoadout($('inv'),u);const inv=$('inventory');if(inv){inv.innerHTML='';(u.inventory||[]).forEach(item=>{const row=document.createElement('div');row.className='row';const p=document.createElement('span');p.textContent=`${item.name||'Ürün'} · ${item.type||'eşya'}`;row.appendChild(p);if(item.itemId&&!['membership','miniPass','title'].includes(item.type)){const b=document.createElement('button');b.className='btn';b.textContent='Sat (yarı fiyat)';b.onclick=()=>call('sellInventoryItem',{itemId:item.itemId}).then(r=>alert('Ürün satıldı. +'+r.data.refund+' altın')).catch(e=>alert(e.message));row.appendChild(b)}inv.appendChild(row)})}const membershipActive=Number(u.membershipUntil)>Date.now();const own=$('ownedMemberships');if(own)own.textContent=membershipActive?`Aktif üyelik: ${u.membership}`:'Aktif ücretli üyelik yok.';const pass=$('activePassBadge');if(pass)pass.textContent=membershipActive?u.membership:'Mini Pass';renderMiniPass(u);const quickName=$('quickMenuName'),quickEmail=$('quickMenuEmail'),quickAvatar=$('quickMenuAvatar');if(quickName)quickName.textContent=u.displayName||c().user.displayName||'Kullanıcı';if(quickEmail)quickEmail.textContent=c().user.email||'Hesap';if(quickAvatar)quickAvatar.textContent=u.avatar||'🙂';const p=$('profileView');if(p)p.innerHTML=`<p><b>${safe(u.displayName||c().user.displayName||'Kullanıcı')}</b> ${safe(u.title||'')}</p><p>Okul: ${safe(u.school||'Belirtilmedi')}</p><p>Sınıf: ${safe(u.className||'7. sınıf')}</p><p>Takma ad: ${safe(u.nickname||'Yok')}</p><p>Soyadı: ${safe(u.surname||'Belirtilmedi')}</p>`},e=>{const p=$('profileView');if(p)p.textContent='Profil yüklenemedi: '+e.message+' (Hata kodu: 0132)';w.MMError?.show?.('Profil yüklenemedi: '+e.message,'0132');console.warn('Profil akışı:',e)});}
+ function loadUser(){if(!c()?.user||!c()?.db)return;stopUser?.();stopUser=c().db.collection('users').doc(c().user.uid).onSnapshot(d=>{if(!d.exists)return;const u=d.data();window.MMCloud.userData=u;const pmSelect=$('playerMarketItem');if(pmSelect){const eligible=(u.inventory||[]).filter(x=>['card','title','membership','miniPass'].includes(x.type)&&!x.listed&&x.itemId);pmSelect.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent=eligible.length?'Ürün seç':'Satılabilir kart/unvan/üyelik yok';pmSelect.appendChild(empty);eligible.forEach(x=>{const o=document.createElement('option');o.value=x.itemId;o.textContent=(x.emoji||'🎁')+' '+x.name+' · '+x.type;pmSelect.appendChild(o);});}document.querySelectorAll('[data-coins]').forEach(x=>x.textContent=Number(u.coins)||0);renderLoadout($('inv'),u);const inv=$('inventory');if(inv){inv.innerHTML='';(u.inventory||[]).forEach(item=>{const row=document.createElement('div');row.className='row';const p=document.createElement('span');p.textContent=`${item.name||'Ürün'} · ${item.type||'eşya'}`;row.appendChild(p);if(item.itemId&&!['membership','miniPass','title'].includes(item.type)){const b=document.createElement('button');b.className='btn';b.textContent='Sat (yarı fiyat)';b.onclick=()=>call('sellInventoryItem',{itemId:item.itemId}).then(r=>alert('Ürün satıldı. +'+r.data.refund+' altın')).catch(e=>alert(e.message));row.appendChild(b)}inv.appendChild(row)})}const membershipActive=Number(u.membershipUntil)>Date.now();const own=$('ownedMemberships');if(own)own.textContent=membershipActive?`Aktif üyelik: ${u.membership}`:'Aktif ücretli üyelik yok.';const pass=$('activePassBadge');if(pass)pass.textContent=membershipActive?u.membership:'Mini Pass';renderMiniPass(u);const quickName=$('quickMenuName'),quickEmail=$('quickMenuEmail'),quickAvatar=$('quickMenuAvatar');if(quickName)quickName.textContent=u.displayName||c().user.displayName||'Kullanıcı';if(quickEmail)quickEmail.textContent=c().user.email||'Hesap';if(quickAvatar)quickAvatar.textContent=u.avatar||'🙂';const p=$('profileView');if(p)p.innerHTML=`<p><b>${safe(u.displayName||c().user.displayName||'Kullanıcı')}</b> ${safe(u.title||'')}</p><p>Okul: ${safe(u.school||'Belirtilmedi')}</p><p>Sınıf: ${safe(u.className||'7. sınıf')}</p><p>Takma ad: ${safe(u.nickname||'Yok')}</p><p>Soyadı: ${safe(u.surname||'Belirtilmedi')}</p>`},e=>{const code=e.code==='permission-denied'?'0138':'0132';const message=(code==='0138'?'Envanter okunamadı: ':'Profil yüklenemedi: ')+e.message+' (Hata kodu: '+code+')';const p=$('profileView');if(p)p.textContent=message;w.MMError?.show?.(message,code);console.warn('Profil/Envanter akışı ['+code+']:',e)});}
  function bindProfile(){
   const b=$('profileEditBtn');if(!b||b.dataset.bound)return;b.dataset.bound='1';
   b.addEventListener('click',async()=>{
@@ -265,6 +265,6 @@
  }
  function admin(){}
  function watchAdminSubmissions(){}
- function init(){bind();bindPdf();bindPublicForms();let started=false;window.addEventListener('mm-auth-ready',e=>{if(!e.detail.user){applyMiniPassAccess(null);started=false;stopShop?.();stopPlayerMarket?.();stopPlayerMarketListings?.();stopUser?.();stopCurriculum?.();stopTransfers.forEach(fn=>fn());stopTransfers=[];if($('trTo'))$('trTo').replaceChildren();if($('trList')){$('trList').replaceChildren();$('trList').dataset.live='';}if($('inventory'))$('inventory').replaceChildren();if($('dailyTasks'))$('dailyTasks').textContent='Görevleri görmek için giriş yap.';if($('profileView'))$('profileView').textContent='Profil bilgileri için giriş yap.';if($('ownedMemberships'))$('ownedMemberships').textContent='';if($('activePassBadge'))$('activePassBadge').textContent='';document.querySelectorAll('[data-coins]').forEach(x=>x.textContent='0');return}applyMiniPassAccess(e.detail.user);if(started)return;started=true;watchCurriculum();Promise.resolve(c()?.profileReady).finally(()=>renderShop());loadUser();bindPlayerMarket();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()});if(c()?.user){applyMiniPassAccess(c().user);started=true;watchCurriculum();Promise.resolve(c()?.profileReady).finally(()=>renderShop());loadUser();bindPlayerMarket();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions()}else{applyMiniPassAccess(null)}}
+ function init(){bind();bindPdf();bindPublicForms();let started=false;const startForUser=user=>{const uid=user?.uid;if(!uid)return;Promise.resolve(c()?.profileReady).then(ok=>{if(c()?.user?.uid!==uid)return;if(ok===false){if($('dailyTasks'))$('dailyTasks').textContent='Profil eşitlemesi tamamlanamadı. Sayfayı yenileyip tekrar dene.';return;}renderShop();loadUser();bindPlayerMarket();bindProfile();bindTransfers();loadTasks();admin();watchAdminSubmissions();}).catch(e=>{console.warn('Kullanıcı modülleri başlatılamadı:',e);});};window.addEventListener('mm-auth-ready',e=>{if(!e.detail.user){applyMiniPassAccess(null);started=false;stopShop?.();stopPlayerMarket?.();stopPlayerMarketListings?.();stopUser?.();stopCurriculum?.();stopTransfers.forEach(fn=>fn());stopTransfers=[];if($('trTo'))$('trTo').replaceChildren();if($('trList')){$('trList').replaceChildren();$('trList').dataset.live='';}if($('inventory'))$('inventory').replaceChildren();if($('dailyTasks'))$('dailyTasks').textContent='Görevleri görmek için giriş yap.';if($('profileView'))$('profileView').textContent='Profil bilgileri için giriş yap.';if($('ownedMemberships'))$('ownedMemberships').textContent='';if($('activePassBadge'))$('activePassBadge').textContent='';document.querySelectorAll('[data-coins]').forEach(x=>x.textContent='0');return;}applyMiniPassAccess(e.detail.user);if(started)return;started=true;watchCurriculum();bindProfile();startForUser(e.detail.user);});if(c()?.user){applyMiniPassAccess(c().user);started=true;watchCurriculum();bindProfile();startForUser(c().user);}else{applyMiniPassAccess(null);}}
  document.addEventListener('DOMContentLoaded',init);w.MatematikMacerasi=w.MatematikMacerasi||{};w.MatematikMacerasi.register?.('features',{renderShop});
 })(window);
