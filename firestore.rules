@@ -40,6 +40,16 @@ service cloud.firestore {
     && (!request.resource.data.keys().hasAny(['mediaType']) || (request.resource.data.mediaType is string && request.resource.data.mediaType.matches('(image|audio|video)/[a-zA-Z0-9.+-]+')));
   }
   match /settings/{doc}{allow read:if doc in ['site','theme','curriculum','features','economy']||admin();allow write:if admin();}
+  match /onlinePresence/{uid}{
+   allow read:if socialActive();
+   allow create,update:if owner(uid)
+    && request.resource.data.keys().hasOnly(['uid','displayName','lastSeen'])
+    && request.resource.data.uid==uid
+    && request.resource.data.displayName is string
+    && request.resource.data.displayName.size()<=80
+    && request.resource.data.lastSeen is timestamp;
+   allow delete:if owner(uid);
+  }
   match /users/{uid}{
    allow read:if owner(uid)||admin();
    allow create:if owner(uid)&&request.auth.token.email_verified==true&&request.resource.data.keys().hasOnly(['email','displayName','device','lastSeen','surname','school','nickname','className','location','avatar','avatarPath','status','statusUpdatedAt'])&&validProfile(request.resource.data);
