@@ -174,11 +174,13 @@
    const displayName=prompt('Adın:',c().user.displayName||'');if(displayName===null)return;
    const surname=prompt('Soyadın:');if(surname===null)return;
    const school=prompt('Okulun:');if(school===null)return;
-   const nickname=prompt('Takma ad (isteğe bağlı):');if(nickname===null)return;
+   const nickname=prompt('Takma ad:');if(nickname===null)return;
    const className=prompt('Sınıfın:','7. sınıf');if(className===null)return;
    try{
     const clean={displayName:String(displayName).trim().slice(0,80),surname:String(surname).trim().slice(0,80),school:String(school).trim().slice(0,120),nickname:String(nickname).trim().slice(0,40),className:String(className).trim().slice(0,30)};
-    if(!clean.displayName)throw Error('Ad boş olamaz.');
+    const requiredFields=[['Ad',clean.displayName],['Soyad',clean.surname],['Okul',clean.school],['Takma ad',clean.nickname],['Sınıf',clean.className]];
+    const emptyField=requiredFields.find(field=>!field[1]);
+    if(emptyField)throw Error(emptyField[0]+' boş bırakılamaz.');
     const previous=window.MMCloud?.userData||{};
     const fields=[['Ad',previous.displayName||c().user.displayName||'',clean.displayName],['Soyad',previous.surname||'',clean.surname],['Okul',previous.school||'',clean.school],['Takma ad',previous.nickname||'',clean.nickname],['Sınıf',previous.className||'',clean.className]];
     const changedFields=fields.filter(x=>String(x[1]).trim()!==String(x[2]).trim()).map(x=>x[0]);
