@@ -81,9 +81,24 @@
     const close=d.createElement('button');close.type='button';close.textContent='Kapat';close.addEventListener('click',()=>box.remove());box.appendChild(close);
     box.classList.add('show');return box;
   }
+  function initHomePanels() {
+    const tabs = Array.from(d.querySelectorAll('[data-home-tab]'));
+    const panels = Array.from(d.querySelectorAll('[data-home-panel]'));
+    if (!tabs.length || !panels.length) return;
+    const selected = tabs.find(tab => tab.getAttribute('aria-selected') === 'true' && panels.some(panel => panel.dataset.homePanel === tab.dataset.homeTab));
+    const activeKey = selected?.dataset.homeTab || 'play';
+    panels.forEach(panel => {
+      const active = panel.dataset.homePanel === activeKey;
+      panel.classList.toggle('hide', !active);
+      panel.setAttribute('aria-hidden', String(!active));
+    });
+    tabs.forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.homeTab === activeKey)));
+  }
+
   function init() {
     if (app.navigationReady) return;
     app.navigationReady = true;
+    initHomePanels();
     // Capture aşaması, modül butonlarının bubble aşamasında olayı durdurmasından etkilenmez.
     d.addEventListener('click', onDocumentClick, true);
 
