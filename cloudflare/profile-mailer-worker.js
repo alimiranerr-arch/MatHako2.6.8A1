@@ -219,11 +219,14 @@ async function handleMarket(request, env, claims, action) {
     if (!listingDoc || listingDoc.data.active !== true || listingDoc.data.sellerUid !== uid) throw new Error("Aktif ilan bulunamadı.");
     const listing = listingDoc.data;
     const userPath = documentName(projectId, "users", uid);
-    const tx2 = await beginMarketTransaction(env, [userPath]);
+    const tx2 = await beginMarketTransaction(env, [listingPath, userPath]);
+    const freshListingDoc = tx2.docs.get(listingPath);
+    if (!freshListingDoc || freshListingDoc.data.active !== true || freshListingDoc.data.sellerUid !== uid) throw new Error("İlan bu sırada değişti. Yenileyip tekrar dene.");
+    const freshListing = freshListingDoc.data;
     const userDoc = tx2.docs.get(userPath);
     const user = requiredUser(userDoc);
     const inventory = Array.isArray(user.inventory) ? user.inventory : [];
-    const index = inventory.findIndex(item => item.itemId === listing.itemId && item.listed);
+    const index = inventory.findIndex(item => item.itemId === freshListing.itemId && item.listed);
     if (index >= 0) {
       const next = inventory.slice();
       next[index] = { ...next[index], listed: false };
@@ -231,7 +234,7 @@ async function handleMarket(request, env, claims, action) {
     }
     await commitMarketTransaction(env, tx2.transaction, [
       updateWrite(userPath, user, userDoc.updateTime),
-      updateWrite(listingPath, { ...listing, active: false, cancelledAt: Date.now() }, listingDoc.updateTime)
+      updateWrite(listingPath, { ...freshListing, active: false, cancelledAt: Date.now() }, freshListingDoc.updateTime)
     ]);
     return { ok: true };
   }
@@ -244,16 +247,19 @@ async function handleMarket(request, env, claims, action) {
     if (!sellerUid || sellerUid === uid) throw new Error("Kendi ilanını satın alamazsın.");
     const buyerPath = documentName(projectId, "users", uid);
     const sellerPath = documentName(projectId, "users", sellerUid);
-    const tx2 = await beginMarketTransaction(env, [buyerPath, sellerPath]);
+    const tx2 = await beginMarketTransaction(env, [listingPath, buyerPath, sellerPath]);
+    const freshListingDoc = tx2.docs.get(listingPath);
+    if (!freshListingDoc || freshListingDoc.data.active !== true || freshListingDoc.data.sellerUid !== sellerUid) throw new Error("İlan bu sırada değişti veya artık satışta değil.");
+    const freshListing = freshListingDoc.data;
     const buyerDoc = tx2.docs.get(buyerPath);
     const sellerDoc = tx2.docs.get(sellerPath);
     const buyer = requiredUser(buyerDoc, "Alıcı hesabı bulunamadı.");
     const seller = requiredUser(sellerDoc, "Satıcı hesabı bulunamadı.");
-    const price = Number(listing.price);
+    const price = Number(freshListing.price);
     if (!Number.isSafeInteger(price) || price < 1 || price > 1000000) throw new Error("İlan fiyatı geçersiz.");
     if ((Number(buyer.coins) || 0) < price) throw new Error("Yeterli altının yok.");
     const sellerInventory = Array.isArray(seller.inventory) ? seller.inventory : [];
-    const index = sellerInventory.findIndex(item => item.itemId === listing.itemId && item.listed);
+    const index = sellerInventory.findIndex(item => item.itemId === freshListing.itemId && item.listed);
     if (index < 0) throw new Error("Satılan ürün artık satıcının envanterinde değil.");
     const item = { ...sellerInventory[index], listed: false };
     const nextSellerInventory = sellerInventory.slice();
@@ -261,7 +267,7 @@ async function handleMarket(request, env, claims, action) {
     const nextBuyerInventory = [...(Array.isArray(buyer.inventory) ? buyer.inventory : []), { ...item, listed: false, ownedAt: Date.now(), paidPrice: price }];
     const sellerPatch = { ...seller, coins: (Number(seller.coins) || 0) + price, inventory: nextSellerInventory };
     const buyerPatch = { ...buyer, coins: (Number(buyer.coins) || 0) - price, inventory: nextBuyerInventory };
-    if (["membership", "miniPass"].includes(listing.type)) {
+    if (["membership", "miniPass"].includes(freshListing.type)) {
       const until = Number(seller.membershipUntil) || 0;
       if (until <= Date.now() || Number(buyer.membershipUntil) > Date.now()) throw new Error("Üyeliğin süresi dolmuş veya alıcının zaten aktif üyeliği var.");
       const remaining = until - Date.now();
@@ -269,19 +275,19 @@ async function handleMarket(request, env, claims, action) {
       sellerPatch.membershipType = "miniPass";
       sellerPatch.membershipUntil = 0;
       buyerPatch.membership = item.name;
-      buyerPatch.membershipType = listing.type;
+      buyerPatch.membershipType = freshListing.type;
       buyerPatch.membershipUntil = Date.now() + remaining;
     }
-    if (listing.type === "title") {
+    if (freshListing.type === "title") {
       if (String(seller.title || "") === String(item.name || "")) sellerPatch.title = "";
       buyerPatch.title = String(item.name || "");
     }
     await commitMarketTransaction(env, tx2.transaction, [
       updateWrite(sellerPath, sellerPatch, sellerDoc.updateTime),
       updateWrite(buyerPath, buyerPatch, buyerDoc.updateTime),
-      updateWrite(listingPath, { ...listing, active: false, soldAt: Date.now(), buyerUid: uid }, listingDoc.updateTime)
+      updateWrite(listingPath, { ...freshListing, active: false, soldAt: Date.now(), buyerUid: uid }, freshListingDoc.updateTime)
     ]);
-    return { ok: true, name: listing.name, price };
+    return { ok: true, name: freshListing.name, price };
   }
   throw new Error("Bilinmeyen pazar işlemi.");
 }
