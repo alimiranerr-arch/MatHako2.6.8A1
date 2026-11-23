@@ -310,7 +310,7 @@ test('Market, admin görünür kullanıcı aralığı, GIF ve hata kodları', ()
   assert.ok(css.includes('#s7:not(.hide) #saveSettings.savebar{position:fixed'));
   assert.ok(game.includes('#gameDifficultyCards'));
   assert.ok(client.includes("setOnlineDisplayRange") && client.includes("setMiniPassGif"));
-  assert.ok(features.includes('Hata kodu: 0126') && features.includes('Hata kodu: 0130') && features.includes('Hata kodu: 0132'));
+  assert.ok(features.includes('Hata kodu: 0126') && features.includes('Hata kodu: 0130') && features.includes("?'0138':'0132'"));
   assert.ok(client.includes("'0128'"));
   assert.ok(duels.includes('Hata kodu: 0134') && duels.includes('Hata kodu: 0146'));
   assert.ok(backend.includes('exports.setOnlineDisplayRange') && backend.includes('exports.setMiniPassGif'));
