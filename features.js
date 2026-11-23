@@ -136,7 +136,7 @@
  async function playerMarketRequest(action,payload){
   const user=c()?.user;if(!user)throw new Error('Oyuncu pazarı için giriş yapmalısın.');
   const token=await user.getIdToken();
-  const response=await fetch('https://hako-profile-mailer.alimir anerr.workers.dev/market/'+action,{
+  const response=await fetch('https://hako-profile-mailer.alimir anerr anerr.workers.dev/market/'+action,{
    method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload||{})
   });
   const result=await response.json().catch(()=>({}));
