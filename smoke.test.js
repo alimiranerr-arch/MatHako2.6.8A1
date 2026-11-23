@@ -77,7 +77,7 @@ test('Güvenlik ve sohbet işlevleri için ek kontroller mevcut', () => {
   assert.ok(features.includes('membershipActive'));
   const authClient=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
   assert.ok(authClient.includes("call('syncUserProfile',{device})"));
-  assert.ok(authClient.includes('state.profileReady=profileWrite'));
+  assert.ok(authClient.includes('state.profileReady=recordVisitor(user)'));
   assert.ok(fs.readFileSync(path.join(root,'functions/index.js'),'utf8').includes('exports.syncUserProfile=onCall'));
   assert.ok(fs.readFileSync(path.join(root,'settings.js'),'utf8').includes('seasonEffect'));
   assert.ok(fs.readFileSync(path.join(root,'settings.js'),'utf8').includes('settings/theme'));
@@ -160,7 +160,8 @@ test('Çevrimiçi oyuncu durumu güvenli presence kayıtlarıyla izleniyor', () 
   assert.ok(client.includes("collection('onlinePresence')"));
   assert.ok(client.includes('setInterval(update,30000)'));
   assert.ok(duels.includes("collection('onlinePresence').where('lastSeen'"));
-  assert.ok(duels.includes('id="onlineNames"')===false); // UI id is defined in HTML, not the module.
+  assert.ok(duels.includes("$('onlineNames')"));
+  assert.ok(fs.readFileSync(path.join(root,'index.html'),'utf8').includes('id="onlineNames"'));
   assert.ok(rules.includes('match /onlinePresence/{uid}'));
 });
 
@@ -312,7 +313,7 @@ test('2.7.0 market, admin görünür kullanıcı aralığı, GIF ve hata kodlar�
   assert.ok(client.includes("setOnlineDisplayRange") && client.includes("setMiniPassGif"));
   assert.ok(features.includes('Hata kodu: 0126') && features.includes('Hata kodu: 0130') && features.includes('Hata kodu: 0132'));
   assert.ok(client.includes("'0128'"));
-  assert.ok(duels.includes('Hata kodu: 0134') && duels.includes('Hata kodu: 0136'));
+  assert.ok(duels.includes('Hata kodu: 0134') && duels.includes('Hata kodu: 0146'));
   assert.ok(backend.includes('exports.setOnlineDisplayRange') && backend.includes('exports.setMiniPassGif'));
   assert.equal(backend,mirror,'Root ve Functions backend kaynakları eşleşmeli.');
 });
