@@ -186,7 +186,7 @@ test('Firebase başlangıcı hata ve gecikme durumlarında uygulamayı kilitlemi
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   assert.ok(client.includes("if(!window.firebase||!window.firebaseConfig||!window.firebaseConfig.apiKey)"));
   assert.ok(client.includes("state.authReady=true"));
-  assert.ok(client.includes("new Promise(resolve=>setTimeout(()=>resolve(false),20000))"));
+  assert.ok(client.includes("new Promise(resolve=>setTimeout(()=>resolve({error:'Firebase SDK yüklemesi 20 saniyede tamamlanmadı.'}),20000))"));
   assert.ok(client.includes("auth.onAuthStateChanged(async user=>"));
   assert.ok(client.includes("Oturum kontrol edilemedi: "));
   assert.ok(html.includes('id="firebaseStatus"'));
