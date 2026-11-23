@@ -290,7 +290,7 @@ test('2.7.0 sürümü, Mini Pass Gmail kilidi, ödül hata kodu ve profil açıl
   assert.ok(core.includes("app.version = '2.7.0'"));
   assert.ok(html.includes('id="miniPassLock"') && html.includes('class="mini-pass mini-pass-locked"'));
   assert.ok(features.includes('user.emailVerified') && features.includes("Günlük ödül alınamadı.',124"));
-  assert.ok(features.includes("Ödül alınamadı.',124"));
+  assert.ok(features.includes("Günlük ödül alınamadı.',124"));
   assert.ok(core.includes("profileQuickMenu") && core.includes("aria-hidden"));
   assert.ok(!social.includes("(Hata kodu: 0114)'+' (Hata kodu: 0114)"));
 });
