@@ -1,5 +1,5 @@
 /* Offline app shell for GitHub Pages. Firebase data and authenticated requests are never cached. */
-const CACHE_NAME='mathako-shell-2026-11-23-v18';
+const CACHE_NAME='mathako-shell-2026-11-23-v19';
 const APP_ASSETS=[
  './','./index.html','./app.css','./firebase-loader.js','./media-config.js','./support-bridge.js','./manifest.webmanifest',
  './admin-scores.js','./admin-tools.js','./admin.js','./core.js','./duels.js',
