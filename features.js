@@ -133,6 +133,16 @@
   const active=$('activeEmojiSelect');if(active){active.replaceChildren();const chosen=ownedEmojis.filter(x=>emojis.includes(keyOf(x)));(chosen.length?chosen:ownedEmojis).forEach(item=>{const o=document.createElement('option');o.value=item.emoji||item.name;o.textContent=(item.emoji||'😊')+' '+item.name;active.appendChild(o)});if(!active.options.length){const o=document.createElement('option');o.value='';o.textContent='Kuşanılmış emoji yok';active.appendChild(o);}}
  }
 
+ async function playerMarketRequest(action,payload){
+  const user=c()?.user;if(!user)throw new Error('Oyuncu pazarı için giriş yapmalısın.');
+  const token=await user.getIdToken();
+  const response=await fetch('https://hako-profile-mailer.alimir anerr.workers.dev/market/'+action,{
+   method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(payload||{})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok)throw new Error(result.error||'Oyuncu pazarı işlemi tamamlanamadı.');
+  return result;
+ }
  let stopPlayerMarket=null,stopPlayerMarketListings=null;
  function bindPlayerMarket(){
   const select=$('playerMarketItem'),btn=$('playerMarketListBtn'),out=$('playerMarketMsg'),box=$('playerMarketListings');
@@ -150,7 +160,7 @@
   stopPlayerMarket=()=>{stopOwned();stopPlayerMarket=null;};
   if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.addEventListener('click',async()=>{
    const itemId=select?.value,price=Number($('playerMarketPrice')?.value);if(!itemId||!Number.isSafeInteger(price)||price<1||price>1000000){if(out)out.textContent='Ürün seç ve 1-1.000.000 arası tam sayı fiyat gir.';return;}
-   btn.disabled=true;try{await call('createPlayerMarketListing',{itemId,price});if(out)out.textContent='İlanın Oyuncu Pazarı’na eklendi.';if($('playerMarketPrice'))$('playerMarketPrice').value='';}
+   btn.disabled=true;try{await playerMarketRequest('create',{itemId,price});if(out)out.textContent='İlanın Oyuncu Pazarı’na eklendi.';if($('playerMarketPrice'))$('playerMarketPrice').value='';}
    catch(e){if(out)out.textContent=e.message||'İlan oluşturulamadı.';}finally{btn.disabled=false;}
   });}
   if(box) stopPlayerMarketListings=c().db.collection('playerMarketListings').where('active','==',true).onSnapshot(s=>{
@@ -161,8 +171,8 @@
     const price=document.createElement('p');price.textContent='🪙 '+Number(x.price||0)+' altın';
     card.append(title,seller,price);
     if(x.gifUrl){const img=document.createElement('img');img.src=x.gifUrl;img.alt=x.name||'Ürün';img.loading='lazy';img.style.maxWidth='120px';card.appendChild(img);}
-    if(x.sellerUid===c()?.user?.uid){const cancel=document.createElement('button');cancel.className='btn';cancel.textContent='İlanı kaldır';cancel.onclick=()=>call('cancelPlayerMarketListing',{listingId:d.id}).catch(e=>{if(out)out.textContent=e.message;});card.appendChild(cancel);}
-    else{const buy=document.createElement('button');buy.className='btn';buy.textContent='Altınla satın al';buy.onclick=async()=>{buy.disabled=true;try{await call('buyPlayerMarketListing',{listingId:d.id});if(out)out.textContent='Satın alma tamamlandı: '+x.name;}catch(e){if(out)out.textContent=e.message;}finally{buy.disabled=false;}};card.appendChild(buy);}
+    if(x.sellerUid===c()?.user?.uid){const cancel=document.createElement('button');cancel.className='btn';cancel.textContent='İlanı kaldır';cancel.onclick=()=>playerMarketRequest('cancel',{listingId:d.id}).catch(e=>{if(out)out.textContent=e.message;});card.appendChild(cancel);}
+    else{const buy=document.createElement('button');buy.className='btn';buy.textContent='Altınla satın al';buy.onclick=async()=>{buy.disabled=true;try{await playerMarketRequest('buy',{listingId:d.id});if(out)out.textContent='Satın alma tamamlandı: '+x.name;}catch(e){if(out)out.textContent=e.message;}finally{buy.disabled=false;}};card.appendChild(buy);}
     box.appendChild(card);
    });
   },e=>{box.textContent='Oyuncu Pazarı yüklenemedi: '+e.message;});
