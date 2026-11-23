@@ -32,7 +32,7 @@ test('Firebase yapılandırma JSON dosyaları geçerli', () => {
 test('Ana HTML içindeki yerel script dosyaları mevcut ve ID değerleri benzersiz', () => {
   const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   const scripts=[...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["']/gi)].map(m=>m[1]).filter(s=>!/^https?:\/\//i.test(s));
-  for(const src of scripts) assert.ok(fs.existsSync(path.resolve(root,src)), 'Eksik script: '+src);
+  for(const src of scripts) assert.ok(fs.existsSync(path.resolve(root,src.split('?')[0])), 'Eksik script: '+src);
   const ids=[...html.matchAll(/\bid=["']([^"']+)["']/gi)].map(m=>m[1]);
   assert.equal(ids.length,new Set(ids).size,'HTML içinde yinelenen id var');
 });
@@ -117,6 +117,51 @@ test('Ortak başlangıç ve sekme gezinmesi etkin', () => {
   assert.ok(html.includes('#bannedOverlay {'));
   assert.ok(html.includes('#bannedOverlay.hide {'));
   assert.ok(html.indexOf('#bannedOverlay {') < html.indexOf('#bannedOverlay.hide {'));
+});
+
+test('Ana menü sekmeleri birbirinden bağımsız panelleri açıyor ve koyu temada okunuyor', () => {
+  const core=fs.readFileSync(path.join(root,'core.js'),'utf8');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  const css=fs.readFileSync(path.join(root,'app.css'),'utf8');
+  const panels=[...html.matchAll(/data-home-panel="([^"]+)"/g)].map(x=>x[1]);
+  assert.deepEqual(panels,['play','inventory','rewards','stats']);
+  assert.ok(core.includes("#s0 > [data-home-panel]"));
+  assert.ok(core.includes('panel.hidden = !active'));
+  assert.ok(core.includes("closest?.('#homeTabs [data-home-tab]')"));
+  assert.ok(css.includes('body.theme-night .home-tabs'));
+  assert.ok(css.includes('body[data-mm-mode="dark"] .home-tabs'));
+});
+
+test('Görev, envanter ve oyuncu pazarı hata kodları ayrılmış; görevler Firestore üzerinden okunuyor', () => {
+  const features=fs.readFileSync(path.join(root,'features.js'),'utf8');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.ok(features.includes("collection('dailyTasks').where('active','==',true)"));
+  assert.ok(features.includes("collection('dailyTaskClaims').where('uid','==',c().user.uid)"));
+  assert.ok(features.includes("'0142'"));
+  assert.ok(features.includes("'0138'"));
+  assert.ok(features.includes("'0140'"));
+  assert.ok(features.includes("'0136'"));
+  assert.ok(!html.includes('Admin tarafından yayınlanan GIF görevleri'));
+});
+
+test('Gmail hesabı değiştirilebilir ve boş giriş kartı gösterilmez', () => {
+  const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
+  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
+  assert.ok(html.includes('id="switchAccountBtn"'));
+  assert.ok(client.includes("auth.signOut()"));
+  assert.ok(client.includes("accountCard?.classList.add('hide')"));
+  assert.ok(client.includes("accountCard?.classList.remove('hide')"));
+});
+
+test('Çevrimiçi oyuncu durumu güvenli presence kayıtlarıyla izleniyor', () => {
+  const client=fs.readFileSync(path.join(root,'firebase-client.js'),'utf8');
+  const duels=fs.readFileSync(path.join(root,'duels.js'),'utf8');
+  const rules=fs.readFileSync(path.join(root,'firestore.rules'),'utf8');
+  assert.ok(client.includes("collection('onlinePresence')"));
+  assert.ok(client.includes('setInterval(update,30000)'));
+  assert.ok(duels.includes("collection('onlinePresence').where('lastSeen'"));
+  assert.ok(duels.includes('id="onlineNames"')===false); // UI id is defined in HTML, not the module.
+  assert.ok(rules.includes('match /onlinePresence/{uid}'));
 });
 
 test('Firebase SDK dosyaları arayüzü bloke etmeden sırayla yükleniyor', () => {
@@ -213,7 +258,7 @@ test('Yeni güvenli oyun, hesap, hediye ve yönetim akışları kaynakta bağlı
   assert.ok(social.includes('Hata kodu: 0114'));
   assert.ok(social.includes('Hata kodu: 0116'));
   assert.ok(social.includes('Hata kodu: 0117'));
-  assert.ok(duels.includes('Hata kodu: 0136'));
+  assert.ok(duels.includes('Hata kodu: 0146'));
   assert.ok(duels.includes('Hata kodu: 0120'));
   assert.ok(social.includes('displayName') && social.includes('friend.data()'));
   assert.ok(admin.includes('resolveMessageReport'));
