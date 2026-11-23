@@ -46,20 +46,10 @@
     if(profileButton){if(!w.MMCloud?.user){d.getElementById('profileQuickMenu')?.classList.remove('show');d.getElementById('profileQuickMenu')?.setAttribute('aria-hidden','true');profileButton.setAttribute('aria-expanded','false');d.querySelector('.gLogin')?.click();event.preventDefault();return;}const menu=d.getElementById('profileQuickMenu');if(menu){const open=!menu.classList.contains('show');menu.classList.toggle('show',open);menu.setAttribute('aria-hidden',String(!open));profileButton.setAttribute('aria-expanded',String(open));}event.preventDefault();return;}
     if(!event.target?.closest?.('#profileQuickMenu')){const menu=d.getElementById('profileQuickMenu');if(menu){menu.classList.remove('show');menu.setAttribute('aria-hidden','true');d.getElementById('meChip')?.setAttribute('aria-expanded','false');}}
     const quick=event.target?.closest?.('[data-profile-go]');if(quick){const target=quick.dataset.profileGo;d.getElementById('profileQuickMenu')?.classList.remove('show');d.getElementById('profileQuickMenu')?.setAttribute('aria-hidden','true');d.getElementById('meChip')?.setAttribute('aria-expanded','false');if(!w.MMCloud?.user){d.querySelector('.gLogin')?.click();}else if(target==='profile'){navigate('s6');d.getElementById('profileCard')?.scrollIntoView({behavior:'smooth',block:'start'});}else navigate(target);event.preventDefault();return;}
-    const homeTab = event.target?.closest?.('[data-home-tab]');
+    const homeTab = event.target?.closest?.('#homeTabs [data-home-tab]');
     if (homeTab && !homeTab.disabled) {
-      const key = homeTab.dataset.homeTab;
-      const panels = Array.from(d.querySelectorAll('[data-home-panel]'));
-      if (panels.some(panel => panel.dataset.homePanel === key)) {
-        panels.forEach(panel => {
-          const active = panel.dataset.homePanel === key;
-          panel.classList.toggle('hide', !active);
-          panel.setAttribute('aria-hidden', String(!active));
-        });
-        d.querySelectorAll('[data-home-tab]').forEach(tab => {
-          tab.setAttribute('aria-selected', String(tab === homeTab));
-        });
-      }
+      setHomePanel(homeTab.dataset.homeTab);
+      event.preventDefault();
       return;
     }
     const control = event.target?.closest?.('[data-go]');
@@ -81,18 +71,30 @@
     const close=d.createElement('button');close.type='button';close.textContent='Kapat';close.addEventListener('click',()=>box.remove());box.appendChild(close);
     box.classList.add('show');return box;
   }
-  function initHomePanels() {
-    const tabs = Array.from(d.querySelectorAll('[data-home-tab]'));
-    const panels = Array.from(d.querySelectorAll('[data-home-panel]'));
-    if (!tabs.length || !panels.length) return;
-    const selected = tabs.find(tab => tab.getAttribute('aria-selected') === 'true' && panels.some(panel => panel.dataset.homePanel === tab.dataset.homeTab));
-    const activeKey = selected?.dataset.homeTab || 'play';
+  function setHomePanel(key) {
+    const tabs = Array.from(d.querySelectorAll('#homeTabs [data-home-tab]'));
+    const panels = Array.from(d.querySelectorAll('#s0 > [data-home-panel]'));
+    if (!tabs.length || !panels.length || !panels.some(panel => panel.dataset.homePanel === key)) return false;
     panels.forEach(panel => {
-      const active = panel.dataset.homePanel === activeKey;
+      const active = panel.dataset.homePanel === key;
+      panel.hidden = !active;
       panel.classList.toggle('hide', !active);
       panel.setAttribute('aria-hidden', String(!active));
     });
-    tabs.forEach(tab => tab.setAttribute('aria-selected', String(tab.dataset.homeTab === activeKey)));
+    tabs.forEach(tab => {
+      const active = tab.dataset.homeTab === key;
+      tab.setAttribute('aria-selected', String(active));
+      tab.setAttribute('tabindex', active ? '0' : '-1');
+    });
+    app.activeHomeTab = key;
+    return true;
+  }
+
+  function initHomePanels() {
+    const tabs = Array.from(d.querySelectorAll('#homeTabs [data-home-tab]'));
+    const selected = tabs.find(tab => tab.getAttribute('aria-selected') === 'true');
+    const key = selected?.dataset.homeTab || 'play';
+    if (!setHomePanel(key)) setHomePanel('play');
   }
 
   function init() {
@@ -119,6 +121,7 @@
   }
 
   app.navigate = navigate;
+  app.setHomePanel = setHomePanel;
   w.MMError={show:showError};
   app.register = function (name, api) {
     app.modules[name] = api || {};
