@@ -154,14 +154,17 @@
    const options=inv.filter(x=>['card','title','membership','miniPass'].includes(x.type)&&!x.listed&&x.itemId);
    select.replaceChildren();const empty=document.createElement('option');empty.value='';empty.textContent=options.length?'Ürün seç':'Satılabilir kart/unvan/üyelik yok';select.appendChild(empty);
    options.forEach(x=>{const o=document.createElement('option');o.value=x.itemId;o.textContent=(x.emoji||'🎁')+' '+x.name+' · '+x.type;select.appendChild(o);});
+   if(btn)btn.disabled=!options.length;
   };
   const userRef=c().db.collection('users').doc(c().user.uid);
   const stopOwned=userRef.onSnapshot(s=>{if(s.exists){window.MMCloud.userData=s.data();drawOwned();}},e=>{if(out)out.textContent='Envanter okunamadı: '+e.message;});
   stopPlayerMarket=()=>{stopOwned();stopPlayerMarket=null;};
   if(btn&&!btn.dataset.bound){btn.dataset.bound='1';btn.addEventListener('click',async()=>{
-   const itemId=select?.value,price=Number($('playerMarketPrice')?.value);if(!itemId||!Number.isSafeInteger(price)||price<1||price>1000000){if(out)out.textContent='Ürün seç ve 1-1.000.000 arası tam sayı fiyat gir.';return;}
+   const itemId=select?.value,price=Number($('playerMarketPrice')?.value);
+   if(!itemId){if(out)out.textContent='Satışa çıkarabileceğin ürün yok. Önce marketten kart, unvan veya üyelik edin; diğer oyuncuların ilanlarını yine de satın alabilirsin.';return;}
+   if(!Number.isSafeInteger(price)||price<1||price>1000000){if(out)out.textContent='1-1.000.000 arası tam sayı fiyat gir.';return;}
    btn.disabled=true;try{await playerMarketRequest('create',{itemId,price});if(out)out.textContent='İlanın Oyuncu Pazarı’na eklendi.';if($('playerMarketPrice'))$('playerMarketPrice').value='';}
-   catch(e){if(out)out.textContent=e.message||'İlan oluşturulamadı.';}finally{btn.disabled=false;}
+   catch(e){if(out)out.textContent=e.message||'İlan oluşturulamadı.';}finally{btn.disabled=!Array.from(select?.options||[]).some(o=>o.value);}
   });}
   if(box) stopPlayerMarketListings=c().db.collection('playerMarketListings').where('active','==',true).onSnapshot(s=>{
    box.replaceChildren();if(s.empty){box.textContent='Şu anda oyuncu ilanı yok.';return;}
