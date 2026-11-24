@@ -8,7 +8,7 @@
  async function resolveChatMediaUrl(data,chatId){
   if(data.mediaPath&&String(data.mediaPath).startsWith('chatMedia/')&&String(data.mediaPath).split('/').length===4){
    let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);if(!worker)throw (w.MMStorageFail?.('Sohbet medya sunucusu henüz yapılandırılmadı.')||new Error('Sohbet medya sunucusu henüz yapılandırılmadı. (Hata kodu: 0148)'));
-   const token=await cloud().user.getIdToken(),response=await fetch(worker+'/v1/chat-media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({chatId,path:data.mediaPath,mediaType:data.mediaType})});
+   const token=await cloud().user.getIdToken(),response=await w.MMStorageFetch(worker+'/v1/chat-media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({chatId,path:data.mediaPath,mediaType:data.mediaType})});
    const result=await response.json().catch(()=>({}));if(!response.ok||!result.url)throw (w.MMStorageFail?.(result.error||'Sohbet eki açılamadı.')||new Error((result.error||'Sohbet eki açılamadı.')+' (Hata kodu: 0148)'));return result.url;
   }
   return data.mediaUrl||'';
