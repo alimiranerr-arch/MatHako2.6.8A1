@@ -112,7 +112,7 @@
   if(!['image/png','image/jpeg','image/gif','image/webp','audio/mpeg','audio/ogg','audio/wav','audio/webm','audio/mp4','video/mp4','video/webm','video/ogg'].includes(file.type))throw Error('Bu dosya türü desteklenmiyor.');
   let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);if(!worker)throw (w.MMStorageFail?.('Sohbet medya sunucusu henüz yapılandırılmadı.')||new Error('Sohbet medya sunucusu henüz yapılandırılmadı. (Hata kodu: 0148)'));
   const chatId=activeChat,token=await cloud().user.getIdToken();
-  const response=await fetch(worker+'/v1/chat-upload?chatId='+encodeURIComponent(chatId),{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
+  const response=await w.MMStorageFetch(worker+'/v1/chat-upload?chatId='+encodeURIComponent(chatId),{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
   const result=await response.json().catch(()=>({}));if(!response.ok||!result.path)throw (w.MMStorageFail?.(result.message||result.error||'Dosya yüklenemedi.')||new Error((result.message||result.error||'Dosya yüklenemedi.')+' (Hata kodu: 0148)'));
   await db().collection('chats').doc(chatId).collection('messages').add({senderId:uid(),senderName:await currentSenderName(),text:'',mediaPath:result.path,mediaType:file.type,createdAt:firebase.firestore.FieldValue.serverTimestamp(),type:'media'});
  }
