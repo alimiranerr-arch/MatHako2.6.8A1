@@ -62,6 +62,7 @@ window.firebaseConfig = {
    state.db=firebase.firestore();state.fn=firebase.functions();watchPublicSettings();watchSeasonTheme();watchFeatureFlags();
    const auth=firebase.auth();
    auth.onAuthStateChanged(async user=>{
+    if(user){try{await user.reload();user=auth.currentUser||user;}catch(refreshError){console.warn('E-posta doğrulama durumu yenilenemedi:',refreshError);}}
     state.user=user;state.admin=false;showAdmin(false);
     const authBox=$('gmailAuthBox'),accountCard=$('accountCard'),registerForm=$('accountRegisterForm');
     if(user){
