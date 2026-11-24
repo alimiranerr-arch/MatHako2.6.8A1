@@ -74,7 +74,7 @@
   if(!path||!path.startsWith(prefix))return '';
   const storedPath=path.slice(prefix.length);
   if(!storedPath.startsWith('users/'))return w.firebase?.storage?w.firebase.storage().ref(path).getDownloadURL(): '';
-  let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
+  let worker=String(w.MMStorageWorkerUrl||'https://hako-media-server.alimiranerr.workers.dev');while(worker.endsWith('/'))worker=worker.slice(0,-1);
   if(!worker)throw (w.MMStorageFail?.('Görsel sunucusu henüz yapılandırılmadı.')||new Error('Görsel sunucusu henüz yapılandırılmadı. (Hata kodu: 0148)'));
   const token=await w.MMCloud.user.getIdToken();
   const response=await fetch(worker+'/v1/media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({path:storedPath})});
@@ -83,14 +83,14 @@
   return data.url;
  }
  function avatarView(emoji,path){
-  const seq=++avatarLoadSeq,el=$('meAv');if(el){el.replaceChildren();if(path&&path.startsWith('avatars/'))resolveAvatarUrl(path).then(url=>{if(seq!==avatarLoadSeq||!url)return;const img=d.createElement('img');img.src=url;img.alt='Profil resmi';img.style.cssText='width:30px;height:30px;object-fit:cover;border-radius:50%';el.replaceChildren(img)}).catch(()=>{if(seq===avatarLoadSeq)el.textContent=emoji||'🙂'});else el.textContent=emoji||'🙂'}const preview=$('avatarPreviewBox');if(preview)preview.textContent=emoji||'🙂'
+  const seq=++avatarLoadSeq,el=$('meAv');if(el){el.replaceChildren();if(path&&path.startsWith('avatars/'))resolveAvatarUrl(path).then(url=>{if(seq!==avatarLoadSeq||!url)return;const img=d.createElement('img');img.src=url;img.alt='Profil resmi';img.style.cssText='width:30px;height:30px;object-fit:cover;border-radius:50%';el.replaceChildren(img)}).catch(error=>{if(seq===avatarLoadSeq){el.textContent=emoji||'🙂';w.MMStorageFail?.(error.message||'Profil resmi görüntülenemedi.')}});else el.textContent=emoji||'🙂'}const preview=$('avatarPreviewBox');if(preview)preview.textContent=emoji||'🙂'
  }
  async function saveAvatar(user){
   const emoji=$('presetAvatarSelect')?.value||'🦊',file=$('customAvatarFile')?.files?.[0];
   if(!file)return{avatar:emoji,avatarPath:''};
   if(file.size>2*1024*1024)throw Error('Profil resmi en fazla 2 MB olabilir.');
   if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Profil resmi PNG, JPEG veya WebP olmalı.');
-  let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
+  let worker=String(w.MMStorageWorkerUrl||'https://hako-media-server.alimiranerr.workers.dev');while(worker.endsWith('/'))worker=worker.slice(0,-1);
   if(!worker)throw (w.MMStorageFail?.('Görsel sunucusu henüz yapılandırılmadı. Daha sonra tekrar dene.')||new Error('Görsel sunucusu henüz yapılandırılmadı. Daha sonra tekrar dene. (Hata kodu: 0148)'));
   const token=await user.getIdToken();
   const response=await fetch(worker+'/v1/upload',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
