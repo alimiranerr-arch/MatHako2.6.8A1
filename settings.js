@@ -77,7 +77,7 @@
   let worker=String(w.MMStorageWorkerUrl||'https://hako-media-server.alimiranerr.workers.dev');while(worker.endsWith('/'))worker=worker.slice(0,-1);
   if(!worker)throw (w.MMStorageFail?.('Görsel sunucusu henüz yapılandırılmadı.')||new Error('Görsel sunucusu henüz yapılandırılmadı. (Hata kodu: 0148)'));
   const token=await w.MMCloud.user.getIdToken();
-  const response=await fetch(worker+'/v1/media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({path:storedPath})});
+  const response=await w.MMStorageFetch(worker+'/v1/media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({path:storedPath})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.url)throw (w.MMStorageFail?.(data.error||'Profil resmi alınamadı.')||new Error((data.error||'Profil resmi alınamadı.')+' (Hata kodu: 0148)'));
   return data.url;
@@ -93,7 +93,7 @@
   let worker=String(w.MMStorageWorkerUrl||'https://hako-media-server.alimiranerr.workers.dev');while(worker.endsWith('/'))worker=worker.slice(0,-1);
   if(!worker)throw (w.MMStorageFail?.('Görsel sunucusu henüz yapılandırılmadı. Daha sonra tekrar dene.')||new Error('Görsel sunucusu henüz yapılandırılmadı. Daha sonra tekrar dene. (Hata kodu: 0148)'));
   const token=await user.getIdToken();
-  const response=await fetch(worker+'/v1/upload',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
+  const response=await w.MMStorageFetch(worker+'/v1/upload',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
   const data=await response.json().catch(()=>({}));
   if(!response.ok||!data.path)throw (w.MMStorageFail?.(data.message||data.error||'Profil resmi yüklenemedi.')||new Error((data.message||data.error||'Profil resmi yüklenemedi.')+' (Hata kodu: 0148)'));
   return{avatar:'🖼️',avatarPath:'avatars/'+user.uid+'/'+data.path};
