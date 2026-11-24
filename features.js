@@ -64,9 +64,9 @@
      if(String(t.gifUrl).startsWith('adminMedia/')){
       (async()=>{try{
        let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);
-       if(!worker)throw Error('Worker URL yok');
+       if(!worker)throw (w.MMStorageFail?.('Görev görseli sunucusu yapılandırılmamış.')||new Error('Görev görseli sunucusu yapılandırılmamış. (Hata kodu: 0148)'));
        const response=await fetch(worker+'/v1/task-media-url',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({path:t.gifUrl})});
-       const data=await response.json().catch(()=>({}));if(!response.ok||!data.url)throw Error(data.error||'Görsel alınamadı');img.src=data.url;
+       const data=await response.json().catch(()=>({}));if(!response.ok||!data.url)throw (w.MMStorageFail?.(data.error||'Görev görseli alınamadı.')||new Error((data.error||'Görev görseli alınamadı.')+' (Hata kodu: 0148)'));img.src=data.url;
       }catch(e){img.alt='Görev görseli yüklenemedi';}})();
      }else img.src=t.gifUrl;
     }
