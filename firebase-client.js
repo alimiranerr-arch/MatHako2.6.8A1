@@ -251,7 +251,7 @@ window.firebaseConfig = {
     const avatarData=await window.MMSettings?.saveAvatar(auth.currentUser)||{avatar:$('presetAvatarSelect')?.value||'🦊',avatarPath:''};
     await state.db.collection('users').doc(auth.currentUser.uid).set({email:auth.currentUser.email,displayName,surname,nickname,school,className,...avatarData},{merge:true});
     const form=$('accountRegisterForm');form?.classList.add('hide');$('accountCard')?.classList.add('hide');if(out)out.textContent='Profilin kaydedildi. Maceraya hoş geldin!';
-   }catch(e){if(out)out.textContent=e.message;}
+   }catch(e){if(out)out.textContent=e.message;if(String(e.message||'').includes('0148'))window.MMError?.show?.(e.message,'0148');}
   });}
  }
  function bindEmailChange(auth){
