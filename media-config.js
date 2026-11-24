@@ -19,3 +19,12 @@ window.MMStorageFetch = async function (url, options) {
     throw window.MMStorageFail(error?.message || "Görsel sunucusu isteği başarısız oldu.", "0148");
   }
 };
+
+// Yakalanmadan kalan ağ hatalarını da hata paneline taşı.
+window.addEventListener("unhandledrejection", function (event) {
+  const error = event.reason;
+  const message = String(error?.message || error || "");
+  if (/failed to fetch|networkerror|load failed|fetch failed/i.test(message)) {
+    window.MMStorageFail("Bir sunucuya bağlanılamadı. Hangi hizmetin başarısız olduğu tarayıcı günlüğünden belirlenmeli.", "0152");
+  }
+});
