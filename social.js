@@ -7,9 +7,9 @@
  function note(s){const e=$('msgs'); if(e)e.insertAdjacentHTML('beforeend',`<p class="note">${esc(s)}</p>`)}
  async function resolveChatMediaUrl(data,chatId){
   if(data.mediaPath&&String(data.mediaPath).startsWith('chatMedia/')&&String(data.mediaPath).split('/').length===4){
-   let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);if(!worker)throw Error('Sohbet medya sunucusu henüz yapılandırılmadı.');
+   let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);if(!worker)throw (w.MMStorageFail?.('Sohbet medya sunucusu henüz yapılandırılmadı.')||new Error('Sohbet medya sunucusu henüz yapılandırılmadı. (Hata kodu: 0148)'));
    const token=await cloud().user.getIdToken(),response=await fetch(worker+'/v1/chat-media-url',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({chatId,path:data.mediaPath,mediaType:data.mediaType})});
-   const result=await response.json().catch(()=>({}));if(!response.ok||!result.url)throw Error(result.error||'Sohbet eki açılamadı.');return result.url;
+   const result=await response.json().catch(()=>({}));if(!response.ok||!result.url)throw (w.MMStorageFail?.(result.error||'Sohbet eki açılamadı.')||new Error((result.error||'Sohbet eki açılamadı.')+' (Hata kodu: 0148)'));return result.url;
   }
   return data.mediaUrl||'';
  }
@@ -110,10 +110,10 @@
   if(!file||!activeChat)return;
   if(file.size>15*1024*1024)throw Error('Dosya en fazla 15 MB olabilir.');
   if(!['image/png','image/jpeg','image/gif','image/webp','audio/mpeg','audio/ogg','audio/wav','audio/webm','audio/mp4','video/mp4','video/webm','video/ogg'].includes(file.type))throw Error('Bu dosya türü desteklenmiyor.');
-  let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);if(!worker)throw Error('Sohbet medya sunucusu henüz yapılandırılmadı.');
+  let worker=String(w.MMStorageWorkerUrl||'');while(worker.endsWith('/'))worker=worker.slice(0,-1);if(!worker)throw (w.MMStorageFail?.('Sohbet medya sunucusu henüz yapılandırılmadı.')||new Error('Sohbet medya sunucusu henüz yapılandırılmadı. (Hata kodu: 0148)'));
   const chatId=activeChat,token=await cloud().user.getIdToken();
   const response=await fetch(worker+'/v1/chat-upload?chatId='+encodeURIComponent(chatId),{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':file.type},body:file});
-  const result=await response.json().catch(()=>({}));if(!response.ok||!result.path)throw Error(result.message||result.error||'Dosya yüklenemedi.');
+  const result=await response.json().catch(()=>({}));if(!response.ok||!result.path)throw (w.MMStorageFail?.(result.message||result.error||'Dosya yüklenemedi.')||new Error((result.message||result.error||'Dosya yüklenemedi.')+' (Hata kodu: 0148)'));
   await db().collection('chats').doc(chatId).collection('messages').add({senderId:uid(),senderName:await currentSenderName(),text:'',mediaPath:result.path,mediaType:file.type,createdAt:firebase.firestore.FieldValue.serverTimestamp(),type:'media'});
  }
  async function startVoice(){if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)throw Error('Bu tarayıcı ses kaydını desteklemiyor.');const stream=await navigator.mediaDevices.getUserMedia({audio:true});recorder=new MediaRecorder(stream);chunks=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());try{await upload(new File(chunks,`ses-${Date.now()}.webm`,{type:chunks[0]?.type||'audio/webm'}))}catch(e){alert(e.message)}};recorder.start();alert('Ses kaydı başladı. Bitirmek için tekrar ses kaydı düğmesine bas.');}
