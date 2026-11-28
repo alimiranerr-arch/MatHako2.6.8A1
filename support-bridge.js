@@ -11,6 +11,15 @@
       if(!user){alert("Önce Matematik Macerası hesabına giriş yapmalısın.");return;}
       b.disabled=true;b.textContent="Hesap doğrulanıyor…";
       try{
+        // The auth event fires before the background profile sync finishes.
+        // Wait for it so createSupportHandoff never races userDoc(uid).
+        if(cloud.profileReady&&typeof cloud.profileReady.then==="function"){
+          const profileReady=await cloud.profileReady;
+          if(!profileReady){
+            alert("Matematik Macerası profilin henüz hazır değil. Ana sitedeki profil eşitlemesi tamamlandıktan sonra tekrar dene.");
+            return;
+          }
+        }
         const result=await cloud.fn.httpsCallable("createSupportHandoff")({});
         const ticket=result.data&&result.data.ticket;
         if(!ticket)throw new Error("Güvenli destek bağlantısı oluşturulamadı.");
